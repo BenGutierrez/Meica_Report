@@ -9,20 +9,27 @@ import numpy as np
 import sys
 import kappa_vs_rho
 import overlay_mass
-import parse as parse
-from matplotlib.ticker import MaxNLocator
-
-
-
 
 fig = plt.figure(1)
-gs = gridspec.GridSpec(3,3)
-ax1 = fig.add_subplot(gs[0,0])
+gs = gridspec.GridSpec(6,5)
+ax1 = fig.add_subplot(gs[0:3,0:3])
 components = kappa_vs_rho.file_parse(sys.argv[1])
 accept, reject, middle, ignore = kappa_vs_rho.split_components(sys.argv[1], components)
 plot = kappa_vs_rho.kappa_vs_rho_plot(accept, reject, middle, ignore)
+N = 0
+anatomical_data, overlay_data, ant_hdr, hdr, com = overlay_mass.center_of_mass(anatomical = sys.argv[2], overlay = sys.argv[3])
 
-ax2 = fig.add_subplot(gs[1,0])
-plot = overlay_mass.overlay(sys.argv[2],sys.argv[3],threshold=12.34, index = 7)
+
+for i in range(3,6):
+	fig.add_subplot(gs[i,0])
+	plot1 = overlay_mass.overlay_axial(anatomical_data, overlay_data, com, threshold=12.34, alpha =0.8,
+	 index=N, overlay_hdr = hdr, anatomical_hdr = ant_hdr)
+	fig.add_subplot(gs[i,1])
+	plot2 = overlay_mass.overlay_cornial(anatomical_data, overlay_data, com, threshold=12.34, alpha=0.8,
+	 index=N, overlay_hdr = hdr, anatomical_hdr = ant_hdr)
+	fig.add_subplot(gs[i,2])
+	plot3 = overlay_mass.overlay_sagital(anatomical_data, overlay_data, com, threshold=12.34, alpha=0.8,
+	 index=N, overlay_hdr = hdr, anatomical_hdr = ant_hdr)
+	N = N + 1
 
 plt.show()

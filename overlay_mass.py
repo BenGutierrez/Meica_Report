@@ -1,100 +1,130 @@
 #!/usr/bin/env python
 """
-Gutierrez, B.  Displayes an anatomical image with a super imposed
-functional image overlayed.  Files must be in NIFTI format.
+Gutierrez, B.  Contains a function for finding the center of mass of 
+fMRI image componants.  Also contains functions for overlaying 
+a 2D fMRI image onto a 2D anatomical image in the axial, sagital, and cortial
+plane
 """
 
 """
-The function overlay accepts an two datasets.  The first used in meica.py
-as the anatomical, the second from the selection of output files from meica (i.e medn, mefc, mefl, tsoc).
+
 The threshold can be set to any positive number that controls how much of the overlay is seen.  Alpha 
 is the blending of the image, i.e the transparency of the overlay and can be anythng from 0-1.
-Index is the component number of the overlay that is to be viewd.  For x,y,z, represent the slice number
-to be viewed in the x,y,z dimension.  Only sone should be defined in the function at a time.
-
-import matplotlib.pyplot as plt
-import nibabel as ni
-import numpy as np
-import scipy
-
-overlay_mass.overlay(anatomical= '/Users/gutierrezbe/Documents/NIFTI/WE/meica.WE_TE1234Run_5/20140528_094651MPRAGE1isoG2s013a1001_ns_at.nii.gz',
-        overlay= '/Users/gutierrezbe/Documents/NIFTI/WE/meica.WE_TE1234Run_5/WE_meica_Run_5_mefl.nii.gz',threshold =12.34,
-        index =7 ,alpha=0.6)
-
-what
+anatomical_hdr and overlay_hdr contain the header information from the datasets above
 """
 import matplotlib.pyplot as plt
 import numpy as np
 import nibabel as ni
 import scipy.ndimage
+from matplotlib import gridspec
 
-def overlay(anatomical, overlay, threshold, index, alpha = 0.8, axial = 0, cornial = 0, sagital = 0):
 
+
+"""
+Accepts the path to two datasets.  The first used in meica.py
+as the anatomical is a 3D array from a NIFTI file, the second from the selection of output files from meica (i.e medn, mefc, mefl, tsoc)
+ is a 4d array.  Returns the data from the two argument datasets, the header of the two argument datasets, and 
+an array called component (which contains the center of mass for each component).
+"""
+def center_of_mass(anatomical, overlay):
 	anatomical = ni.load(anatomical)
 	overlay = ni.load(overlay)
 	anatomical_data = anatomical.get_data()
 	overlay_data = overlay.get_data()
-	com = np.empty(shape = (overlay_data.shape[3],4))
+	anatomical_hdr = anatomical.get_header()
+	overlay_hdr = overlay.get_header()
+	component = np.empty(shape = (overlay_data.shape[3],4))
 	for i in range(overlay_data.shape[3]):
-		com[i,0] = i
-		com[i,1:4] = np.asarray(scipy.ndimage.measurements.center_of_mass(abs(overlay_data[:,:,:,i])))
+		component[i,0] = i
+		component[i,1:4] = np.asarray(scipy.ndimage.measurements.center_of_mass(abs(overlay_data[:,:,:,i])))
+	return(anatomical_data, overlay_data, anatomical_hdr, overlay_hdr, component)
 
-	#gs = gridspec.GridSpec(1,3)
-	if axial == 0:
-		#ax1 = fig.add_subplot(gs[0,0])
-		overlay_axial(anatomical_data, overlay_data, com, threshold, alpha, index)
-	if cornial == 0:
-		#ax2 = fig.add_subplot(gs[0,1])
-		overlay_cornial(anatomical_data, overlay_data, com, threshold, alpha, index)
-	if sagital == 0: 
-		#ax3 = fig.add_subplot(gs[0,2])
-		overlay_sagital(anatomical_data, overlay_data, com, threshold, alpha, index)
+"""
+Overlays an image onto another image in the axial plane
+Accepts a 3D array to be used as an underlay and a 4D array to be used as an overlay.  Component is an array containing 
+the center of mass of each component number.  Threshold is an int that determines minmum value of overlay to appear.  
+alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
+overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
+"""
+def overlay_axial(anatomical_data, overlay_data, component, threshold, alpha, index, overlay_hdr, anatomical_hdr):
+	n = component[index,3]/overlay_data.shape[2]
+	threshold_overlay = np.empty(shape = (overlay_data.shape[0],overlay_data.shape[1]))
+	a_xmax = anatomical_data[:,:,round(anatomical_data.shape[2]*n)].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]
+	a_ymax = anatomical_data[:,:,round(anatomical_data.shape[2]*n)].shape[1]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
+	xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
+	ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
+	a_xmin = anatomical_hdr['srow_x'][3]
+	a_ymin = anatomical_hdr['srow_y'][3]
+	xmin = overlay_hdr['srow_x'][3]
+	ymin = overlay_hdr['srow_y'][3]
+	for i , j in np.ndenumerate(overlay_data[:,:,round(component[index,3]),index]):
+	 	if abs(overlay_data[i[0],i[1],round(component[index,3]),index]) <= threshold:
+	 		threshold_overlay[i[0]][i[1]] = np.nan
+	 	else:
+	 		threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],i[1],round(component[index,3]),index])
 
-def overlay_axial(anatomical_data, overlay_data, com, threshold, alpha, index):
-	
-	fig = plt.figure()
-	n = com[index,3]/overlay_data.shape[2]
-	threshold_overlay = np.empty(shape=(overlay_data.shape[0],overlay_data.shape[1]))
+	plt.imshow(anatomical_data[:,:,round(anatomical_data.shape[2]*n)].T, cmap = 'Greys_r', 
+		origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_ymin,a_ymax])
+	plt.imshow(threshold_overlay.T, cmap = 'RdYlGn', extent = [xmin,xmax,ymin,ymax],
+		alpha = alpha, vmin = threshold, origin = 'lower', interpolation='nearest')
+	plt.axis('off')
 
-	for i , j in np.ndenumerate(overlay_data[:,:,round(com[index,3]),index]):
-		if abs(overlay_data[i[0],i[1],round(com[index,3]),index]) <= threshold:
+"""
+Overlays an image onto another image in the cornial plane
+Accepts a 3D array to be used as an underlay and a 4D array to be used as an overlay.  Component is an array containing 
+the center of mass of each component number.  Threshold is an int that determines minmum value of overlay to appear.  
+alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
+overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
+"""
+def overlay_cornial(anatomical_data, overlay_data, component, threshold, alpha, index, overlay_hdr, anatomical_hdr):
+	n = component[index,2]/overlay_data.shape[1]
+	threshold_overlay = np.empty(shape = (overlay_data.shape[0],overlay_data.shape[2]))
+	a_xmax = anatomical_data[:,round(anatomical_data.shape[1]*n),:].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]
+	a_zmax = anatomical_data[:,round(anatomical_data.shape[1]*n),:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
+	xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
+	zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
+	a_xmin = anatomical_hdr['srow_x'][3]
+	a_zmin = anatomical_hdr['srow_z'][3]
+	xmin = overlay_hdr['srow_x'][3]
+	zmin = overlay_hdr['srow_z'][3]
+	for i , j in np.ndenumerate(overlay_data[:,round(component[index,2]),:,index]):
+		if abs(overlay_data[i[0],round(component[index,2]),i[1],index]) <= threshold:
 			threshold_overlay[i[0]][i[1]] = np.nan
 		else:
-			threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],i[1],round(com[index,3]),index])
+			threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],round(component[index,2]),i[1],index])
 
-	plt.imshow(anatomical_data[:,:,round(anatomical_data.shape[2]*n)].T,cmap = 'Greys_r',origin='lower')
-	plt.imshow(threshold_overlay.T,cmap = 'RdYlGn',extent=(0,anatomical_data.shape[0],0,anatomical_data.shape[1]),
-		alpha=alpha,vmin=threshold,origin='lower', interpolation='bilinear')
-	threshold_overlay= [0]
+	plt.imshow(anatomical_data[:,round(anatomical_data.shape[1]*n),:].T,cmap = 'Greys_r', 
+		origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_zmin,a_zmax])
+	plt.imshow(threshold_overlay.T,cmap = 'RdYlGn',extent = [xmin,xmax,zmin,zmax],
+		alpha = alpha, vmin = threshold, origin = 'lower', interpolation = 'nearest')
+	plt.axis('off')
 
-def overlay_cornial(anatomical_data, overlay_data, com, threshold, alpha, index):
-	fig = plt.figure()
-	n = com[index,2]/overlay_data.shape[1]
-	threshold_overlay = np.empty(shape=(overlay_data.shape[0],overlay_data.shape[2]))
-
-	for i , j in np.ndenumerate(overlay_data[:,round(com[index,2]),:,index]):
-		if abs(overlay_data[i[0],round(com[index,2]),i[1],index]) <= threshold:
+"""
+Overlays an image onto another image in the sagital plane
+Accepts a 3D array to be used as an underlay and a 4D array to be used as an overlay.  Component is an array containing 
+the center of mass of each component number.  Threshold is an int that determines minmum value of overlay to appear.  
+alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
+overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
+"""
+def overlay_sagital(anatomical_data, overlay_data, component, threshold, alpha, index, overlay_hdr, anatomical_hdr):
+	n = component[index,1]/overlay_data.shape[0]
+	threshold_overlay = np.empty(shape = (overlay_data.shape[1],overlay_data.shape[2]))
+	a_ymax = anatomical_data[round(anatomical_data.shape[0]*n),:,:].shape[0]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
+	a_zmax = anatomical_data[round(anatomical_data.shape[0]*n),:,:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
+	ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
+	zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
+	a_ymin = anatomical_hdr['srow_y'][3]
+	a_zmin = anatomical_hdr['srow_z'][3]
+	ymin = overlay_hdr['srow_y'][3]
+	zmin = overlay_hdr['srow_z'][3]
+	for i , j in np.ndenumerate(overlay_data[round(component[index,1]),:,:,index]):
+		if abs(overlay_data[round(component[index,3]),i[0],i[1],index]) <= threshold:
 			threshold_overlay[i[0]][i[1]] = np.nan
 		else:
-			threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],round(com[index,2]),i[1],index])
+			threshold_overlay[i[0]][i[1]] = abs(overlay_data[round(component[index,3]),i[0],i[1],index])
 
-	plt.imshow(anatomical_data[:,round(anatomical_data.shape[1]*n),:].T,cmap = 'Greys_r',origin='lower')
-	plt.imshow(threshold_overlay.T,cmap = 'RdYlGn',extent=(0,anatomical_data.shape[0],0,anatomical_data.shape[2]),
-		alpha=alpha,vmin=threshold,origin='lower',interpolation='bilinear')
-	threshold_overlay= [0]
-
-def overlay_sagital(anatomical_data, overlay_data, com, threshold, alpha, index):
-	fig = plt.figure()
-	n = com[index,1]/overlay_data.shape[0]
-	threshold_overlay = np.empty(shape=(overlay_data.shape[1],overlay_data.shape[2]))
-
-	for i , j in np.ndenumerate(overlay_data[round(com[index,1]),:,:,index]):
-		if abs(overlay_data[round(com[index,3]),i[0],i[1],index]) <= threshold:
-			threshold_overlay[i[0]][i[1]] = np.nan
-		else:
-			threshold_overlay[i[0]][i[1]] = abs(overlay_data[round(com[index,3]),i[0],i[1],index])
-
-
-	plt.imshow(anatomical_data[round(anatomical_data.shape[0]*n),:,:].T,cmap = 'Greys_r',origin='lower')
-	plt.imshow(threshold_overlay.T[:,::-1],cmap = 'RdYlGn',extent=(anatomical_data.shape[1],0,0,anatomical_data.shape[2]),
-		alpha=alpha,vmin=threshold,origin='lower',interpolation='bilinear')
+	plt.imshow(anatomical_data[round(anatomical_data.shape[0]*n),:,:].T[:,::-1],cmap = 'Greys_r',
+		origin ='lower', interpolation = 'nearest', extent = [a_ymax,a_ymin,a_zmin,a_zmax])
+	plt.imshow(threshold_overlay.T[:,::-1],cmap = 'RdYlGn', extent = [ymax,ymin,zmin,zmax],
+		alpha = alpha, vmin = threshold, origin = 'lower', interpolation = 'nearest')
+	plt.axis('off')
