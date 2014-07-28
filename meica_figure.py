@@ -41,6 +41,4 @@ for i in range(0,6,2):
 	 index = N, overlay_hdr = hdr, anatomical_hdr = ant_hdr)
 	N = N + 1
 
-
-
 plt.show()
