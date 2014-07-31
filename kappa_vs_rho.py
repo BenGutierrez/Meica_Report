@@ -29,6 +29,7 @@ def file_parse(file):
 		components[i] = parse(components[i]+'{:S} {}\n', txt_file.readline())
 	for i in range(4):
 		components[i] = map(int, components[i][0].split(','))
+	txt_file.close()
 	return components
 
 """
@@ -40,7 +41,7 @@ def split_components(comp_table_title,components):
 	b = 0
 	c = 0
 	d = 0
-	comp_table=np.loadtxt(str(comp_table_title))
+	comp_table = np.loadtxt(str(comp_table_title))
 	accept = np.zeros(shape = (len(components[0]),5))
 	reject = np.zeros(shape = (len(components[1]),5))
 	middle = np.zeros(shape = (len(components[2]),5))
