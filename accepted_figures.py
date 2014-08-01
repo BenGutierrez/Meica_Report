@@ -42,56 +42,59 @@ the center of mass of each component number.  Threshold is an int that determine
 alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
 overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
 """
-def overlay_axial(maps, component, threshold, alpha, index, series = '', accepted = 0, Counter = 0):
+def overlay_axial(maps, accept, alpha, threshold, series = ''):
 	anatomical_data = maps[0]
 	overlay_data = maps[1]
 	threshold_data = maps[2]
 	anatomical_hdr = maps[3]
 	overlay_hdr = maps[4]
-	n = component[index,3]/overlay_data.shape[2] # n is used to determine which anatomical slice to use
-	threshold_overlay = np.empty(shape = (overlay_data.shape[0],overlay_data.shape[1]))
-	a_xmax = anatomical_data[:,:,round(anatomical_data.shape[2]*n)].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]#setting up talairach coordinates
-	a_ymax = anatomical_data[:,:,round(anatomical_data.shape[2]*n)].shape[1]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
-	xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
-	ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
-	a_xmin = anatomical_hdr['srow_x'][3]
-	a_ymin = anatomical_hdr['srow_y'][3]
-	xmin = overlay_hdr['srow_x'][3]
-	ymin = overlay_hdr['srow_y'][3]
-	if accepted == 0:
-		for i , j in np.ndenumerate(overlay_data[:,:,round(component[index,3]),index]):# makes values below threshold not seen
-	 		if threshold_data[i[0],i[1],round(component[index,3]),Counter] <= threshold:
-	 			threshold_overlay[i[0]][i[1]] = np.nan
-	 		else:
-	 			threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],i[1],round(component[index,3]),index])
-	else:
-		for i , j in np.ndenumerate(overlay_data[:,:,round(component[index,3]),index]):
-			threshold_overlay[i[0]][i[1]] = overlay_data[i[0],i[1],round(component[index,3]),index]
-	fig = plt.figure(figsize = (3.2,6))
-	if series == '':
-		gs0 = gridspec.GridSpec(2,2)
-	else:
-		gs0 = gridspec.GridSpec(3,2)
-	ax1 = fig.add_subplot(gs0[0:2,0:2])
-	if accepted == 0:
-		plt.imshow(anatomical_data[:,:,round(anatomical_data.shape[2]*n)].T, cmap = 'Greys_r', 
-			origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_ymin,a_ymax])
-		plt.imshow(threshold_overlay.T, cmap = 'RdYlGn', extent = [xmin,xmax,ymin,ymax],
-			alpha = alpha, origin = 'lower', interpolation='nearest')
-	else: 
-		plt.imshow(threshold_overlay.T, cmap = 'Greys_r', extent = [xmin,xmax,ymin,ymax],
-			origin = 'lower', vmin = np.amin(threshold_overlay)/5, vmax = np.amax(threshold_overlay)/5)
-	plt.axis('off')
+	L = 0
+	for i in range(overlay_data.shape[3]):
+		n = np.array(range(1,10,1))*.1  # n is used to determine which anatomical slice to use
+		a_xmax = anatomical_data[:,:,round(anatomical_data.shape[2])/2].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]#setting up talairach coordinates
+		a_ymax = anatomical_data[:,:,round(anatomical_data.shape[2])/2].shape[1]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
+		xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
+		ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
+		a_xmin = anatomical_hdr['srow_x'][3]
+		a_ymin = anatomical_hdr['srow_y'][3]
+		xmin = overlay_hdr['srow_x'][3]
+		ymin = overlay_hdr['srow_y'][3]
+		fig = plt.figure(figsize = (3.2*5,3))
+		if series == '':
+			gs0 = gridspec.GridSpec(2,18)
+		else:
+			gs0 = gridspec.GridSpec(2,18)
+		if i in accept:
+			overlay_data[:,:,:,i] = np.absolute(overlay_data[:,:,:,i])
+			overlay_data[abs(threshold_data[:,:,:,L]) < threshold,i] = np.nan
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(anatomical_data[:,:,round(anatomical_data.shape[2]*n[j])].T, cmap = 'Greys_r', 
+					origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_ymin,a_ymax])
+				plt.imshow(overlay_data[:,:,round(overlay_data.shape[2]*n[j]),i].T, cmap = 'RdYlGn', extent = [xmin,xmax,ymin,ymax],
+					alpha = alpha, origin = 'lower', interpolation='nearest')
+				plt.axis('off')
+			L = L + 1
+		else:
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(overlay_data[:,:,round(overlay_data.shape[2]*n[j]),i].T, cmap = 'Greys_r', extent = [xmin,xmax,ymin,ymax],
+					origin = 'lower', vmin = np.amin(overlay_data[:,:,round(overlay_data.shape[2]*.5),i])/5, 
+					vmax = np.amax(overlay_data[:,:,round(overlay_data.shape[2]*.5),i])/5)
+				plt.axis('off')
+		
 
-	if series != '':
-		ax1 = fig.add_subplot(gs0[2,0:2])
-		time_series = np.loadtxt(series)
-		plt.plot(np.arange(time_series.shape[0]),time_series[:,component[index,0]])
-	if index <10:
-		plt.savefig('axial_component_'+'0'+str(index))
-	else:
-		plt.savefig('axial_component_'+str(index))
-	plt.close()
+		# if series != '':
+		# 	ax1 = fig.add_subplot(gs0[2,0:2])
+		# 	time_series = np.loadtxt(series)
+		# 	plt.plot(np.arange(time_series.shape[0]),time_series[:,component[index,0]])
+
+		N = str(i)
+		while len(N) < len(str(overlay_data.shape[3])):
+			N = '0'+N
+		gs0.tight_layout(fig, w_pad = -2.5,h_pad = -.5)
+		plt.savefig('axial_component_'+N)
+		plt.close()
 
 
 """
@@ -101,57 +104,59 @@ the center of mass of each component number.  Threshold is an int that determine
 alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
 overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
 """
-def overlay_coronal(maps, component, threshold, alpha, index, series ='', greyscale = 1, accepted = 0, Counter = 0):
+def overlay_coronal(maps, accept, threshold, alpha, series =''):
 	anatomical_data = maps[0]
 	overlay_data = maps[1]
 	threshold_data = maps[2]
 	anatomical_hdr = maps[3]
 	overlay_hdr = maps[4]
-	n = component[index,2]/overlay_data.shape[1]
-	threshold_overlay = np.empty(shape = (overlay_data.shape[0],overlay_data.shape[2]))
-	a_xmax = anatomical_data[:,round(anatomical_data.shape[1]*n),:].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]
-	a_zmax = anatomical_data[:,round(anatomical_data.shape[1]*n),:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
-	xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
-	zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
-	a_xmin = anatomical_hdr['srow_x'][3]
-	a_zmin = anatomical_hdr['srow_z'][3]
-	xmin = overlay_hdr['srow_x'][3]
-	zmin = overlay_hdr['srow_z'][3]
-	if accepted == 0:
-		for i , j in np.ndenumerate(overlay_data[:,round(component[index,2]),:,index]):
-			if threshold_data[i[0],round(component[index,2]),i[1],index] <= threshold:
-				threshold_overlay[i[0]][i[1]] = np.nan
-			else:
-				threshold_overlay[i[0]][i[1]] = abs(overlay_data[i[0],round(component[index,2]),i[1],index])
-	else:
-		for i , j in np.ndenumerate(overlay_data[:,round(component[index,2]),:,index]):
-			threshold_overlay[i[0]][i[1]] = overlay_data[i[0],round(component[index,2]),i[1],index]
-	fig = plt.figure(figsize = (5,6))
-	if series == '':
-		gs0 = gridspec.GridSpec(3,3)
-	else:
-		gs0 = gridspec.GridSpec(4,3)
-	ax1 = fig.add_subplot(gs0[0:3,0:3])
-	if accepted == 0:
-		plt.imshow(anatomical_data[:,round(anatomical_data.shape[1]*n),:].T,cmap = 'Greys_r', 
-			origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_zmin,a_zmax])
-		plt.imshow(threshold_overlay.T,cmap = 'RdYlGn',extent = [xmin,xmax,zmin,zmax],
-			alpha = alpha, origin = 'lower', interpolation = 'nearest')
-	else:
-		plt.imshow(threshold_overlay.T,cmap = 'Greys_r',extent = [xmin,xmax,zmin,zmax],
-			origin = 'lower', vmin = np.amin(threshold_overlay)/5, vmax = np.amax(threshold_overlay)/5)
-	plt.axis('off')
+	L = 0
+	for i in range(overlay_data.shape[3]):
+		n = np.array(range(1,10,1))*.1  # n is used to determine which anatomical slice to use
+		a_xmax = anatomical_data[:,round(anatomical_data.shape[1]/2),:].shape[0]*anatomical_hdr['srow_x'][0] + anatomical_hdr['srow_x'][3]
+		a_zmax = anatomical_data[:,round(anatomical_data.shape[1]/2),:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
+		xmax = overlay_data.shape[0]*overlay_hdr['srow_x'][0] + overlay_hdr['srow_x'][3]
+		zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
+		a_xmin = anatomical_hdr['srow_x'][3]
+		a_zmin = anatomical_hdr['srow_z'][3]
+		xmin = overlay_hdr['srow_x'][3]
+		zmin = overlay_hdr['srow_z'][3]
+		fig = plt.figure(figsize = (3.2*5,4))
+		if series == '':
+			gs0 = gridspec.GridSpec(2,18)
+		else:
+			gs0 = gridspec.GridSpec(2,18)
+		if i in accept:
+			N = 0
+			overlay_data[:,:,:,i] = np.absolute(overlay_data[:,:,:,i])
+			overlay_data[abs(threshold_data[:,:,:,L]) < threshold,i] = np.nan
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(anatomical_data[:,round(anatomical_data.shape[1]*n[j]),:].T, cmap = 'Greys_r', 
+					origin = 'lower', interpolation = 'nearest', extent = [a_xmin,a_xmax,a_zmin,a_zmax])
+				plt.imshow(overlay_data[:,round(overlay_data.shape[1]*n[j]),:,i].T, cmap = 'RdYlGn', extent = [xmin,xmax,zmin,zmax],
+					alpha = alpha, origin = 'lower', interpolation='nearest')
+				plt.axis('off')
+			L = L + 1
+		else:
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(overlay_data[:,round(overlay_data.shape[1]*n[j]),:,i].T, cmap = 'Greys_r', extent = [xmin,xmax,zmin,zmax],
+					origin = 'lower', vmin = np.amin(overlay_data[:,round(overlay_data.shape[1]*.5),:,i])/5, 
+					vmax = np.amax(overlay_data[:,round(overlay_data.shape[1]*.5),:,i])/5)
+				plt.axis('off')
 
-	if series != '':
-		ax1 = fig.add_subplot(gs0[3,0:3])
-		time_series = np.loadtxt(series)
-		plt.plot(np.arange(time_series.shape[0]),time_series[:,index])
-	if index <10:
-		plt.savefig('coronal_component_'+'0'+str(index))
-	else:
-		plt.savefig('coronal_component_'+str(index))
-	gs0.tight_layout(fig)
-	plt.close()
+		# if series != '':
+		# 	ax1 = fig.add_subplot(gs0[3,0:3])
+		# 	time_series = np.loadtxt(series)
+		# 	plt.plot(np.arange(time_series.shape[0]),time_series[:,index])
+
+		N = str(i)
+		while len(N) < len(str(overlay_data.shape[3])):
+			N = '0'+N
+		gs0.tight_layout(fig, w_pad = -2,h_pad = -2)
+		plt.savefig('coronal_component_'+N)
+		plt.close()
 """
 Overlays an image onto another image in the sagital plane
 Accepts a 3D array to be used as an underlay and a 4D array to be used as an overlay.  Component is an array containing 
@@ -159,57 +164,58 @@ the center of mass of each component number.  Threshold is an int that determine
 alpha is an int between 0 and 1 that dictates transparency of the overlay.  Index indicates which component to use.
 overlay_hdr and anatomical_hdr are the headers from each of these datasets respectively.
 """
-def overlay_sagital(maps, component, threshold, alpha, index, series = '', greyscale = 1, accepted = 0, Counter = 0):
+def overlay_sagital(maps, accept, threshold, alpha, series = '',):
 	anatomical_data = maps[0]
 	overlay_data = maps[1]
 	threshold_data = maps[2]
 	anatomical_hdr = maps[3]
 	overlay_hdr = maps[4]
-	n = component[index,1]/overlay_data.shape[0]
-	threshold_overlay = np.empty(shape = (overlay_data.shape[1],overlay_data.shape[2]))
-	a_ymax = anatomical_data[round(anatomical_data.shape[0]*n),:,:].shape[0]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
-	a_zmax = anatomical_data[round(anatomical_data.shape[0]*n),:,:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
-	ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
-	zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
-	a_ymin = anatomical_hdr['srow_y'][3]
-	a_zmin = anatomical_hdr['srow_z'][3]
-	ymin = overlay_hdr['srow_y'][3]
-	zmin = overlay_hdr['srow_z'][3]
-	if accepted == 0:
-		for i , j in np.ndenumerate(overlay_data[round(component[index,1]),:,:,index]):
-			if threshold_data[round(component[index,3]),i[0],i[1],Counter] <= threshold:
-				threshold_overlay[i[0]][i[1]] = np.nan
-			else:
-				threshold_overlay[i[0]][i[1]] = abs(overlay_data[round(component[index,3]),i[0],i[1],index])
-	else:
-		for i , j in np.ndenumerate(overlay_data[round(component[index,1]),:,:,index]):
-			threshold_overlay[i[0]][i[1]] = overlay_data[round(component[index,3]),i[0],i[1],index]
-	fig = plt.figure(figsize = (5,6))
-	if series == '':
-		gs0 = gridspec.GridSpec(3,3)
-	else:
-		gs0 = gridspec.GridSpec(4,3)
-	ax1 = fig.add_subplot(gs0[0:3,0:3])
-	if accepted == 0:
-		plt.imshow(anatomical_data[round(anatomical_data.shape[0]*n),:,:].T[:,::-1],cmap = 'Greys_r',
-			origin ='lower', interpolation = 'nearest', extent = [a_ymax,a_ymin,a_zmin,a_zmax],)
-		plt.imshow(threshold_overlay.T[:,::-1],cmap = 'RdYlGn', extent = [ymax,ymin,zmin,zmax],
-			alpha = alpha, origin = 'lower', interpolation = 'nearest')
-	else:
-		plt.imshow(threshold_overlay.T[:,::-1],cmap = 'Greys_r', extent = [ymax,ymin,zmin,zmax],
-			origin = 'lower', vmin = np.amin(threshold_overlay)/5, vmax = np.amax(threshold_overlay)/5)
-	plt.axis('off')
+	L = 0
+	for i in range(overlay_data.shape[3]):
+		n = np.array(range(1,10,1))*.1  # n is used to determine which anatomical slice to use
+		a_ymax = anatomical_data[round(anatomical_data.shape[0]/2),:,:].shape[0]*anatomical_hdr['srow_y'][1] + anatomical_hdr['srow_y'][3]
+		a_zmax = anatomical_data[round(anatomical_data.shape[0]/2),:,:].shape[1]*anatomical_hdr['srow_z'][2] + anatomical_hdr['srow_z'][3]
+		ymax = overlay_data.shape[1]*overlay_hdr['srow_y'][1] + overlay_hdr['srow_y'][3]
+		zmax = overlay_data.shape[2]*overlay_hdr['srow_z'][2] + overlay_hdr['srow_z'][3]
+		a_ymin = anatomical_hdr['srow_y'][3]
+		a_zmin = anatomical_hdr['srow_z'][3]
+		ymin = overlay_hdr['srow_y'][3]
+		zmin = overlay_hdr['srow_z'][3]
+		fig = plt.figure(figsize = (3.2*5,4))
+		if series == '':
+			gs0 = gridspec.GridSpec(2,18)
+		else:
+			gs0 = gridspec.GridSpec(2,18)
+		if i in accept:
+			overlay_data[:,:,:,i] = np.absolute(overlay_data[:,:,:,i])
+			overlay_data[abs(threshold_data[:,:,:,L]) < threshold,i] = np.nan
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(anatomical_data[round(anatomical_data.shape[0]*n[j]),:,:].T[:,::-1], cmap = 'Greys_r', 
+					origin = 'lower', interpolation = 'nearest', extent = [a_ymin,a_ymax,a_zmin,a_zmax])
+				plt.imshow(overlay_data[round(overlay_data.shape[0]*n[j]),:,:,i].T[:,::-1], cmap = 'RdYlGn', extent = [ymin,ymax,zmin,zmax],
+					alpha = alpha, origin = 'lower', interpolation='nearest')
+				plt.axis('off')
+			L = L + 1
+		else:
+			for j in range(len(n)):
+				ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
+				plt.imshow(overlay_data[round(overlay_data.shape[0]*n[j]),:,:,i].T[:,::-1], cmap = 'Greys_r', extent = [ymin,ymax,zmin,zmax],
+					origin = 'lower', vmin = np.amin(overlay_data[round(overlay_data.shape[0]*.5),:,:,i])/5, 
+					vmax = np.amax(overlay_data[round(overlay_data.shape[0]*.5),:,:,i])/5)
+				plt.axis('off')
 
-	if series != '':
-		ax1 = fig.add_subplot(gs0[3,0:3])
-		time_series = np.loadtxt(series)
-		plt.plot(np.arange(time_series.shape[0]),time_series[:,index])
-	if index <10:
-		plt.savefig('sagital_component_'+'0'+str(index))
-	else:
-		plt.savefig('sagital_component_'+str(index))
-	gs0.tight_layout(fig)
-	plt.close()
+		# if series != '':
+		# 	ax1 = fig.add_subplot(gs0[3,0:3])
+		# 	time_series = np.loadtxt(series)
+		# 	plt.plot(np.arange(time_series.shape[0]),time_series[:,index])
+
+		N = str(i)
+		while len(N) < len(str(overlay_data.shape[3])):
+			N = '0'+N
+		gs0.tight_layout(fig, w_pad = -1.9,h_pad = -3)
+		plt.savefig('sagital_component_'+N)
+		plt.close()
 
 """
 Collects data from the given data sets.
@@ -223,7 +229,6 @@ def collect_data(anatomical, overlay, threshold_map):
 	threshold_data = threshold.get_data()
 	anatomical_hdr = anatomical.get_header()
 	overlay_hdr = overlay.get_header()
-
 	return(anatomical_data, overlay_data, threshold_data, anatomical_hdr, overlay_hdr)
 
 

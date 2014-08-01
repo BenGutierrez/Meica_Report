@@ -83,3 +83,8 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.tick_params(axis = 'y',which = 'both',right = 'off')
 	plt.xlabel(r'$\kappa$',fontsize = 15)
 	plt.ylabel(r'$\rho$',fontsize = 15)
+
+
+
+
+	
