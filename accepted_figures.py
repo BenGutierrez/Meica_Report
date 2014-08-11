@@ -17,7 +17,6 @@ import numpy as np
 from matplotlib import gridspec
 import ipdb
 
-
 """
 Accepts the path to three datasets.  The first used in meica.py
 as the anatomical is a 3D array from a NIFTI file, the second from the selection of output files from meica (i.e medn, mefc, mefl, tsoc)
@@ -32,96 +31,125 @@ def montage(maps, accept, threshold, alpha, series ='', Axial = 0, Sagital = 0, 
 	anat_hdr = maps[3]
 	overlay_hdr = maps[4]
 	l = 0
-	n = np.array(range(1,10,1))*.1  # n is used to determine which anatomical slice to use
-	ax_extreme = np.zeros(8)
+	ax_extremne = np.zeros(12)
 	ax = ['x','y']
 	cor_extreme = np.zeros(8)
 	co = ['x','z']
 	sag_extreme = np.zeros(8)
 	sa = ['y','z']
-	anat_x = mask(image = anat, axis = (1,2))
-	anat_y = mask(image = anat, axis = (0,2))
-	anat_z = mask(image = anat, axis = (0,1))
-	for i in [0,1]:
+	for j in [0,1]:
 		if Axial == 0:
-			ax_extreme[i+6] = anat[:,:,anat.shape[2])/2.shape[i]*anat_hdr['srow_%s' % ax[i]][i] + anat_hdr['srow_%s' % ax[i]][3]#setting up talairach coordinates
-			ax_extreme[i+4] = overlay.shape[i]*overlay_hdr['srow_%s' % ax[i]][i] + overlay_hdr['srow_%s' % ax[i]][3]
-			ax_extreme[i+2] = anat_hdr['srow_%s' % ax[i]][3]
-			ax_extreme[i] = overlay_hdr['srow_%s' % ax[i]][3]
+			ax_extreme[j+6] = anat.shape[j]*anat_hdr['srow_%s' % ax[j]][j] + anat_hdr['srow_%s' % ax[j]][3]#setting up talairach coordinates
+			ax_extreme[j+4] = overlay.shape[j]*overlay_hdr['srow_%s' % ax[j]][j] + overlay_hdr['srow_%s' % ax[j]][3]
+			ax_extreme[j+2] = anat_hdr['srow_%s' % ax[j]][3]
+			ax_extreme[j] = overlay_hdr['srow_%s' % ax[j]][3]
 		if Sagital == 0:
-			sag_extreme[i+6] = anat[anat.shape[0]/2,:,:].shape[i]*anat_hdr['srow_%s' % sa[i]][i+1] + anat_hdr['srow_%s' % sa[i]][3]
-			sag_extreme[i+4] = overlay.shape[i+1]*overlay_hdr['srow_%s' % sa[i]][i+1] + overlay_hdr['srow_%s' % sa[i]][3]
-			sag_extreme[i+2] = anat_hdr['srow_%s' % sa[i]][3]
-			sag_extreme[i] = overlay_hdr['srow_%s' % sa[i]][3]
+			sag_extreme[j+6] = anat.shape[j+1]*anat_hdr['srow_%s' % sa[j]][j+1] + anat_hdr['srow_%s' % sa[j]][3]
+			sag_extreme[j+4] = overlay.shape[j+1]*overlay_hdr['srow_%s' % sa[j]][j+1] + overlay_hdr['srow_%s' % sa[j]][3]
+			sag_extreme[j+2] = anat_hdr['srow_%s' % sa[j]][3]
+			sag_extreme[j] = overlay_hdr['srow_%s' % sa[j]][3]
 		if Coronal == 0:
-			cor_extreme[i+6] = anat[:,anat.shape[1]/2,:].shape[i]*anat_hdr['srow_%s' % co[i]][i*2] + anat_hdr['srow_%s' % co[i]][3]
-			cor_extreme[i+4] = overlay.shape[i*2]*overlay_hdr['srow_%s' % co[i]][i*2] + overlay_hdr['srow_%s' % co[i]][3]
-			cor_extreme[i+2] = anat_hdr['srow_%s' % co[i]][3]
-			cor_extreme[i] = overlay_hdr['srow_%s' % co[i]][3]
+			cor_extreme[j+6] = anat.shape[j*2]*anat_hdr['srow_%s' % co[j]][j*2] + anat_hdr['srow_%s' % co[j]][3]
+			cor_extreme[j+4] = overlay.shape[j*2]*overlay_hdr['srow_%s' % co[j]][j*2] + overlay_hdr['srow_%s' % co[j]][3]
+			cor_extreme[j+2] = anat_hdr['srow_%s' % co[j]][3]
+			cor_extreme[j] = overlay_hdr['srow_%s' % co[j]][3]
 	for i in range(overlay.shape[3]):
 		if series == '':
 			fig = plt.figure(figsize = (3.2*5,7-(Axial +Sagital)*2))
-			gs0 = gridspec.GridSpec(6-(Axial + Sagital + Coronal)*2,18)
+			gs0 = gridspec.GridSpec(3-(Axial + Sagital + Coronal),10)
 		else:
-			fig = plt.figure(figsize = (3.2*5,7-(Axial +Sagital)*2+1))
-			gs0 = gridspec.GridSpec(6-(Axial + Sagital + Coronal)*2+1,18)
+			fig = plt.figure(figsize = (3.2*5,7-(Axial +Sagital)*2))
+			gs0 = gridspec.GridSpec(3-(Axial + Sagital + Coronal),10)
 		if i in accept:
 			overlay[:,:,:,i] = np.absolute(overlay[:,:,:,i])
-			overlay[abs(threshold_data[:,:,:,l]) < threshold,i] = np.nan
-			for j in range(1,10):
+			overlay[abs(threshold_data[:,:,:,l]) < threshold,i] = 0
+			overlay_data = overlay[:,:,:,i]
+			overlay_mask = np.zeros(overlay_data.shape)
+			overlay_mask[overlay_data != 0] = 1
+			itemindex = np.where(overlay_mask == 1)
+			# traversed = []
+			# for j in range(len(itemindex[0])):
+			# 	if [itemindex[0][j],itemindex[1][j],itemindex[2][j]] not in traversed:
+			# 		overlay_mask, travelled = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])
+			# 		traversed.append(travelled[0])
+
+			for j in range(len(itemindex[0])):
+				overlay_mask = flood1(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])
+			overlay_data[overlay_mask == 0] = np.nan
+			for j in range(10):
 				if Axial == 0:
-					ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
-					plt.imshow(anat[:,:,round(anat.shape[2]*n[j])].T, cmap = 'Greys_r', 
+					ax1 = fig.add_subplot(gs0[0,j])
+					plt.imshow(anat[:,:,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [ax_extreme[2],ax_extreme[6],ax_extreme[3],ax_extreme[7]])
-					plt.imshow(overlay[:,:,round(overlay.shape[2]*n[j]),i].T, cmap = 'RdYlGn', extent = [ax_extreme[0],ax_extreme[4],ax_extreme[1],ax_extreme[5]],
+					plt.imshow(overlay_data[:,:,overlay.shape[2]*j*.1].T, cmap = 'YlOrRd', extent = [ax_extreme[0],ax_extreme[4],ax_extreme[1],ax_extreme[5]],
 						alpha = alpha, origin = 'lower', interpolation='nearest')
 					plt.axis('off')
 				if Sagital == 0:
-					ax2 = fig.add_subplot(gs0[2-Axial*2:4-Axial*2:2,j*2:j*2+2])
-					plt.imshow(anat[round(anat.shape[0]*n[j]),:,:].T[:,::-1], cmap = 'Greys_r', 
+					ax2 = fig.add_subplot(gs0[1-Axial,j])
+					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [sag_extreme[2],sag_extreme[6],sag_extreme[3],sag_extreme[7]])
-					plt.imshow(overlay[round(overlay.shape[0]*n[j]),:,:,i].T[:,::-1], cmap = 'RdYlGn', extent = [sag_extreme[0],sag_extreme[4],sag_extreme[1],sag_extreme[5]],
+					plt.imshow(overlay_data[overlay.shape[0]*j*.1,::-1,:].T, cmap = 'YlOrRd', extent = [sag_extreme[0],sag_extreme[4],sag_extreme[1],sag_extreme[5]],
 						alpha = alpha, origin = 'lower', interpolation='nearest')
 					plt.axis('off')
 				if Coronal == 0:
-					ax3 = fig.add_subplot(gs0[4-(Axial+Sagital)*2:6-(Axial+Sagital)*2:2,j*2:j*2+2])
-					plt.imshow(anat[:,round(anat.shape[1]*n[j]),:].T, cmap = 'Greys_r', 
+					ax3 = fig.add_subplot(gs0[2-(Axial+Sagital),j])
+					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [cor_extreme[2],cor_extreme[6],cor_extreme[3],cor_extreme[7]])
-					plt.imshow(overlay[:,round(overlay.shape[1]*n[j]),:,i].T, cmap = 'RdYlGn', extent = [cor_extreme[0],cor_extreme[4],cor_extreme[1],cor_extreme[5]],
+					plt.imshow(overlay_data[:,overlay.shape[1]*j*.1,:].T, cmap = 'YlOrRd', extent = [cor_extreme[0],cor_extreme[4],cor_extreme[1],cor_extreme[5]],
 						alpha = alpha, origin = 'lower', interpolation='nearest')
 					plt.axis('off')
 			l = l + 1
+			if series != '':
+				gs0.tight_layout(fig, w_pad = -2.5, h_pad = -5,rect = [0,.3 -(Axial+Sagital+Coronal)*.1,1,1])
+				gs1 = gridspec.GridSpec(1,1)
+				ax4 = fig.add_subplot(gs1[0,0])
+				time_series = np.loadtxt(series)
+			 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
+				gs1.tight_layout(fig, rect = [0,0,1,.25+(Axial+Sagital+Coronal)*.1])
+				right = max(gs0.right,gs1.right)
+				left = min(gs0.left,gs1.left)
+				gs0.update(left = left, right = right)
+				gs1.update(left = left, right = right)
 		else:
-			for j in range(len(n)):
+			overlay_z = mask(overlay[:,:,:,i],(0,1))
+			overlay_x = mask(overlay[:,:,:,i],(1,2))
+			overlay_y = mask(overlay[:,:,:,i],(0,2))
+			for j in range(10):
 				if Axial == 0:
-					ax1 = fig.add_subplot(gs0[0:2,j*2:j*2+2])
-					plt.imshow(overlay[:,:,round(overlay.shape[2]*n[j]),i].T, cmap = 'Greys_r', extent = [ax_extreme[0],ax_extreme[4],ax_extreme[1],ax_extreme[5]],
-						origin = 'lower', vmin = np.amin(overlay[:,:,round(overlay.shape[2]*.5),i])/5, 
-						vmax = np.amax(overlay[:,:,round(overlay.shape[2]*.5),i])/5)
+					ax1 = fig.add_subplot(gs0[0,j])
+					plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r',
+						origin = 'lower', vmin = np.amin(overlay_z[:,:,overlay_z.shape[2]/2])/5, 
+						vmax = np.amax(overlay_z[:,:,overlay_z.shape[2]/2])/5)
 					plt.axis('off')
 				if Sagital == 0:
-					ax2 = fig.add_subplot(gs0[2-Axial*2:4-Axial*2,j*2:j*2+2])
-					plt.imshow(overlay[round(overlay.shape[0]*n[j]),:,:,i].T, cmap = 'Greys_r', extent = [sag_extreme[0],sag_extreme[4],sag_extreme[1],sag_extreme[5]],
-						origin = 'lower', vmin = np.amin(overlay[round(overlay.shape[0]*.5),:,:,i])/5, 
-						vmax = np.amax(overlay[round(overlay.shape[0]*.5),:,:,i])/5)
+					ax2 = fig.add_subplot(gs0[1-Axial,j])
+					plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',
+						origin = 'lower', vmin = np.amin(overlay_y[overlay_y.shape[0]/2,:,:])/5, 
+						vmax = np.amax(overlay_y[overlay_y.shape[0]/2,:,:])/5)
 					plt.axis('off')
 				if Coronal == 0:
-					ax3 = fig.add_subplot(gs0[4-(Axial+Sagital)*2:6-(Axial+Sagital)*2,j*2:j*2+2])
-					plt.imshow(overlay[:,round(overlay.shape[1]*n[j]),:,i].T, cmap = 'Greys_r', extent = [cor_extreme[0],cor_extreme[4],cor_extreme[1],cor_extreme[5]],
-						origin = 'lower', vmin = np.amin(overlay[:,round(overlay.shape[1]*.5),:,i])/5, 
-						vmax = np.amax(overlay[:,round(overlay.shape[1]*.5),:,i])/5)
+					ax3 = fig.add_subplot(gs0[2-(Axial+Sagital),j])
+					plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r',
+						origin = 'lower', vmin = np.amin(overlay_x[:,overlay_x.shape[1]/2,:])/5, 
+						vmax = np.amax(overlay_x[:,overlay_x.shape[1]/2,:,i])/5)
 					plt.axis('off')
-
-		if series != '':
-		 	ax1 = fig.add_subplot(gs0[6-(Axial + Sagital + Coronal)*2,0:18])
-			time_series = np.loadtxt(series)
-		 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-		gs0.tight_layout(fig, w_pad = -2.3, h_pad = -1)
+			if series != '':
+				gs0.tight_layout(fig, w_pad = -1.5, h_pad = -4.85,rect = [0,.3 -(Axial+Sagital+Coronal)*.1,1,1])
+				gs1 = gridspec.GridSpec(1,1)
+				ax4 = fig.add_subplot(gs1[0,0])
+				time_series = np.loadtxt(series)
+			 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
+				gs1.tight_layout(fig, rect = [0,0,1,.25+(Axial+Sagital+Coronal)*.1])
+				right = max(gs0.right,gs1.right)
+				left = min(gs0.left,gs1.left)
+				gs0.update(left = left, right = right)
+				gs1.update(left = left, right = right)
+		
 
 		N = str(i)
 		while len(N) < len(str(overlay.shape[3])):
-			N = '0'+N
-		plt.savefig('Component_'+N)
+			N = '0' + N
+		plt.savefig('Component_' + N)
 		plt.close()
 
 """
@@ -131,12 +159,12 @@ def collect_data(anatomical, overlay, threshold_map):
 	anatomical = ni.load(anatomical)
 	overlay = ni.load(overlay)
 	threshold = ni.load(threshold_map)
-	anat = anatomical.get_data()
-	overlay = overlay.get_data()
+	anat_data = anatomical.get_data()
+	overlay_data = overlay.get_data()
 	threshold_data = threshold.get_data()
 	anat_hdr = anatomical.get_header()
 	overlay_hdr = overlay.get_header()
-	return(anat, overlay, threshold_data, anat_hdr, overlay_hdr)
+	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
 
 def tsnr(tsoc,medn):
 	medn_data = ni.load(medn).get_data()
@@ -147,45 +175,134 @@ def tsnr(tsoc,medn):
 	tsoc_mean = tsoc_data.mean(-1)
 	tsoc_std = tsoc_data.std(-1)
 	tsoc_tsnr = tsoc_mean/tsoc_std
-
 	frac = medn_tsnr/tsoc_tsnr
-	tsnr = mask(image = medn_tsnr, axis = (1,0))
-	tsnr_frac = mask(image = frac, axis = (1,0))
-	
+	tsnr = mask(image = medn_tsnr, axis = (0,1))
+	tsnr_frac = mask(image = frac, axis = (0,1))
 	tsnr[tsnr == 0] = np.nan
 	fig = plt.figure(figsize = (3.2*5,6))
-	gs0 = gridspec.GridSpec(2,21)
-	for i in range(1,10):
-		ax1 = fig.add_subplot(gs0[0:2,i*2:i*2+2])
-		plt.imshow(tsnr[:,::-1,round(i*.1*tsnr.shape[2])].T)
+	gs0 = gridspec.GridSpec(1,11)
+	for i in range(0,10):
+		bar = tsnr[:,:,i*.1*tsnr.shape[2]]
+		bar_2 = bar[np.isnan(bar) == False] 
+		maximum = np.percentile(bar_2,98)
+		minimum = np.percentile(bar_2,2)
+		ax1 = fig.add_subplot(gs0[0,i])
+		plt.imshow(tsnr[:,::-1,i*.1*tsnr.shape[2]].T,vmin = minimum, vmax = maximum)
 		plt.axis('off')
-	ax1 = fig.add_subplot(gs0[0:2,20])
+	ax1 = fig.add_subplot(gs0[0,10])
 	plt.axis('off')
-	plt.colorbar(aspect = 30)
-	plt.show()
-	# plt.savefig('medn_tsnr')
-
+	plt.colorbar(aspect = 18)
+	plt.savefig('medn_tsnr')
 	tsnr_frac[tsnr_frac == 0] = np.nan
 	fig = plt.figure(figsize = (3.2*5,6))
-	gs0 = gridspec.GridSpec(2,21)
-	import ipdb
-	#ipdb.set_trace()
-	for i in range(1,10):
-		ax2 = fig.add_subplot(gs0[0:2,i*2:i*2+2])
-		plt.imshow((tsnr_frac)[:,::-1,round(i*.1*tsnr_frac.shape[2])].T)
+	gs0 = gridspec.GridSpec(1,11)
+	for i in range(0,10):
+		bar = tsnr_frac[:,:,i*.1*tsnr_frac.shape[2]]
+		bar_2 = bar[np.isnan(bar) == False] 
+		maximum = np.percentile(bar_2,98)
+		minimum = np.percentile(bar_2,2)
+		ax2 = fig.add_subplot(gs0[0,i])
+		plt.imshow(tsnr_frac[:,::-1,i*.1*tsnr_frac.shape[2]].T,vmin = minimum,vmax = maximum)
 		plt.axis('off')
-	ax2 = fig.add_subplot(gs0[0:2,20])
+	ax2 = fig.add_subplot(gs0[0,10])
 	plt.axis('off')
-	plt.colorbar(aspect = 30)
-	plt.show()
-	# plt.savefig('tsnr_ratio')
-def mask(image,axis):
+	plt.colorbar(aspect = 18)
+	plt.savefig('tsnr_ratio')
+
+	fig = plt.figure()
+	plt.hist(tsnr[tsnr != 0], bins = 100, range = [0,1000])
+	# ipdb.set_trace()
+	plt.title('TSNR medn',fontsize = 15)
+	plt.xlabel('TSNR',fontsize = 15)
+	plt.ylabel('Frequency',fontsize = 15)
+	plt.savefig('medn_tsnr_hist')
+	plt.close()
+
+	fig = plt.figure()
+	plt.hist(tsnr_frac[tsnr_frac != 0], bins = 100, range = [0,10])
+	plt.title('TSNR medn / TSNR tsoc',fontsize = 15)
+	plt.xlabel('TSNR ratio',fontsize = 15)
+	plt.ylabel('Frequency',fontsize = 15)
+	plt.savefig('tsnr_ratio_hist')
+	plt.close()
+def mask(image, axis):
 	im_mask = np.zeros(image.shape)
 	image[np.isnan(image)] = 0
 	im_mask[image != 0] = 1
-	im_z_slice = im_mask.sum(axis = axis)
-	return image[:,:,im_z_slice > 0]
+	if axis == (0,1):
+		im_z_slice = im_mask.sum(axis = axis)
+		return image[:,:,im_z_slice > 0]
+	elif axis == (1,2):
+		im_x_slice = im_mask.sum(axis = axis)
+		return image[im_x_slice > 0,:,:]
+	elif axis == (0,2):
+		im_y_slice = im_mask.sum(axis = axis)
+		return image[:,im_y_slice > 0,:]
 
+def flood(matrix, x, y, z):
+	travelled = []
+	N = 0
+	original = matrix.copy()
+	N, travelled = floodfill(matrix, x, y, z, N, travelled)
+	if N >= 20:
+		return original, travelled
+	else:
+		return matrix, [[]]
+
+def floodfill1(matrix, x, y, z, N, itemindex):
+	itemindex[0] = itemindex[0][1:len(itemindex[0])+1]
+	itemindex[1] = itemindex[1][1:len(itemindex[0])+1]
+	itemindex[2] = itemindex[2][1:len(itemindex[0])+1]
+	N = N + np.sum(matrix[max(x-1,0):min(x+2,matrix.shape[0]),max(y-1,0):min(y+2,matrix.shape[1]),max(z-1,0):min(z+2,matrix.shape[2])])
+	if N <= 19: #20 -1
+		matrix[x,y,z] = 0
+		test = np.where(matrix[max(x-1,0):min(x+2,matrix.shape[0]-1),max(y-1,0):min(y+2,matrix.shape[1]-1),max(z-1,0):min(z+2,matrix.shape[2]-1)] == 1)
+		itemindex[0].extend(test[0]+ x + (2 - (min(x+2,matrix.shape[0])-max(x-1,0)))) #(2-...) is a fudge factor for being on the edge of the matrix
+		itemindex[1].extend(test[1]+ y + (2 - (min(y+2,matrix.shape[1])-max(y-1,0))))
+		itemindex[2].extend(test[2]+ z + (2 - (min(z+2,matrix.shape[2])-max(z-1,0))))
+		matrix[max(x-1,0):min(x+2,matrix.shape[0]),max(y-1,0):min(y+2,matrix.shape[1]),max(z-1,0):min(z+2,matrix.shape[2])] = 0
+		if len(itemindex[0])>0:#ensures that if no more 1's around (x,y,z) not calling function again
+			N = floodfill1(matrix,itemindex[0][0],itemindex[1][0],itemindex[2][0], N, itemindex)
+	return N
+
+def floodfill(matrix, x, y, z, N, travelled):
+	travelled.append([x,y,z])
+	N = N + 1
+	if N <= 19:
+		matrix[x,y,z] = 0
+		if x == 0:
+			x_range = [0,1]
+		elif x == matrix.shape[0]-1:
+			x_range = [-1,0]
+		else:
+			x_range = [-1,0,1]
+		if y == 0:
+			y_range = [0,1]
+		elif y == matrix.shape[1]-1:
+			y_range = [-1,0]
+		else:
+			y_range = [-1,0,1]
+		if z == 0:
+			z_range = [0,1]
+		elif z == matrix.shape[2]-1:
+			z_range = [-1,0]
+		else:
+			z_range = [-1,0,1]
+		for i in x_range:
+			for j in y_range:
+				for k in z_range:
+					if matrix[x+i,y+j,z+k] == 1 and N <= 19:
+						N, travelled = floodfill(matrix, x+i, y+j, z+k, N, travelled)
+	return N, travelled
+def flood1(matrix, x, y, z):
+	N = 0
+	itemindex = [[],[],[]]
+	original = matrix.copy()
+	N = floodfill1(matrix, x, y, z, N, itemindex)
+	if N >= 20: # twenty is arbitrary choosen
+		return original
+	else:
+		return matrix
 
 
 
