@@ -9,7 +9,7 @@ The percent variance is
 Parse the component file from meica.py and return a list of lists containing the
 component numbers from the accepted, rejected, middle, and ignore bins.
 """
-from parse import parse
+
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
@@ -19,7 +19,7 @@ def file_parse(file):
 	components = [None,'#REJ ','#MID ','#IGN ']
 	txt_file.seek(0)
 	while components[0] == None:
-		line=txt_file.readline()
+		line = txt_file.readline()
 		if line == '':
 			print('unable to parse the ctab txt_file')
 			break
@@ -29,6 +29,7 @@ def file_parse(file):
 		components[i] = parse(components[i]+'{:S} {}\n', txt_file.readline())
 	for i in range(4):
 		components[i] = map(int, components[i][0].split(','))
+	txt_file.close()
 	return components
 
 """
@@ -82,3 +83,13 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.tick_params(axis = 'y',which = 'both',right = 'off')
 	plt.xlabel(r'$\kappa$',fontsize = 15)
 	plt.ylabel(r'$\rho$',fontsize = 15)
+
+def kr_vs_component(comp_table_title):
+	components = np.loadtxt(str(comp_table_title))
+	plt.figure()
+	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' and ' + r'$\rho$' + ' vs Component Rank',fontsize = 14)
+	plt.xlabel(r'$\kappa$' ', ' + r'$\rho$' ,fontsize = 15)
+	plt.xlabel('Component Rank' ,fontsize = 15)
+	kappa = plt.plot(components[:,0],components[:,1])
+	rho = plt.plot(components[:,0],components[:,2])
+	plt.legend((r'$\kappa$',r'$\rho$'))
