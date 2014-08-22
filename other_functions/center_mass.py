@@ -8,8 +8,6 @@ import numpy as np
 import nibabel as ni
 import scipy.ndimage
 
-
-
 """
 The first used in meica.py
 as the anatomical is a 3D array from a NIFTI file, the second from the selection of output files from meica (i.e medn, mefc, mefl, tsoc)

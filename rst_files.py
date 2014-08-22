@@ -3,19 +3,37 @@
 Gutierrez, B.  Generates the analysis.rst file
 """
 import numpy as np
-from parse import parse
 
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
+def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_number, min_variance_explained):
 	sl = []
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
 	sl.append('=======================')
 	line = header(ctab)
 	for i in range(len(line)):
-		sl.append('%s' % line[i][1:])
+		if ':' in line[i][:]:
+			index = line[i][:].index(':')
+		if line[i][1] == 'T' and line[i][7] == 'c' and int(line[i][index+1:]) < min_component_number:
+			sl.append('%s !!!! |warning| !!!! number of components is below %s\n'  % (line[i][1:-1],min_component_number))
+		if line[i][1] == 'D' and float(line[i][index+1:]) < min_variance_explained:
+			sl.append('%s !!!! |warning| !!!! variance explained below %s\n'  % (line[i][1:-1],min_variance_explained))
+		else:
+			sl.append('%s' % line[i][1:])
+	sl.append('\n+----------------+------------------+-------------------------+\n' +
+				'|                | %  Total Vairance| %  Total Variance(norm) |\n' + 
+				'+================+==================+=========================+')
+	sl.append('| **Accepted**   |        %s    |          %s         |' % (digit_length(sum(accept[:,3]),6),digit_length(sum(accept[:,4]),6)))
+	sl.append('+----------------+------------------+-------------------------+\n' +
+				'| **Rejected**   |        %s    |          %s         |' % (digit_length(sum(reject[:,3]),6),digit_length(sum(reject[:,4]),6)))
+	sl.append('+----------------+------------------+-------------------------+\n' +
+				'|**Middle kappa**|        %s    |          %s         |' % (digit_length(sum(middle[:,3]),6),digit_length(sum(middle[:,4]),6)))
+	sl.append('+----------------+------------------+-------------------------+\n' +
+				'| **Ignored**    |        %s    |          %s         |' % (digit_length(sum(ignore[:,3]),6),digit_length(sum(ignore[:,4]),6)))
+	sl.append('+----------------+------------------+-------------------------+\n')
+
 	sl.append('Graphs')
 	sl.append('++++++')
 	sl.append('.. image:: .. /png_dump/kappa_vs_rho.png')
@@ -23,12 +41,12 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 	sl.append('.. image:: .. /png_dump/kappa_rho_vs_components.png')
 	sl.append('	:width: 49%\n')
 	sl.append('The size of the scatter plot points is linearly related to the percent variance of that component.\n')
-	sl.append('=============  =============  =============  =============')
-	sl.append('  #Accepted      #Rejected    #Middle Kappa    #Ignored   ')
-	sl.append('=============  =============  =============  =============')
-	sl.append('     %s             %s              %s             %s    ' % 
+	sl.append('=============  =============  =================  =============')
+	sl.append('# of Accepted  # of Rejected  # of Middle kappa  # of Ignored ')
+	sl.append('=============  =============  =================  =============')
+	sl.append('     %s             %s              %s                 %s    ' % 
 		(len(accept), len(reject), len(middle), len(ignore)))
-	sl.append('=============  =============  =============  =============\n')
+	sl.append('=============  =============  =================  =============\n')
 	sl.append('Accepted Components with anatomical')
 	sl.append('+++++++++++++++++++++++++++++++++++')	
 	sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
@@ -39,12 +57,12 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 		sl.append('.. image:: ../png_dump/Accepted_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n')
-		sl.append('=============  =============  =============  =============')
-		sl.append('     kappa         Rho           %%Var        %%Var(norm)')
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(accept[N,1],8),digit_length(accept[N,2],7),digit_length(accept[N,3],3),digit_length(accept[N,4],3)))
-		sl.append('=============  =============  =============  =============\n')
+		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
 	sl.append('Accepted Components')
@@ -57,12 +75,12 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 		sl.append('.. image:: ../png_dump/Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n')
-		sl.append('=============  =============  =============  =============')
-		sl.append('     kappa         Rho           %%Var        %%Var(norm)')
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(accept[N,1],8),digit_length(accept[N,2],7),digit_length(accept[N,3],3),digit_length(accept[N,4],3)))
-		sl.append('=============  =============  =============  =============\n')
+		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
 	sl.append('Rejected Components\n' + '+++++++++++++++++++')
@@ -74,12 +92,12 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 		sl.append('.. image:: ../png_dump/Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n')
-		sl.append('=============  =============  =============  =============')
-		sl.append('     kappa         Rho           %%Var        %%Var(norm)')
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(reject[N,1],8),digit_length(reject[N,2],7),digit_length(reject[N,3],3),digit_length(reject[N,4],3)))
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
 		N += 1
 
 	sl.append('\nMiddle Components\n' + '+++++++++++++++++++')
@@ -91,12 +109,12 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 		sl.append('.. image:: ../png_dump/Component_' +(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n')
-		sl.append('=============  =============  =============  =============')
-		sl.append('     kappa         Rho           %%Var        %%Var(norm)')
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(middle[N,1],9),digit_length(middle[N,2],7),digit_length(middle[N,3],4),digit_length(middle[N,4],4)))
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
 		N += 1
 
 	sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
@@ -108,13 +126,16 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab):
 		sl.append('.. image:: ../png_dump/Component_'  +(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n')
-		sl.append('=============  =============  =============  =============')
-		sl.append('     kappa         Rho           %%Var        %%Var(norm)')
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(ignore[N,1],8),digit_length(ignore[N,2],7),digit_length(ignore[N,3],4),digit_length(ignore[N,4],4)))
-		sl.append('=============  =============  =============  =============')
+		sl.append('=============  =============  =============  =================\n\n')
 		N += 1
+	sl.append('.. |warning| image:: ../png_dump/warning.png')
+	sl.append('    		 :align: middle')
+	sl.append('    		 :alt: warning')
 
 	ofh = open("analysis.rst","w")
 	ofh.write("\n".join(sl)+"\n")
@@ -126,20 +147,31 @@ make diagnostics.rst file
 def diagnostics_rst(nsmprage):
 	sl = []
 	sl.append('Preliminary Diagnostics\n' + '==========================\n')
+	sl.append('The signal to noise ratio (TSNR) for a dataset is defined as the mean over the standard deviationof the dataset.  ' +
+		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset has a greater ' + 
+		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
 	sl.append('Absolute TSNR of the medn NIFTI1 dataset:\n')
 	sl.append('.. image:: .. /png_dump/medn_tsnr.png')
+	sl.append('	:scale: 99%')
+	sl.append('	:align: left\n')
+	sl.append('Absolute TSNR of the tsoc NIFTI1 dataset:\n')
+	sl.append('.. image:: .. /png_dump/tsoc_tsnr.png')
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
 	sl.append('Ratio of the TSNR of the medn NIFTI1 dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
 	sl.append('.. image:: .. /png_dump/tsnr_ratio.png')
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
-	sl.append('Histograms of the TSNR of the medn NIFTI1 dataset and the ratio of the TSNr of the medn dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
+	sl.append('Histograms of the TSNR of the medn NIFTI1 dataset and the TSNR of the tsoc NIFTI1 dataset:\n')
 	sl.append('.. image:: .. /png_dump/medn_tsnr_hist.png')
 	sl.append('	:width: 49%')
+	sl.append('.. image:: .. /png_dump/tsoc_tsnr_hist.png')
+	sl.append('	:width: 49%\n')
+	sl.append('Histogram of the ratio of the TSNR of the medn dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
 	sl.append('.. image:: .. /png_dump/tsnr_ratio_hist.png')
 	sl.append('	:width: 49%\n')
+	
 	if nsmprage != '':
 		sl.append('Coregistration\n' + '+++++++++++++++')
 		sl.append('Coregistration of the subject to the anatomical provided:\n')
@@ -188,7 +220,7 @@ def intro_rst():
 		 + 'section contains a view of the TSNR of the medn dataset, the "denoised" BOLD time series after: basic '
 		 + 'preprocessing, T2* weighted averaging of echoes (i.e. "optimal combination"), and ICA denoising, produced by meica.py '
 		 + 'and also the TSNR ratio of the medn dataset over tsoc dataset, "raw" BOLD time series dataset after: basic preprocessing '
-		 + ' and T2* weighted averaging of echoes (i.e. "optimal combination"\n\n)')
+		 + ' and T2* weighted averaging of echoes (i.e. "optimal combination")\n\n')
 	sl.append('This report also includes two different ways to visualize the information from the accepted components. '
 		 + 'The first is a thresholding of the bold responce overlayed onto the anatomical image '
 		 + 'that was used for correlation.  If this is not present, then it is because this option '
@@ -207,7 +239,7 @@ def correlation_rst():
 	sl.append('Correlation\n' + '==========================\n')
 	sl.append('In this section, several seeds were choosen to represent a few networks that are common in the literature.  ' +
 	  'These seeds for the default were taken at MNI coordinates (0,-53,26) and (0,52,6) [1]_ which coorespond to Post cingulate ' +
-	   'cortex and the medial prefrontal cortex respectively.\n')
+	   'cortex and the medial prefrontal cortex respectively.  Z scores were capped at 5 and -5 for the below figures.\n')
 	sl.append('.. [1] **Koene R. A. Van Dijk, Trey Hedden, Archana Venkataraman, Karleyton C. Evans, Sara W. Lazar and Randy L. Buckner.** ' +
 		'Intrinsic Functional Connectivity As a Tool For Human Connectomics: Theory, Properties, and Optimization. *J Neurophysiol 103:297-321, 2010*\n')
 	sl.append('Default mode\n' + '+++++++++++++++')
@@ -222,14 +254,15 @@ def correlation_rst():
 	ofh.write("\n".join(sl)+"\n")
 	ofh.close()
 """
-Controls length of floats.  needs to be done because spaceing important for sphinx
+Controls length of floats.  Needs to be done because spaceing important for sphinx.
+This function is not designed to work if length is less than the number of digits before the decimal.
 """
 def digit_length(n,length):
 	n_string = str(n)
 	if len(n_string) < length:
 		n_string = n_string + ' '*(length-len(n_string))
 	elif len(n_string)> length:
-		n_string = round(n,length)
+		n_string = str(round(n,length))
 	return(n_string)
 
 """

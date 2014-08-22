@@ -5,22 +5,23 @@ fMRI image componants.  Also contains functions for overlaying
 a 2D fMRI image onto a 2D anatomical image in the axial, sagital, and cortial
 plane
 """
+import matplotlib as mpl
+mpl.use('Agg')
 
-import matplotlib.pyplot as plt
-import nibabel as ni
-import numpy as np
-from matplotlib import gridspec
-from parse import parse
-from matplotlib.ticker import MaxNLocator
-import os
 from matplotlib.colors import LinearSegmentedColormap
 from numpy.core.umath_tests import inner1d
+from matplotlib.ticker import MaxNLocator
+from matplotlib import gridspec
+import matplotlib.pyplot as plt
+from parse import parse
+import nibabel as ni
+import numpy as np
+import os
 
 cdict = {'red':  ((0.0,  0.0, 0.0),
 						   (0.2, 0.6, 0.6),
 						   (0.35, 0.9, 0.9),
 						   (0.5, 1.0, 1.0),
-		                   # (1.9, .75, .75),
 		                   (1.0, 1.0, 1.0)),
 
 		         'green': ((0.0, 1.0, 1.0),
@@ -95,7 +96,7 @@ def mask(image, axis):
 	im_mask[image != 0] = 1
 	if axis == (0,1):
 		im_mask = np.sum(im_mask, axis = 0)
-		im_mask= np.sum(im_mask, axis = 0)
+		im_mask = np.sum(im_mask, axis = 0)
 		return image[:,:,im_mask > 0]
 	elif axis == (1,2):
 		im_mask = np.sum(im_mask, axis = 1)
@@ -103,7 +104,7 @@ def mask(image, axis):
 		return image[im_mask > 0,:,:]
 	elif axis == (0,2):
 		im_mask = np.sum(im_mask, axis = 0)
-		im_mask= np.sum(im_mask, axis = 1)
+		im_mask = np.sum(im_mask, axis = 1)
 		return image[:,im_mask > 0,:]
 
 """
@@ -185,8 +186,8 @@ def montage(maps, accept, threshold, alpha, series ='', Axial = 0, Sagital = 0, 
 			cor_extreme[j+2] = anat_hdr['srow_%s' % co[j]][3]
 			cor_extreme[j] = overlay_hdr['srow_%s' % co[j]][3]
 	for i in range(overlay.shape[3]):
-		fig = plt.figure(figsize = (3.2*5,9-(Axial + Sagital + Coronal)*2))
-		gs0 = gridspec.GridSpec(3-(Axial + Sagital + Coronal),10)
+		fig = plt.figure(figsize = (3.2*5,9 - (Axial + Sagital + Coronal)*2))
+		gs0 = gridspec.GridSpec(3 - (Axial + Sagital + Coronal),10)
 		if i in accept:
 			overlay_acc = threshold_data[:,:,:,l].copy()
 			overlay_acc = np.absolute(overlay_acc)
@@ -204,47 +205,47 @@ def montage(maps, accept, threshold, alpha, series ='', Axial = 0, Sagital = 0, 
 					plt.imshow(anat[:,:,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [ax_extreme[2],ax_extreme[6],ax_extreme[3],ax_extreme[7]])
 					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = RGB, extent = [ax_extreme[0],ax_extreme[4],ax_extreme[1],ax_extreme[5]],
-						alpha = alpha, origin = 'lower', interpolation='gaussian', vmin = threshold, vmax = 5)
+						alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 				if Sagital == 0:
 					ax2 = fig.add_subplot(gs0[1 - Axial,j])
 					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [sag_extreme[2],sag_extreme[6],sag_extreme[3],sag_extreme[7]])
 					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = RGB, extent = [sag_extreme[0],sag_extreme[4],sag_extreme[1],sag_extreme[5]],
-						alpha = alpha, origin = 'lower', interpolation='gaussian', vmin = threshold, vmax = 5)
+						alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 				if Coronal == 0:
 					ax3 = fig.add_subplot(gs0[2 - (Axial + Sagital),j])
 					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [cor_extreme[2],cor_extreme[6],cor_extreme[3],cor_extreme[7]])
 					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = RGB, extent = [cor_extreme[0],cor_extreme[4],cor_extreme[1],cor_extreme[5]],
-						alpha = alpha, origin = 'lower', interpolation='gaussian', vmin = threshold, vmax =5)
+						alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
 					plt.axis('off')
 			l += 1
 			
- 
 			gs1 = gridspec.GridSpec(1,1)
 			ax4 = fig.add_subplot(gs1[0,0])
 			if Axial + Sagital + Coronal == 0:
-				fig.subplots_adjust(top=0.3)
-				gs0.tight_layout(fig, h_pad = -5, w_pad = 0.5, rect = [0,.3,0.95,1])
+				fig.subplots_adjust(top = 0.3)
+				gs0.tight_layout(fig, h_pad = -5, w_pad = 0.5, rect = [0,.3,.95,1])
 			elif Axial + Sagital + Coronal == 1:
-				fig.subplots_adjust(top=0.21)
-				gs0.tight_layout(fig, h_pad = -6, rect = [0,.2,0.95,1])
+				fig.subplots_adjust(top = 0.21)
+				gs0.tight_layout(fig, h_pad = -13, w_pad = 1.5, rect = [0,.2,.95,1])
 			elif Axial + Sagital + Coronal == 2:
-				fig.subplots_adjust(top=0.21)
-				gs0.tight_layout(fig, rect = [0,.2,0.95,1])
+				fig.subplots_adjust(top = 0.21)
+				gs0.tight_layout(fig, rect = [0,.2,.95,1])
 			time_series = np.loadtxt(series)
 		 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-			gs1.tight_layout(fig, rect = [0,0,0.95,.25 + (Axial + Sagital + Coronal) * .1])
-			right = max(gs0.right,gs1.right)
-			left = min(gs0.left,gs1.left)
-			gs0.update(left = left, right = right, top = 0.9)
+		 	plt.xlabel('Time (TR)', fontsize = 12)
+		 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+			gs1.tight_layout(fig, rect = [0,0,.95,.35 + (Axial + Sagital + Coronal) * .1])
+			right = max(gs0.right, gs1.right)
+			left = max(gs0.left, gs1.left)
+			gs0.update(left = left, right = right)
 			gs1.update(left = left, right = right)
-			fig.subplots_adjust(right = 0.9)
 			cbar_ax = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs1.bottom, .01, gs0.top - (gs1.bottom * 2)])
 			fig.colorbar(bar, cax = cbar_ax)
-
+			plt.ylabel('absoulte z score', fontsize = 12, rotation = 270)
 			N = str(i)
 			while len(N) < len(str(overlay.shape[3])):
 				N = '0' + N
@@ -279,14 +280,25 @@ def montage(maps, accept, threshold, alpha, series ='', Axial = 0, Sagital = 0, 
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
-		gs0.tight_layout(fig, w_pad = -1.5, h_pad = -4.85,rect = [0,.3 - (Axial + Sagital + Coronal)*.1,1,1])
+		if Axial + Sagital + Coronal == 0:
+			fig.subplots_adjust(top=0.3)
+			gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
+		elif Axial + Sagital + Coronal == 1:
+			fig.subplots_adjust(top=0.21)
+			gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
+		elif Axial + Sagital + Coronal == 2:
+			fig.subplots_adjust(top=0.15)
+			gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
+
 		gs1 = gridspec.GridSpec(1,1)
 		ax4 = fig.add_subplot(gs1[0,0])
 		time_series = np.loadtxt(series)
 	 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-		gs1.tight_layout(fig, rect = [0,0,1,.25 + (Axial + Sagital + Coronal)*.1])
-		right = max(gs0.right,gs1.right)
-		left = min(gs0.left,gs1.left)
+	 	plt.xlabel('Time (TR)', fontsize = 12)
+		plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+		gs1.tight_layout(fig, rect = [0,0,1,.35 + (Axial + Sagital + Coronal) * .1])
+		right = max(gs0.right, gs1.right)
+		left = max(gs0.left, gs1.left)
 		gs0.update(left = left, right = right)
 		gs1.update(left = left, right = right)
 
@@ -294,13 +306,13 @@ def montage(maps, accept, threshold, alpha, series ='', Axial = 0, Sagital = 0, 
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
 		plt.savefig('Component_' + N)
+		print ('++ figures created for Component %s' % N)
 		plt.close()
 
 def coreg(setname,anat):
 	fig = plt.figure(figsize = (3.2*5,4))
 	gs0 = gridspec.GridSpec(1,3)
-	os.chdir('..')
-	os.chdir(setname)
+	os.chdir('../%s' % setname)
 	if os.path.isfile('ocv_uni_vrm_e3.nii'):
 		os.system('rm -f ocv_uni_vrm*')
 	if '.nii.gz' in anat[-7:]:
@@ -316,13 +328,15 @@ def coreg(setname,anat):
 	os.chdir('../png_dump')
 	overlay[overlay == 0] = np.nan
 
-	fig = plt.figure(figsize = (3.2*8,5))
-	gs0 = gridspec.GridSpec(1,7)
-	for i in [.3,.4,.5,.6,.7,.8,.9]:#plot montage of accept component onto 
-		ax1 = fig.add_subplot(gs0[0,int(i*10-3)])
+	fig = plt.figure(figsize = (3.2*5,4))
+	gs0 = gridspec.GridSpec(1,10)
+	for i in np.arange(0,1,.1):#plot montage of accept component onto 
+		ax1 = fig.add_subplot(gs0[0,int(i*10)])
 		plt.imshow(anatomical[:,::-1,anatomical.shape[2]*i].T, cmap = 'Greys_r')
 		plt.imshow(overlay[:,::-1,overlay.shape[2]*i].T, alpha = 0.8, cmap = RGB)
 		plt.axis('off')
+	gs0.tight_layout(fig, w_pad = -2)
+	fig.subplots_adjust(right = 0.9)
 	plt.savefig('coregistration')
 	plt.close()
 
@@ -351,66 +365,69 @@ def tsnr(tsoc,medn):
 
 	medn_data = ni.load(medn).get_data()
 	tsoc_data = ni.load(tsoc).get_data()
-	medn_mean = medn_data.mean(-1)
-	medn_std = medn_data.std(-1)
-	medn_tsnr = medn_mean/medn_std
-	tsoc_mean = tsoc_data.mean(-1)
-	tsoc_std = tsoc_data.std(-1)
-	tsoc_tsnr = tsoc_mean/tsoc_std
+	medn_tsnr = medn_data.mean(-1)/medn_data.std(-1)
+	tsoc_tsnr = tsoc_data.mean(-1)/tsoc_data.std(-1)
 	frac = medn_tsnr/tsoc_tsnr
-	tsnr = mask(image = medn_tsnr, axis = (0,1))#remove z slices without nonzero elements
-	tsnr_frac = mask(image = frac, axis = (0,1))#remove z slices without nonzero elements
-	tsnr[tsnr == 0] = np.nan
-	fig = plt.figure(figsize = (3.2*5,4))
-	gs0 = gridspec.GridSpec(1,11)
-	#plot montage of medn TSNR
-	background = np.zeros((tsnr[:,:,0].T).shape)
-	bar = tsnr[np.isnan(tsnr) == False] 
-	maximum = np.percentile(bar,95)
-	minimum = np.percentile(bar,5)
-	for i in range(0,10):
-		ax1 = fig.add_subplot(gs0[0,i])
-		plt.imshow(background,cmap = 'Greys_r')
-		plt.imshow(tsnr[:,::-1,i*.1*tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = RGB)
-		plt.axis('off')
-	ax1 = fig.add_subplot(gs0[0,10])
-	plt.axis('off')
-	plt.colorbar(aspect = 18)
-	plt.savefig('medn_tsnr')
-	plt.close
 
-	tsnr_frac[tsnr_frac == 0] = np.nan
-	fig = plt.figure(figsize = (3.2*5,4))
-	gs0 = gridspec.GridSpec(1,11)
-	#plot montage of medn/tsoc montage
-	background = np.zeros((tsnr_frac[:,:,0].T).shape)
-	bar = tsnr_frac[np.isnan(tsnr_frac) == False] 
-	maximum = np.percentile(bar,95)
-	minimum = np.percentile(bar,5)
-	for i in range(0,10):
-		ax2 = fig.add_subplot(gs0[0,i])
-		plt.imshow(background,cmap = 'Greys_r')
-		plt.imshow(tsnr_frac[:,::-1,i*.1*tsnr_frac.shape[2]].T, vmin = minimum, vmax = maximum, cmap = RGB)
-		plt.axis('off')
-	ax2 = fig.add_subplot(gs0[0,10])
-	plt.axis('off')
-	plt.colorbar(aspect = 18)
-	plt.savefig('tsnr_ratio')
-	plt.close
+	medn_tsnr = mask(image = medn_tsnr, axis = (0,1))#remove z slices without nonzero elements
+	tsoc_tsnr = mask(image = tsoc_tsnr, axis = (0,1))
+	frac_tsnr = mask(image = frac, axis = (0,1))#remove z slices without nonzero elements
+	medn_tsnr[medn_tsnr == 0] = np.nan
+	tsoc_tsnr[tsoc_tsnr == 0] = np.nan
+	frac_tsnr[frac_tsnr == 0] = np.nan
+	background = np.zeros((medn_tsnr[:,:,0].T).shape)
+	tsnr_options = [medn_tsnr,tsoc_tsnr,frac_tsnr]
+	for j in range(3):
+		tsnr = tsnr_options[j]
+		fig = plt.figure(figsize = (3.2*5,4)) #medn tsnr figure
+		gs0 = gridspec.GridSpec(1,10)
+		#plot montage of medn TSNR
+		tsnr_mask = tsnr[np.isnan(tsnr) == False]
+		if j in [0,2]: 
+			maximum = np.percentile(tsnr_mask,95)
+			minimum = np.percentile(tsnr_mask,5)
+		for i in range(0,10):
+			ax1 = fig.add_subplot(gs0[0,i])
+			plt.imshow(background, cmap = 'Greys_r')
+			plot = plt.imshow(tsnr[:,::-1,i*.1*tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = RGB)
+			plt.axis('off')
+		gs0.tight_layout(fig, w_pad = -1, rect = [0,0,0.95,1])
+		cbar = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs0.bottom, .01, gs0.top - gs0.bottom])
+		fig.subplots_adjust(right = 0.9)
+		fig.colorbar(plot, cax = cbar)
+		if j == 0:
+			plt.savefig('medn_tsnr')
+		elif j ==1:
+			plt.savefig('tsoc_tsnr')
+		else:
+			plt.savefig('tsnr_ratio')
+		plt.close()
+
 	#plot histogram of the TSNR of medn
+	medn_mask = medn_tsnr[np.isnan(medn_tsnr) == False]
+	tsoc_mask = tsoc_tsnr[np.isnan(tsoc_tsnr) == False]
+	frac_mask = frac_tsnr[np.isnan(frac_tsnr) == False]
 	fig = plt.figure()
-	plt.hist(tsnr[tsnr != 0], bins = 100, range = [0,1000])
-	plt.title('TSNR medn',fontsize = 15)
-	plt.xlabel('TSNR',fontsize = 15)
-	plt.ylabel('Frequency',fontsize = 15)
+	plt.hist(medn_mask, bins = 100, range = [np.percentile(medn_mask,0.01),np.percentile(medn_mask,99.99)])
+	plt.title('TSNR medn', fontsize = 15)
+	plt.xlabel('TSNR', fontsize = 15)
+	plt.ylabel('Frequency', fontsize = 15)
 	plt.savefig('medn_tsnr_hist')
 	plt.close()
+	fig = plt.figure()
+	plt.hist(tsoc_mask, bins = 100, range = [np.percentile(tsoc_mask,0.01),np.percentile(tsoc_mask,99.99)])
+	plt.title('TSNR tsoc', fontsize = 15)
+	plt.xlabel('TSNR', fontsize = 15)
+	plt.ylabel('Frequency', fontsize = 15)
+	plt.savefig('tsoc_tsnr_hist')
+	plt.close()
+
 	#plot histogram of the TSNR ratio of medn/tsnr
 	fig = plt.figure()
-	plt.hist(tsnr_frac[tsnr_frac != 0], bins = 100, range = [0,10])
-	plt.title('TSNR medn / TSNR tsoc',fontsize = 15)
-	plt.xlabel('TSNR ratio',fontsize = 15)
-	plt.ylabel('Frequency',fontsize = 15)
+	plt.hist(frac_mask, bins = 100, range = [np.percentile(frac_mask,0.01),np.percentile(frac_mask,99.99)])
+	plt.title('TSNR medn / TSNR tsoc', fontsize = 15)
+	plt.xlabel('TSNR ratio', fontsize = 15)
+	plt.ylabel('Frequency', fontsize = 15)
 	plt.savefig('tsnr_ratio_hist')
 	plt.close()
 
@@ -422,25 +439,26 @@ middle: array of all middle kappa components
 ignore: array of all ignore components
 """
 def kappa_vs_rho_plot(accept,reject,middle,ignore):
-	plt.figure(2)
-	trial_1 = plt.scatter(1,1,c = 'r',marker = 'o')
-	trial_2 = plt.scatter(1,1,c = 'b',marker = '^')
-	trial_3 = plt.scatter(1,1,c = 'g',marker = 'v')
-	trial_4 = plt.scatter(1,1,c = 'c',marker = '*')
+	plt.figure(2)# this simple figure is created an removed in order to take the legend from it.  
+	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
+	trial_1 = plt.scatter(1,1, c = 'r', marker = 'o')
+	trial_2 = plt.scatter(1,1, c = 'b', marker = '^')
+	trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
+	trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
 	plt.close(2)
 	fig = plt.figure()
-	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$',fontsize = 14)
-	ACC = plt.scatter(accept[:,1], accept[:,2],c = 'r',marker = 'o', s = 50*accept[:,4]) 
-	REJ = plt.scatter(reject[:,1], reject[:,2],c = 'b',marker = '^', s = 50*reject[:,4])
-	MID = plt.scatter(middle[:,1], middle[:,2],c = 'g',marker = 'v', s = 50*middle[:,4])
-	IGN = plt.scatter(ignore[:,1], ignore[:,2],c = 'c',marker = '*', s = 50*ignore[:,4])
+	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
+	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'r', marker = 'o', s = 50*accept[:,4]) 
+	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'b', marker = '^', s = 50*reject[:,4])
+	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50*middle[:,4])
+	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50*ignore[:,4])
 	plt.legend((trial_1,trial_2,trial_3,trial_4),('Accepted','Rejected','Middle',
-		'Ignore'),scatterpoints = 1, loc = 'upper right',markerscale = 2)
+		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
 	plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 5))
-	plt.tick_params(axis = 'x',which = 'both',top = 'off')
-	plt.tick_params(axis = 'y',which = 'both',right = 'off')
-	plt.xlabel(r'$\kappa$',fontsize = 15)
-	plt.ylabel(r'$\rho$',fontsize = 15)
+	plt.tick_params(axis = 'x', which = 'both', top = 'off')
+	plt.tick_params(axis = 'y', which = 'both', right = 'off')
+	plt.xlabel(r'$\kappa$', fontsize = 15)
+	plt.ylabel(r'$\rho$', fontsize = 15)
 	plt.savefig('kappa_vs_rho')
 	plt.close()
 
@@ -452,17 +470,37 @@ def kr_vs_component(comp_table_title):
 	fig = plt.figure()
 	components = np.loadtxt(str(comp_table_title))
 	plt.figure()
-	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' and ' + r'$\rho$' + ' vs Component Rank',fontsize = 14)
-	plt.xlabel(r'$\kappa$' ', ' + r'$\rho$' ,fontsize = 15)
-	plt.xlabel('Component Rank' ,fontsize = 15)
-	kappa = plt.plot(components[:,0],components[:,1])
-	rho = plt.plot(components[:,0],components[:,2])
-	plt.legend((r'$\kappa$',r'$\rho$'))
+	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' and ' + r'$\rho$' + ' vs Component Rank', fontsize = 14)
+	plt.ylabel(r'$\kappa$' ', ' + r'$\rho$' , fontsize = 15)
+	plt.xlabel('Component Rank' , fontsize = 15)
+	kappa = plt.plot(components[:,0], components[:,1])
+	rho = plt.plot(components[:,0], components[:,2])
+	plt.legend((r'$\kappa$', r'$\rho$'))
 	plt.savefig('kappa_rho_vs_components')
 	plt.close()	
 
 
 def correlation(startdir,setname,nsmprage,threshold):
+	cdict = {'red':  	  ((0.0, 0.0, 0.0),
+						   (0.6, 0.0, 0.0),
+						   (0.7, 0.6, 0.6),
+						   (0.75, 0.9, 0.9),
+						   (0.8, 1.0, 1.0),
+		                   (1.0, 1.0, 1.0)),
+
+		         'green': ((0.0, 0.0, 0.0),
+		         		   (0.6, 1.0, 1.0),
+		         		   (0.8, 1.0, 1.0),
+		         		   (0.85, 0.9, 0.9),
+		                   (0.95, 0.5, 0.5),
+		                   (1.0, 0.0, 0.0)),
+
+		         'blue':  ((0.0, 1.0, 1.0),
+		         		   (0.5, 0.0, 0.0),
+		                   (1.0, 0.0, 0.0))
+		        }
+
+	RGB = LinearSegmentedColormap('RGB', cdict)
 	for i in ['pC', 'mPFC']:
 		if i == 'pC':
 			MNI = np.array([[0],[-53],[26]])
@@ -471,8 +509,8 @@ def correlation(startdir,setname,nsmprage,threshold):
 			MNI = np.array([[0],[52],[6]])
 		ext = np.zeros(8)
 		axial = ['x','y']
-		beta = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir,setname)).get_data()
-		beta_header = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir,setname)).get_header()
+		beta = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_data()
+		beta_header = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_header()
 		anatomical = ni.load(nsmprage).get_data()
 		anat_hdr = ni.load(nsmprage).get_header()
 		b = beta_header['quatern_b'] 
@@ -498,37 +536,40 @@ def correlation(startdir,setname,nsmprage,threshold):
 		seed = beta[native[0,0],native[1,0],native[2,0],:] #Shape: 1 x n_c
 		seed = np.asarray([seed])
 
-		mask = beta.prod(-1)!=0
+		mask = beta.prod(-1) != 0
 		beta_mask = beta[mask] #Shape: n_v x n_c
 		norm = np.array([np.sqrt(inner1d(beta_mask,beta_mask))]).T
 		norm_seed = np.sqrt(np.dot(seed,seed.T))
 		beta_norm= np.divide(beta_mask,norm)
 		R = np.array([inner1d(beta_norm,seed/norm_seed)]).T
-		z = np.arctanh(R)*np.sqrt((beta.shape[3] -3)) #z_value 1D array
+		z = np.arctanh(R)*np.sqrt((beta.shape[3] - 3)) #z_value 1D array
 		z[np.isnan(z)] = 5
+		z[z > 5] = 5
+		z[z < -5] = -5
 
 		z_scores = np.zeros(mask.shape)
 		z_threshold = np.zeros(mask.shape)
 		z_scores[mask == True] = z[:,0]
-		z_threshold[z_scores > (threshold)] = 1
+		z_threshold[np.absolute(z_scores) > threshold] = 1
 
 		itemindex = np.where(z_threshold == 1)
 		for j in range(len(itemindex[0])):
 			z_threshold = flood(z_threshold,itemindex[0][j],itemindex[1][j],itemindex[2][j])#floodfill
 		z_scores[z_threshold == 0 ] = np.nan
-		fig = plt.figure(figsize = (3.2*8,5))
-		gs0 = gridspec.GridSpec(1,8)
-		minimum = np.percentile(z_scores[np.isnan(z_scores) == False],2)
-		maximum = np.percentile(z_scores[np.isnan(z_scores) == False],98)
-		for j in [.3,.4,.5,.6,.7,.8,.9]:#plot montage of accept component onto 
-			ax1 = fig.add_subplot(gs0[0,int(j*10-3)])
+		fig = plt.figure(figsize = (3.2*5,4))
+		gs0 = gridspec.GridSpec(1,10)
+		minimum = min(z_scores[np.isnan(z_scores) == False])
+		maximum = max(z_scores[np.isnan(z_scores) == False])
+		for j in np.arange(0,1,.1):#plot montage of accept component onto 
+			ax1 = fig.add_subplot(gs0[0,int(j*10)])
 			plt.imshow(anatomical[:,::-1,anatomical.shape[2]*j].T, cmap = 'Greys_r', extent = [ext[2],ext[6],ext[3],ext[7]])
-			plt.imshow(z_scores[:,::-1,z_scores.shape[2]*j].T, alpha = 0.8, cmap = RGB , extent = [ext[0],ext[4],ext[1],ext[5]],
-			 interpolation = 'gaussian', vmin = threshold, vmax = maximum)
+			plot = plt.imshow(z_scores[:,::-1,z_scores.shape[2]*j].T, alpha = 0.8, cmap = RGB , extent = [ext[0],ext[4],ext[1],ext[5]],
+			 interpolation = 'gaussian', vmin = minimum, vmax = maximum)
 			plt.axis('off')
-		ax2 = fig.add_subplot(gs0[0,7])
-		plt.axis('off')
-		plt.colorbar(aspect = 18)
+		gs0.tight_layout(fig, w_pad = -2.7, rect = [0,0,0.95,1])
+		cbar = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs0.bottom, .01, gs0.top - gs0.bottom])
+		fig.colorbar(plot, cax = cbar)
+		plt.ylabel('z score',fontsize = 12, rotation = 270)
 		plt.savefig('%s_correlation' % i)
 		plt.close()
 
