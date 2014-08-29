@@ -46,7 +46,7 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 	sl.append('=============  =============  =================  =============')
 	sl.append('     %s             %s              %s                 %s    ' % 
 		(len(accept), len(reject), len(middle), len(ignore)))
-	sl.append('=============  =============  =================  =============\n')
+	sl.append('=============  =============  =================  =============\n\n')
 	sl.append('Accepted Components with anatomical')
 	sl.append('+++++++++++++++++++++++++++++++++++')	
 	sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
@@ -56,7 +56,9 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('----------'+ '-'*len(str(int(i))) + '\n')
 		sl.append('.. image:: ../png_dump/Accepted_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
@@ -65,8 +67,7 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
-	sl.append('Accepted Components')
-	sl.append('+++++++++++++++++++')
+	sl.append('\nAccepted Components\n' + '+++++++++++++++++++')
 	sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
 	N = 0	
 	for i in accept[:,0]:
@@ -74,7 +75,9 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('----------'+ '-'*len(str(int(i))) + '\n')
 		sl.append('.. image:: ../png_dump/Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
@@ -83,7 +86,7 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
-	sl.append('Rejected Components\n' + '+++++++++++++++++++')
+	sl.append('\nRejected Components\n' + '+++++++++++++++++++')
 	sl.append('The following images are the grey scale components from the rejected bin of meica.py.')
 	N = 0
 	for i in reject[:,0]:
@@ -91,13 +94,15 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
 		sl.append('.. image:: ../png_dump/Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(reject[N,1],8),digit_length(reject[N,2],7),digit_length(reject[N,3],3),digit_length(reject[N,4],3)))
-		sl.append('=============  =============  =============  =================')
+		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
 	sl.append('\nMiddle Components\n' + '+++++++++++++++++++')
@@ -108,13 +113,15 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
 		sl.append('.. image:: ../png_dump/Component_' +(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(middle[N,1],9),digit_length(middle[N,2],7),digit_length(middle[N,3],4),digit_length(middle[N,4],4)))
-		sl.append('=============  =============  =============  =================')
+		sl.append('=============  =============  =============  =================\n')
 		N += 1
 
 	sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
@@ -125,7 +132,9 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
 		sl.append('.. image:: ../png_dump/Component_'  +(size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
@@ -216,18 +225,19 @@ def intro_rst():
 	sl = []
 	sl.append('Intro\n' + '=====')
 	sl.append('This report collects information from your ME-ICA analysis and displays '
-		 + 'several ways to interpret the output of meica.py.  The preliminary diagnostics '
-		 + 'section contains a view of the TSNR of the medn dataset, the "denoised" BOLD time series after: basic '
-		 + 'preprocessing, T2* weighted averaging of echoes (i.e. "optimal combination"), and ICA denoising, produced by meica.py '
-		 + 'and also the TSNR ratio of the medn dataset over tsoc dataset, "raw" BOLD time series dataset after: basic preprocessing '
-		 + ' and T2* weighted averaging of echoes (i.e. "optimal combination")\n\n')
-	sl.append('This report also includes two different ways to visualize the information from the accepted components. '
+		 + 'several ways to interpret the output of meica.py.  The Preliminary Diagnostics '
+		 + 'section contains a view of the TSNR of the "denoised" BOLD time series after: basic '
+		 + 'preprocessing, T2* weighted averaging of echoes (i.e. "optimal combination"), and ICA denoising, the TSNR of the '
+		 + '"raw" BOLD time series dataset after: basic preprocessing, and a ratio of these two TSNR maps.  '
+		 + 'also in this section is a view of the corregistration if an anatomical was specified when using meica.py\n\n')
+	sl.append('The Correlation section exists if the MNI option was used when running meica.pycontains the correlation maps  '
+		 + 'of the whole brain with several different seed voxels.  These seed voxels were choosen based on networks that may be of '
+		 + 'particular interest to the viwer, i.e. seeds for the Default mode.\n\n')
+	sl.append('In the Component Visualiztion section there are two different ways to visualize the information from the accepted components. '
 		 + 'The first is a thresholding of the bold responce overlayed onto the anatomical image '
-		 + 'that was used for correlation.  If this is not present, then it is because this option '
-		 + 'was not included when this report was generated.  The other option, which should always '
+		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other option, which should always '
 		 + 'be present are the non-thresholded accepted components without the anatomical visible.  '
-		 + 'For the rejected, middle kappa, and ignored components, the latter grey scale image is '
-		 + 'displayed as well.\n')
+		 + 'For the rejected, middle kappa, and ignored components, the latter grey scale image is displayed as well.\n')
 	sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n' + '* scipy\n\n' +'* sphinx\n\n' + '* parse\n')
 	ofh = open("intro.rst","w")
 	ofh.write("\n".join(sl)+"\n")
