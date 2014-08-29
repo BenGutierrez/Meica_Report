@@ -37,6 +37,29 @@ cdict = {'red':  ((0.0,  0.0, 0.0),
 
 GYR = LinearSegmentedColormap('GYR', cdict)
 
+def FFT(series,i,N):
+	sample = np.loadtxt(series)
+	t = sample[:,i]
+
+	FFT = abs(np.fft.fft(t))
+	FFT = np.fft.fftshift(FFT)
+
+	freq = np.fft.fftfreq(t.size,1.6)# Replace '1.6'  with the correct TR .
+	freq = np.fft.fftshift(freq)
+	fig = plt.figure(figsize= (8,4))
+	gs1 = gridspec.GridSpec(1,1)
+	if (t.size % 2) ==0:
+		plt.plot(freq[t.size/2:],FFT[t.size/2:])
+
+	else:
+		plt.plot(freq,FFT)
+	plt.title('FFT of the Time Series', fontsize = 15)
+	plt.xlabel('Frequency(Hz)' , fontsize = 15)
+	plt.ylabel('Amplitude' , fontsize = 15)
+	fig.subplots_adjust(bottom = 0.15, top = .90)
+	plt.savefig('FFT_Component_' + N)
+	plt.close
+
 """
 Parses ctab file for which components fall into the Accepted, Rejected,
 Middle kappa, and Ignored bins
@@ -151,29 +174,6 @@ def floodfill(matrix, x, y, z, N, itemindex):
 		if len(itemindex[0])>0:#ensures that if no more 1's around (x,y,z) not calling function again
 			N = floodfill(matrix,itemindex[0][0],itemindex[1][0],itemindex[2][0], N, itemindex)
 	return N
-
-def FFT(series,i,N):
-	sample = np.loadtxt(series)
-	t = sample[:,i]
-
-	FFT = abs(np.fft.fft(t))
-	FFT = np.fft.fftshift(FFT)
-
-	freq = np.fft.fftfreq(t.size,1.6)
-	freq = np.fft.fftshift(freq)
-	fig = plt.figure(figsize= (8,4))
-	gs1 = gridspec.GridSpec(1,1)
-	if (t.size % 2) ==0:
-		plt.plot(freq[t.size/2:],FFT[t.size/2:])
-
-	else:
-		plt.plot(freq,FFT)
-	plt.title('FFT of the Time Series', fontsize = 15)
-	plt.xlabel('Frequency(Hz)' , fontsize = 15)
-	plt.ylabel('Amplitude' , fontsize = 15)
-	fig.subplots_adjust(bottom = 0.15, top = .90)
-	plt.savefig('FFT_Component_' + N)
-	plt.close
 
 """
 Collects data from the anatomical, overlay, and threshold data sets.  

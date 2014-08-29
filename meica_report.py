@@ -45,7 +45,6 @@ os.chdir('%s/png_dump' % startdir)
 
 #make figures
 print('++ making figures')
-print('++ ignore tight_layout : falling back to Agg renderer message')
 meica_figures.kr_vs_component('%s/%s_ctab.txt' % (startdir, outprefix))
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)
 meica_figures.tsnr('%s/%s_tsoc.nii.gz' % (startdir,outprefix),'%s/%s_medn.nii.gz' % (startdir,outprefix))
@@ -69,7 +68,7 @@ os.system('rm -f index.rst')#remove sphinx version of .rst
 rst_files.diagnostics_rst(nsmprage)
 rst_files.index_rst()
 rst_files.intro_rst()
-rst_files.analysis_rst(accept, reject, middle, ignore, montage_threshold, '%s/%s_ctab.txt' % (startdir,outprefix),
+rst_files.analysis_rst(accept, reject, middle, ignore, nsmprage, montage_threshold, '%s/%s_ctab.txt' % (startdir,outprefix),
 	min_component_number, min_variance_explained)
 if nsmprage != '' and MNI == True:
 	rst_files.correlation_rst()

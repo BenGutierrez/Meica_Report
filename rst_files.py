@@ -7,7 +7,7 @@ import numpy as np
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_number, min_variance_explained):
+def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained):
 	sl = []
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
@@ -47,25 +47,27 @@ def analysis_rst(accept, reject, middle, ignore, threshold, ctab, min_component_
 	sl.append('     %s             %s              %s                 %s    ' % 
 		(len(accept), len(reject), len(middle), len(ignore)))
 	sl.append('=============  =============  =================  =============\n\n')
-	sl.append('Accepted Components with anatomical')
-	sl.append('+++++++++++++++++++++++++++++++++++')	
-	sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
-	N = 0	
-	for i in accept[:,0]:
-		sl.append('\nComponent %s' % int(i))
-		sl.append('----------'+ '-'*len(str(int(i))) + '\n')
-		sl.append('.. image:: ../png_dump/Accepted_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n\n')
-		sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:width: 49%\n')
-		sl.append('=============  =============  =============  =================')
-		sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
-		sl.append('=============  =============  =============  =================')
-		sl.append('%s       %s         %s           %s       ' % 
-			(digit_length(accept[N,1],8),digit_length(accept[N,2],7),digit_length(accept[N,3],3),digit_length(accept[N,4],3)))
-		sl.append('=============  =============  =============  =================\n')
-		N += 1
+	if nsmprage != '':
+		sl.append('Accepted Components with anatomical')
+		sl.append('+++++++++++++++++++++++++++++++++++')	
+		sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
+		N = 0	
+
+		for i in accept[:,0]:
+			sl.append('\nComponent %s' % int(i))
+			sl.append('----------'+ '-'*len(str(int(i))) + '\n')
+			sl.append('.. image:: ../png_dump/Accepted_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+			sl.append('	:scale: 75%')
+			sl.append('	:align: left\n\n')
+			sl.append('.. image:: .. /png_dump/FFT_Component_'+(size - len(str(int(i))))*'0' + '%s.png' % int(i))
+			sl.append('	:width: 49%\n')
+			sl.append('=============  =============  =============  =================')
+			sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
+			sl.append('=============  =============  =============  =================')
+			sl.append('%s       %s         %s           %s       ' % 
+				(digit_length(accept[N,1],8),digit_length(accept[N,2],7),digit_length(accept[N,3],3),digit_length(accept[N,4],3)))
+			sl.append('=============  =============  =============  =================\n')
+			N += 1
 
 	sl.append('\nAccepted Components\n' + '+++++++++++++++++++')
 	sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
