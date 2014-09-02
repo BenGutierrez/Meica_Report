@@ -16,7 +16,10 @@ import matplotlib.pyplot as plt
 from parse import parse
 import nibabel as ni
 import numpy as np
+import subprocess
+import sys
 import os
+
 
 #frequently used green yellow red color map
 cdict = {'red':  ((0.0,  0.0, 0.0),
@@ -37,14 +40,20 @@ cdict = {'red':  ((0.0,  0.0, 0.0),
 
 GYR = LinearSegmentedColormap('GYR', cdict)
 
-def FFT(series,i,N):
+
+
+def FFT(series, i, N, startdir, outprefix):
+	path = '%s/%s_mefl.nii.gz' % (startdir,outprefix)
+	p = subprocess.Popen(['3dinfo','-tr', path], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+	TR, err = p.communicate()
+
 	sample = np.loadtxt(series)
 	t = sample[:,i]
 
 	FFT = abs(np.fft.fft(t))
 	FFT = np.fft.fftshift(FFT)
-
-	freq = np.fft.fftfreq(t.size,1.6)# Replace '1.6'  with the correct TR .
+	
+	freq = np.fft.fftfreq(t.size,float(TR[:-2]))# Replace '1.6'  with the correct TR .
 	freq = np.fft.fftshift(freq)
 	fig = plt.figure(figsize= (8,4))
 	gs1 = gridspec.GridSpec(1,1)
@@ -212,7 +221,19 @@ axial: true or false. plot axial or not
 sagital: true or false. plot sagital or not
 coronal: true or false. plot coronal or not
 """
-def montage(maps, accept, threshold, alpha, series, Axial = 0, Sagital = 0, Coronal = 0):
+def Rotation_matrix(quaternion):
+	a, b, c, d = quaternion[0], quaternion[1], quaternion[2], quaternion[3]
+	R = np.array([[a*a+b*b-c*c-d*d, 2*b*c-2*a*d, 2*b*d+2*a*c], [2*b*c+2*a*d, a*a-b*b+c*c-d*d,
+		2*c*d-2*a*b], [2*b*d-2*a*c, 2*c*d+2*a*b, a*a-b*b-c*c+d*d]]).astype('float64')
+	if np.linalg.det(R) == -1:
+		q_fac = -1
+	else:
+		q_fac = 1
+
+	return(R, q_fac)
+
+def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial = 0, Sagital = 0, Coronal = 0):
+	series = '%s/%s/TED/meica_mix.1D' % (startdir,setname)
 	anat = maps[0]
 	overlay = maps[1]
 	threshold_data = maps[2]
@@ -229,43 +250,23 @@ def montage(maps, accept, threshold, alpha, series, Axial = 0, Sagital = 0, Coro
 					# anatomical and the overlay can be overlayed correctly.
 		overlay_corners = np.zeros((3,1,2))
 		anat_corners = np.zeros((3,1,2))
-		o_b = overlay_hdr['quatern_b'] 
-		o_c = overlay_hdr['quatern_c']
-		o_d = overlay_hdr['quatern_d']
-		o_a = np.sqrt(1.0-(o_b*o_b+o_c*o_c+o_d*o_d))
-		o_R = np.array([[o_a*o_a+o_b*o_b-o_c*o_c-o_d*o_d, 2*o_b*o_c-2*o_a*o_d, 2*o_b*o_d+2*o_a*o_c], [2*o_b*o_c+2*o_a*o_d, o_a*o_a+o_c*o_c-o_b*o_b-o_d*o_d,
-		 2*o_c*o_d-2*o_a*o_b], [2*o_b*o_d-2*o_a*o_c, 2*o_c*o_d+2*o_a*o_b, o_a*o_a+o_d*o_d-o_c*o_c-o_b*o_b]])
-		if np.linalg.det(o_R) == -1:
-			overlay_q_fac = -1
-		else:
-			overlay_q_fac = 1
 
+		overlay_R, overlay_q_fac = Rotation_matrix(overlay_hdr.get_qform_quaternion())
 		#all we need are the native coordinates of opposite corners for the overlay and anatomcial.
 		overlay_corners[:,:,0] = np.array([[overlay_hdr['qoffset_x']] ,[overlay_hdr['qoffset_y']], [overlay_hdr['qoffset_z']]])
-		overlay_corners[:,:,1] = (np.dot(o_R,np.array([[overlay.shape[0]*overlay_hdr['pixdim'][1]], [overlay.shape[1]*overlay_hdr['pixdim'][2]],
+		overlay_corners[:,:,1] = (np.dot(overlay_R,np.array([[overlay.shape[0]*overlay_hdr['pixdim'][1]], [overlay.shape[1]*overlay_hdr['pixdim'][2]],
 			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
 
-		a_b = anat_hdr['quatern_b'] 
-		a_c = anat_hdr['quatern_c']
-		a_d = anat_hdr['quatern_d']
-		a_a = np.sqrt(1.0-(a_b*a_b+a_c*a_c+a_d*a_d))
-		a_R = np.array([[a_a*a_a+a_b*a_b-a_c*a_c-a_d*a_d, 2*a_b*a_c-2*a_a*a_d, 2*a_b*a_d+2*a_a*a_c], [2*a_b*a_c+2*a_a*a_d, a_a*a_a+a_c*a_c-a_b*a_b-a_d*a_d,
-		 2*a_c*a_d-2*a_a*a_b], [2*a_b*a_d-2*a_a*a_c, 2*a_c*a_d+2*a_a*a_b, a_a*a_a+a_d*a_d-a_c*a_c-a_b*a_b]])
-		if np.linalg.det(a_R) == -1:
-			anat_q_fac = -1
-		else:
-			anat_q_fac = 1
-
+		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
 		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']] ,[anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
-		anat_corners[:,:,1] = (np.dot(a_R,np.array([[anat.shape[0]*anat_hdr['pixdim'][1]], [anat.shape[1]*anat_hdr['pixdim'][2]], 
+		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anat.shape[0]*anat_hdr['pixdim'][1]], [anat.shape[1]*anat_hdr['pixdim'][2]], 
 			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
 
 	for i in range(overlay.shape[3]):# number of components
 		fig = plt.figure(figsize = (3.2*5,9 - (Axial + Sagital + Coronal)*2))#accounts for variability in choices of axial, sagital, cornoal images in final figure
 		gs0 = gridspec.GridSpec(3 - (Axial + Sagital + Coronal),10)
 		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
-			overlay_acc = threshold_data[:,:,:,l].copy()
-			overlay_acc = np.absolute(overlay_acc)
+			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
 			overlay_mask = np.zeros(overlay_acc.shape)
 			overlay_mask[overlay_acc != 0] = 1# 
@@ -334,7 +335,7 @@ def montage(maps, accept, threshold, alpha, series, Axial = 0, Sagital = 0, Coro
 		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove slices z slices with all zero terms
 		overlay_x = mask(overlay[:,:,:,i],(1,2))
 		overlay_y = mask(overlay[:,:,:,i],(0,2))
-		contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference)
+		contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 		maximum = np.percentile(contrast,98)
 		minimum = np.percentile(contrast,2)
 
@@ -383,7 +384,7 @@ def montage(maps, accept, threshold, alpha, series, Axial = 0, Sagital = 0, Coro
 			N = '0' + N
 		plt.savefig('Component_' + N)
 		plt.close()
-		FFT(series,i,N)
+		FFT(series, i, N, startdir, outprefix)
 		print ('++ figures created for Component %s' % N)
 
 """
@@ -538,12 +539,8 @@ def correlation(startdir, setname, nsmprage, threshold):
 
 	beta_corners = np.zeros((3,1,2))
 	anat_corners = np.zeros((3,1,2))
-	cord_matrix = np.array([[beta_hdr['srow_x'][0], beta_hdr['srow_x'][1], beta_hdr['srow_x'][2]],
-		[beta_hdr['srow_y'][0], beta_hdr['srow_y'][1], beta_hdr['srow_y'][2]], [beta_hdr['srow_z'][0],
-		beta_hdr['srow_z'][1], beta_hdr['srow_z'][2]]])
-	anat_cord_matrix = np.array([[anat_hdr['srow_x'][0], anat_hdr['srow_x'][1], anat_hdr['srow_x'][2]],
-		[anat_hdr['srow_y'][0], anat_hdr['srow_y'][1], anat_hdr['srow_y'][2]], [anat_hdr['srow_z'][0],
-		anat_hdr['srow_z'][1], anat_hdr['srow_z'][2]]])
+	cord_matrix = beta_hdr.get_best_affine()[0:3,0:3]
+	anat_cord_matrix = anat_hdr.get_best_affine()[0:3,0:3]
 
 	beta_corners[:,:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
 	beta_corners[:,:,1] = np.dot(cord_matrix,np.array([[beta.shape[0]],[beta.shape[1]],[beta.shape[2]]])) + beta_corners[:,:,0]

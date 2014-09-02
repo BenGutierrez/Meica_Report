@@ -4,11 +4,76 @@ Gutierrez, B.  Generates three png files for each accepted components along with
 in each png file.
 
 """
-import meica_figures
-import numpy as np
-import rst_files
-import sphinx_files
+
+import commands
+import sys
 import os
+
+#Run dependency check
+def dep_check():
+	print '++ Checking system for dependencies...'
+	fails = 0
+	matplotlib_installed = 0
+	nibabel_installed = 0
+	numpy_installed = 0
+	parse_installed = 0
+
+	try:
+		import numpy
+		numpy_installed = 1
+	except:
+		print "*+ Can't import Numpy! Please check Numpy installation for this Python version."
+		fails += 1
+
+	try:
+		import matplotlib
+		matplotlib_installed = 1
+	except:
+		print "*+ Can't import Matplotlib! Please check Matplotlib installation."
+		fails += 1
+
+	try:
+		import nibabel
+		nibabel_installed = 1
+	except:
+		print "*+ Can't import Nibabel! Please check Nibabel installation."
+		fails += 1
+
+	try:
+		import parse
+		parse_installed = 1
+	except:
+		print "*+ Can't import Parse! Please check Parse installation."
+		fails += 1
+
+	if numpy_installed:
+		print " + Numpy version: %s" % (numpy.__version__)
+		if float('.'.join(numpy.__version__.split('.')[0:2]))<1.5:
+			fails += 1
+			print "*+ Numpy version is too old! Please upgrade to Numpy >=1.5.x!"
+		import numpy.__config__ as nc
+		if nc.blas_opt_info == {}:
+			fails += 1
+			print "*+ Numpy is not linked to BLAS! Please check Numpy installation."
+
+	afnicheck = commands.getstatusoutput("3dinfo")
+	if afnicheck[0]!=0:
+		print "*+ Can't run AFNI binaries. Make sure AFNI is on the path!"
+		fails += 1
+	elif not afnicheck[1].__contains__('Alternate Alternative Usage'):
+		print "*+ This seems like an old version of AFNI. Please upgrade to latest version of AFNI."
+		fails += 1
+	if fails == 0:
+		print " + Dependencies OK."
+	else:
+		print "*+ EXITING. Please see error messages."
+		sys.exit()
+dep_check()
+print 'all done'
+
+import meica_figures
+import sphinx_files
+import rst_files
 
 __version__ = "v2.5 beta8"
 startdir = '/Users/gutierrezbe/Documents/NIFTI/WE'
@@ -49,7 +114,7 @@ meica_figures.kr_vs_component('%s/%s_ctab.txt' % (startdir, outprefix))
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)
 meica_figures.tsnr('%s/%s_tsoc.nii.gz' % (startdir,outprefix),'%s/%s_medn.nii.gz' % (startdir,outprefix))
 print('++ this set of figures may take a while')
-meica_figures.montage(maps, accept, montage_threshold, 0.8, '%s/%s/TED/meica_mix.1D' % (startdir,setname), Axial = 0, Sagital = 0, Coronal = 1)
+meica_figures.montage(maps, accept, montage_threshold, 0.8, startdir, setname, outprefix, Axial = 0, Sagital = 0, Coronal = 1)
 if nsmprage != '':
 	meica_figures.coreg(setname,nsmprage[len(startdir)+1:])
 	if MNI == True:
