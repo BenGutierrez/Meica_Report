@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Gutierrez, B.  Generates the analysis.rst file
+Gutierrez, B.  Generates the rst files that sphinx reads to make the eport form
 """
 import numpy as np
 
@@ -159,7 +159,7 @@ def diagnostics_rst(nsmprage):
 	sl = []
 	sl.append('Preliminary Diagnostics\n' + '==========================\n')
 	sl.append('The signal to noise ratio (TSNR) for a dataset is defined as the mean over the standard deviationof the dataset.  ' +
-		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset has a greater ' + 
+		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset having a greater ' + 
 		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
 	sl.append('Absolute TSNR of the medn NIFTI1 dataset:\n')
@@ -212,7 +212,7 @@ def index_rst(cor):
 	sl.append('.. toctree::')
 	sl.append('   :maxdepth: 2\n')
 	sl.append('   intro\n' + '   diagnostics') 
-	if cor = True:
+	if cor == True:
 		sl.append('   correlation')
 	sl.append('   analysis')
 	sl.append('\n\n\nSearch')
@@ -240,8 +240,8 @@ def intro_rst():
 		 + 'particular interest to the viwer, i.e. seeds for the Default mode.\n\n')
 	sl.append('In the Component Visualiztion section there are two different ways to visualize the information from the accepted components. '
 		 + 'The first is a thresholding of the bold responce overlayed onto the anatomical image '
-		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other way to view the accepted component, which will always '
-		 + 'be present, are the non-thresholded grey scale images without an anatomical underlay.  '
+		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other way to view '
+		 + 'the accepted component, which will always be present, are the non-thresholded grey scale images without an anatomical underlay.  '
 		 + 'For the rejected, middle kappa, and ignored components, the grey scale image is always displayed as well.\n')
 	sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n'  + '* parse\n\n' + '* sphinx\n')
 	ofh = open("intro.rst","w")
@@ -315,4 +315,3 @@ def header(ctab):
 	for i in range(11):
 		line[i] = txt_file.readline()
 	return(line)
-

@@ -110,7 +110,7 @@ def conf(__version__):
 	sl.append('# Theme options are theme-specific and customize the look and feel of a theme')
 	sl.append('# further.  For a list of options available for each theme, see the')
 	sl.append('# documentation.')
-	sl.append('#html_theme_options = {}\n')
+	sl.append('html_theme_options = {"stickysidebar" : "true"}\n')
 
 	sl.append('# Add any paths that contain custom themes here, relative to this directory.')
 	sl.append('#html_theme_path = []\n')
@@ -183,7 +183,7 @@ def conf(__version__):
 	sl.append('#html_file_suffix = None\n')
 
 	sl.append('# Output file base name for HTML help builder.')
-	sl.append('htmlhelp_basename = \'MeicaReportdoc\'\n\n\n')
+	sl.append('htmlhelp_basename = \'MeicaReportdoc\'\n\n')
 
 
 	sl.append('# -- Options for LaTeX output ---------------------------------------------\n')
@@ -530,7 +530,9 @@ def make_file():
 
 	sl.append('# User-friendly check for sphinx-build')
 	sl.append('ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)')
-	sl.append('$(error The \'$(SPHINXBUILD)\' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the \'$(SPHINXBUILD)\' executable. Alternatively you can add the directory with the executable to your PATH. If you don\'t have Sphinx installed, grab it from http://sphinx-doc.org/)')
+	sl.append('$(error The \'$(SPHINXBUILD)\' command was not found. Make sure you have Sphinx installed, then set the '
+	+         'SPHINXBUILD environment variable to point to the full path of the \'$(SPHINXBUILD)\' executable. Alternatively '
+	+         'you can add the directory with the executable to your PATH. If you don\'t have Sphinx installed, grab it from http://sphinx-doc.org/)')
 	sl.append('endif\n')
 
 	sl.append('# Internal variables.')
@@ -540,7 +542,8 @@ def make_file():
 	sl.append('# the i18n builder cannot share the environment and doctrees with the others')
 	sl.append('I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .\n')
 
-	sl.append('.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext\n')
+	sl.append('.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man'
+	+         ' changes linkcheck doctest gettext\n')
 
 	sl.append('help:')
 	sl.append('	@echo "Please use \`make <target>\' where <target> is one of"')

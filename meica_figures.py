@@ -40,8 +40,14 @@ cdict = {'red':  ((0.0,  0.0, 0.0),
 
 GYR = LinearSegmentedColormap('GYR', cdict)
 
-
-def check_ROI(ROI, startdir, setname):
+"""
+Check that the MNI coordinates of the ROI's are within the image MNI range
+ROI: array of MNI coodinates
+startdir: string starting directory path
+setname: path of directory containing the TED directory
+description: string describing ROI to be ouputed to the user
+"""
+def check_ROI(ROI, startdir, setname, description):
 	fails = 0
 	if ROI != []:
 		beta = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_data()
@@ -61,8 +67,16 @@ def check_ROI(ROI, startdir, setname):
 		print '*+ EXITING.  MNI coordinates (%s,%s,%s) not within bounds of image' % (ROI[i][0],ROI[i][1],ROI[i][2])
 		sys.exit()
 	else:
-		print '++ MNI coordinates within image bounds'
+		print '++ %s MNI coordinates within image bounds' % description
 
+"""
+Make a figure of the FFT for the ICA component across the time series
+series: path to time series data
+i: integer component number
+N: string component number with zeros in front to make all component numbers all the same length
+startdir: string starting directory path
+outprefix: string prefix specified in meica.py
+"""
 def FFT(series, i, N, startdir, outprefix):
 	path = '%s/%s_mefl.nii.gz' % (startdir,outprefix)
 	p = subprocess.Popen(['3dinfo','-tr', path], stdout = subprocess.PIPE, stderr = subprocess.PIPE)# retrieve TR
@@ -185,6 +199,7 @@ def flood(matrix, x, y, z):
 		return original
 	else:
 		return matrix
+
 """
 Rest of the flood fill algorithm.
 itemindex: array containing location of non-zero elements of matrix next to (x,y,z)
@@ -229,7 +244,6 @@ def collect_data(anatomical, overlay, threshold_map):
 	
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
 
-
 """
 Calculate the roation matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
@@ -243,6 +257,7 @@ def Rotation_matrix(quaternion):
 		q_fac = 1
 
 	return(R, q_fac)
+
 """
 Creates a montage of greyscale 10 images of axial, sagital and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
@@ -255,7 +270,8 @@ axial: true or false. plot axial or not
 sagital: true or false. plot sagital or not
 coronal: true or false. plot coronal or not
 """
-def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial = 0, Sagital = 0, Coronal = 0):
+
+def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial, Sagital, Coronal):
 	series = '%s/%s/TED/meica_mix.1D' % (startdir,setname)
 	anat = maps[0]
 	overlay = maps[1]
@@ -280,13 +296,13 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
 
 		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
-		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']] ,[anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
+		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
 		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anat.shape[0]*anat_hdr['pixdim'][1]], [anat.shape[1]*anat_hdr['pixdim'][2]], 
 			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
 
 	for i in range(overlay.shape[3]):# number of components
-		fig = plt.figure(figsize = (3.2*5,9 - (Axial + Sagital + Coronal)*2))#accounts for variability in choices of axial, sagital, cornoal images in final figure
-		gs0 = gridspec.GridSpec(3 - (Axial + Sagital + Coronal),10)
+		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagital + Coronal)*2))#accounts for variability in choices of axial, sagital, cornoal images in final figure
+		gs0 = gridspec.GridSpec(Axial + Sagital + Coronal,10)
 		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
 			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
@@ -298,22 +314,22 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 				overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
 			overlay_acc[overlay_mask == 0] = np.nan
 			for j in range(10):#plot montage of accept component onto anatomical
-				if Axial == 0:#plot axial
+				if Axial == True:#plot axial
 					ax1 = fig.add_subplot(gs0[0,j])
 					plt.imshow(anat[:,:,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
 					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
 						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
-				if Sagital == 0:#plot sagital
-					ax2 = fig.add_subplot(gs0[1 - Axial,j])
+				if Sagital == True:#plot sagital
+					ax2 = fig.add_subplot(gs0[Axial,j])
 					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
 					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
-				if Coronal == 0:#plot coronal
-					ax3 = fig.add_subplot(gs0[2 - (Axial + Sagital),j])
+				if Coronal == True:#plot coronal
+					ax3 = fig.add_subplot(gs0[Axial + Sagital,j])
 					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
 					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
@@ -323,13 +339,13 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 			
 			gs1 = gridspec.GridSpec(1,1)#plot time series of component
 			ax4 = fig.add_subplot(gs1[0,0])#formatting
-			if Axial + Sagital + Coronal == 0:
+			if Axial + Sagital + Coronal == 3:
 				fig.subplots_adjust(top = 0.3)
 				gs0.tight_layout(fig, h_pad = -5, w_pad = 0.5, rect = [0,.3,.95,1])
-			elif Axial + Sagital + Coronal == 1:
+			elif Axial + Sagital + Coronal == 2:
 				fig.subplots_adjust(top = 0.21)
 				gs0.tight_layout(fig, h_pad = -13, w_pad = 1.5, rect = [0,.2,.95,1])
-			elif Axial + Sagital + Coronal == 2:
+			elif Axial + Sagital + Coronal == 1:
 				fig.subplots_adjust(top = 0.21)
 				gs0.tight_layout(fig, rect = [0,.2,.95,1])
 
@@ -337,7 +353,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 		 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
 		 	plt.xlabel('Time (TR)', fontsize = 12)
 		 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-			gs1.tight_layout(fig, rect = [0,0,.95,.35 + (Axial + Sagital + Coronal) * .1])
+			gs1.tight_layout(fig, rect = [0,0,.95,.65 - (Axial + Sagital + Coronal) * .1])
 			right = max(gs0.right, gs1.right)
 			left = max(gs0.left, gs1.left)
 			gs0.update(left = left, right = right)
@@ -351,8 +367,8 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 			plt.savefig('Accepted_Component_' + N)
 			plt.close()
 		
-		fig = plt.figure(figsize = (3.2*5,9 - (Axial + Sagital + Coronal)*2))
-		gs0 = gridspec.GridSpec(3 - (Axial + Sagital + Coronal),10)
+		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagital + Coronal)*2))
+		gs0 = gridspec.GridSpec( Axial + Sagital + Coronal,10)
 
 		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
 		overlay_x = mask(overlay[:,:,:,i],(1,2))
@@ -362,30 +378,30 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 		minimum = np.percentile(contrast,2)
 
 		for j in range(10):#plot greyscale component montage
-			if Axial == 0:#plot axial
+			if Axial == True:#plot axial
 				ax1 = fig.add_subplot(gs0[0,j])
 				plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, vmax = maximum)
 				plt.axis('off')
-			if Sagital == 0:#plot sagital
-				ax2 = fig.add_subplot(gs0[1 - Axial,j])
+			if Sagital == True:#plot sagital
+				ax2 = fig.add_subplot(gs0[Axial,j])
 				plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
-			if Coronal == 0:#plot coronal
-				ax3 = fig.add_subplot(gs0[2 - (Axial + Sagital),j])
+			if Coronal == True:#plot coronal
+				ax3 = fig.add_subplot(gs0[Axial + Sagital,j])
 				plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
-		if Axial + Sagital + Coronal == 0:#formatting image
+		if Axial + Sagital + Coronal == 3:#formatting image
 			fig.subplots_adjust(top=0.3)
 			gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
-		elif Axial + Sagital + Coronal == 1:
+		elif Axial + Sagital + Coronal == 2:
 			fig.subplots_adjust(top=0.21)
 			gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
-		elif Axial + Sagital + Coronal == 2:
+		elif Axial + Sagital + Coronal == 1:
 			fig.subplots_adjust(top=0.15)
 			gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
 
@@ -395,7 +411,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial 
 	 	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
 	 	plt.xlabel('Time (TR)', fontsize = 12)
 		plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-		gs1.tight_layout(fig, rect = [0,0,1,.35 + (Axial + Sagital + Coronal) * .1])
+		gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagital + Coronal) * .1])
 		right = max(gs0.right, gs1.right)
 		left = max(gs0.left, gs1.left)
 		gs0.update(left = left, right = right)
@@ -414,20 +430,21 @@ Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
 anat: path of the anatomcial image
 """
-def coreg(setname,anat):
+def coreg(startdir,setname,anat):
 	fig = plt.figure(figsize = (3.2*5,4))
 	gs0 = gridspec.GridSpec(1,3)
-	os.chdir('../%s' % setname)
-	if os.path.isfile('ocv_uni_vrm_e3.nii'):
-		os.system('rm -f ocv_uni_vrm*')
+	os.chdir('%s/%s' % (startdir,setname))
+	os.system('rm -f ocv_uni_vrm*')
 	if '.nii.gz' in anat[-7:]:
 		anat_name = anat[:-7]
 	if '.nii' in anat[-4:]:
 		anat_name = anat[:-4]
-	os.system('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm')
-	os.system('3drefit -view orig ocv_uni_vrm+tlrc.')
-	os.system('@AddEdge ocv_uni_vrm+orig. %s+orig.' % anat_name)
-	os.system('3dcalc -a ocv_uni_vrm_e3+orig -expr %s -prefix ocv_uni_vrm_e3.nii' % "a")
+	anat_name= anat_name[len(os.path.dirname(anat_name))+1:]
+
+	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
+	subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc.', shell = True)
+	subprocess.call('@AddEdge ocv_uni_vrm+orig. %s+orig.' % (anat_name), shell = True)
+	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr %s -prefix ocv_uni_vrm_e3.nii' % "a", shell = True)
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 	os.chdir('../png_dump')
@@ -444,6 +461,7 @@ def coreg(setname,anat):
 	fig.subplots_adjust(right = 0.9)
 	plt.savefig('coregistration')
 	plt.close()
+	print '++ finished corregistration figure'
 
 """
 Makes TSNR figures of medn, tsoc, and medn/tsoc datasets
@@ -451,11 +469,11 @@ tsoc: string path to tsoc dataset
 medn: string path to medn dataset
 """
 def tsnr(tsoc,medn):
-
-	GYR = LinearSegmentedColormap('GYR', cdict)
-
 	medn_data = ni.load(medn).get_data()
 	tsoc_data = ni.load(tsoc).get_data()
+	medn_data[medn_data == 0] = np.nan
+	tsoc_data[tsoc_data == 0] = np.nan
+
 	medn_tsnr = medn_data.mean(-1)/medn_data.std(-1)
 	tsoc_tsnr = tsoc_data.mean(-1)/tsoc_data.std(-1)
 	frac = medn_tsnr/tsoc_tsnr
@@ -522,7 +540,7 @@ def tsnr(tsoc,medn):
 	plt.ylabel('Frequency', fontsize = 15)
 	plt.savefig('tsnr_ratio_hist')
 	plt.close()
-
+	print '++ finished tsnr figures'
 
 """
 calculates the statistical correlation between a voxel and the rest of the brain
@@ -653,7 +671,6 @@ def correlation(startdir, setname, nsmprage, ROI_default, ROI_attention, ROI_ref
 				print '++ (%s,%s,%s) correlation complete'  % (ROI[i][0], ROI[i][1], ROI[i][2])
 			plt.close()
 			
-
 """
 plot kappa vs rho and represent percent varaince by the size of the markers.
 accept: array of all accepted components
@@ -684,6 +701,7 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.ylabel(r'$\rho$', fontsize = 15)
 	plt.savefig('kappa_vs_rho')
 	plt.close()
+	print '++ finished kappa vs rho figure'
 
 """
 plot kappa and rho vs their component number.
@@ -701,7 +719,5 @@ def kr_vs_component(comp_table_title):
 	plt.legend((r'$\kappa$', r'$\rho$'))
 	plt.savefig('kappa_rho_vs_components')
 	plt.close()	
-
-
-
-
+	print '++ finished kappa and rho vs component number figure'
+	
