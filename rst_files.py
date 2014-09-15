@@ -158,7 +158,7 @@ make diagnostics.rst file
 def diagnostics_rst(nsmprage):
 	sl = []
 	sl.append('Preliminary Diagnostics\n' + '==========================\n')
-	sl.append('The signal to noise ratio (TSNR) for a dataset is defined as the mean over the standard deviationof the dataset.  ' +
+	sl.append('The signal to noise ratio (TSNR) for a dataset is defined as the mean over the standard deviation of the dataset.  ' +
 		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset having a greater ' + 
 		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
@@ -204,7 +204,7 @@ def index_rst(cor):
 		+ 'which components represent BOLD-like phenomena.\n')
 
 	sl.append('The following content is a report that has taken information provided by '
-		+ 'meica.py and summerizes a few of the results.\n')
+		+ 'meica.py and summarizes a few of the results.\n')
 	sl.append('This report form was created by the Section on Functional Imaging Methods in the NIMH.  '
 		+ 'The creators of this report form are Benjamin Gutierrez, Prantik Kundu, Daniel Handwerker, '
 		+ 'Javier Gonzalez-Castillo, Souheil Inati, and Peter Bandettini.\n')
@@ -236,10 +236,10 @@ def intro_rst():
 		 + '"raw" BOLD time series dataset after: basic preprocessing, and a ratio of these two TSNR maps.  '
 		 + 'also in this section is a view of the corregistration if an anatomical was specified when using meica.py\n\n')
 	sl.append('The Correlation section exists if the MNI option was used when running meica.py and contains the correlation maps '
-		 + 'of the whole brain with several different seed voxels.  These seed voxels were choosen based on networks that may be of '
-		 + 'particular interest to the viwer, i.e. seeds for the Default mode.\n\n')
-	sl.append('In the Component Visualiztion section there are two different ways to visualize the information from the accepted components. '
-		 + 'The first is a thresholding of the bold responce overlayed onto the anatomical image '
+		 + 'of the whole brain with several different seed voxels.  These seed voxels were chosen based on networks that may be of '
+		 + 'particular interest to the viewer, i.e. seeds for the Default mode.\n\n')
+	sl.append('In the Component Visualization section there are two different ways to visualize the information from the accepted components. '
+		 + 'The first is a thresholding of the bold response overlayed onto the anatomical image '
 		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other way to view '
 		 + 'the accepted component, which will always be present, are the non-thresholded grey scale images without an anatomical underlay.  '
 		 + 'For the rejected, middle kappa, and ignored components, the grey scale image is always displayed as well.\n')
@@ -253,8 +253,8 @@ def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_RO
 	ROI = [ROI_default,ROI_attention,ROI_refference]
 	sl = []
 	sl.append('Correlation\n' + '==========================\n')
-	sl.append('In this section, several seeds were choosen to represent a few networks that are common in the literature.  ' +
-	  'These seeds were choosen using MNI coordinates derived by Koene R. A. Van Dijk [1]_.  Z scores were capped at 5 and -5 for the below figures.\n')
+	sl.append('In this section, several seeds were chosen to represent a few networks that are common in the literature.  ' +
+	  'These seeds were chosen using MNI coordinates derived by Koene R. A. Van Dijk [1]_.  Z scores were capped at 5 and -5 for the below figures.\n')
 	sl.append('.. [1] **Koene R. A. Van Dijk, Trey Hedden, Archana Venkataraman, Karleyton C. Evans, Sara W. Lazar and Randy L. Buckner.**  ' +
 		'Intrinsic Functional Connectivity As a Tool For Human Connectomics: Theory, Properties, and Optimization. *J Neurophysiol 103:297-321, 2010*\n')
 	for j in range(3):
@@ -292,7 +292,7 @@ def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_RO
 	ofh.write("\n".join(sl) + "\n")
 	ofh.close()
 """
-Controls length of floats.  Needs to be done because spaceing important for sphinx.
+Controls length of floats.  Needs to be done because spacing important for sphinx.
 This function is not designed to work if length argument is less than the number of digits before the decimal.
 """
 def digit_length(n,length):

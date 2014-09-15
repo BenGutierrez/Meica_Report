@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 """
-Gutierrez, B.  Contains a function for finding the center of mass of 
-fMRI image componants.  Also contains functions for overlaying 
-a 2D fMRI image onto a 2D anatomical image in the axial, sagital, and cortial
-plane
+Gutierrez, B.  Contains all functions for creating the figures
+of the mecia report
 """
 import matplotlib as mpl
 mpl.use('Agg')
@@ -42,10 +40,10 @@ GYR = LinearSegmentedColormap('GYR', cdict)
 
 """
 Check that the MNI coordinates of the ROI's are within the image MNI range
-ROI: array of MNI coodinates
+ROI: array of MNI coordinates
 startdir: string starting directory path
 setname: path of directory containing the TED directory
-description: string describing ROI to be ouputed to the user
+description: string describing ROI to be ouputted to the user
 """
 def check_ROI(ROI, startdir, setname, description):
 	fails = 0
@@ -130,7 +128,7 @@ def file_parse(file):
 	return components
 
 """
-Take the infomation from the comp file and sperate it into 4 2D matricies
+Take the information from the comp file and separate it into 4 2D matrices
 for the accepted, rejected, middle, ignore bins.
 file: comp table path
 components: array with 4 elements, each an array containing the components from
@@ -164,7 +162,7 @@ def split_components(comp_table_title,components):
 """
 Removes two dimensional slices from 3d matrix image that contain all zero elements
 image: three dim array
-axis: axial that the two dimmensional plane fixes, i.e. (0,1) fixes z
+axis: axial that the two dimensional plane fixes, i.e. (0,1) fixes z
 """
 def mask(image, axis):
 	im_mask = np.zeros(image.shape)
@@ -245,7 +243,7 @@ def collect_data(anatomical, overlay, threshold_map):
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
 
 """
-Calculate the roation matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
+Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
 def Rotation_matrix(quaternion):
 	a, b, c, d = quaternion[0], quaternion[1], quaternion[2], quaternion[3]
@@ -259,19 +257,19 @@ def Rotation_matrix(quaternion):
 	return(R, q_fac)
 
 """
-Creates a montage of greyscale 10 images of axial, sagital and coronal views of meica components along with a time series of the component.
+Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
 maps: array of 5 elements [anat dataset, mefl dataset, feats dataset, anat header, overlay header]
 accept: array accepted components
 threshold: float statiscial threshold
 alpha: float alpha blending value
 series: string meica_mix.1D path
-axial: true or false. plot axial or not
-sagital: true or false. plot sagital or not
-coronal: true or false. plot coronal or not
+Axial: true or false. plot axial or not
+Sagittal: true or false. plot sagittal or not
+Coronal: true or false. plot coronal or not
 """
 
-def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial, Sagital, Coronal):
+def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial, Sagittal, Coronal):
 	series = '%s/%s/TED/meica_mix.1D' % (startdir,setname)
 	anat = maps[0]
 	overlay = maps[1]
@@ -301,8 +299,8 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
 
 	for i in range(overlay.shape[3]):# number of components
-		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagital + Coronal)*2))#accounts for variability in choices of axial, sagital, cornoal images in final figure
-		gs0 = gridspec.GridSpec(Axial + Sagital + Coronal,10)
+		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))#accounts for variability in choices of axial, sagittal, cornoal images in final figure
+		gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
 		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
 			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
@@ -321,7 +319,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
 						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
-				if Sagital == True:#plot sagital
+				if Sagittal == True:#plot sagittal
 					ax2 = fig.add_subplot(gs0[Axial,j])
 					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
@@ -329,7 +327,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 				if Coronal == True:#plot coronal
-					ax3 = fig.add_subplot(gs0[Axial + Sagital,j])
+					ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
 					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
 					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
@@ -339,13 +337,13 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 			
 			gs1 = gridspec.GridSpec(1,1)#plot time series of component
 			ax4 = fig.add_subplot(gs1[0,0])#formatting
-			if Axial + Sagital + Coronal == 3:
+			if Axial + Sagittal + Coronal == 3:
 				fig.subplots_adjust(top = 0.3)
 				gs0.tight_layout(fig, h_pad = -5, w_pad = 0.5, rect = [0,.3,.95,1])
-			elif Axial + Sagital + Coronal == 2:
+			elif Axial + Sagittal + Coronal == 2:
 				fig.subplots_adjust(top = 0.21)
 				gs0.tight_layout(fig, h_pad = -13, w_pad = 1.5, rect = [0,.2,.95,1])
-			elif Axial + Sagital + Coronal == 1:
+			elif Axial + Sagittal + Coronal == 1:
 				fig.subplots_adjust(top = 0.21)
 				gs0.tight_layout(fig, rect = [0,.2,.95,1])
 
@@ -353,7 +351,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 		 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
 		 	plt.xlabel('Time (TR)', fontsize = 12)
 		 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-			gs1.tight_layout(fig, rect = [0,0,.95,.65 - (Axial + Sagital + Coronal) * .1])
+			gs1.tight_layout(fig, rect = [0,0,.95,.65 - (Axial + Sagittal + Coronal) * .1])
 			right = max(gs0.right, gs1.right)
 			left = max(gs0.left, gs1.left)
 			gs0.update(left = left, right = right)
@@ -367,8 +365,8 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 			plt.savefig('Accepted_Component_' + N)
 			plt.close()
 		
-		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagital + Coronal)*2))
-		gs0 = gridspec.GridSpec( Axial + Sagital + Coronal,10)
+		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
+		gs0 = gridspec.GridSpec( Axial + Sagittal + Coronal,10)
 
 		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
 		overlay_x = mask(overlay[:,:,:,i],(1,2))
@@ -383,25 +381,25 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 				plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, vmax = maximum)
 				plt.axis('off')
-			if Sagital == True:#plot sagital
+			if Sagittal == True:#plot sagittal
 				ax2 = fig.add_subplot(gs0[Axial,j])
 				plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
 			if Coronal == True:#plot coronal
-				ax3 = fig.add_subplot(gs0[Axial + Sagital,j])
+				ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
 				plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
-		if Axial + Sagital + Coronal == 3:#formatting image
+		if Axial + Sagittal + Coronal == 3:#formatting image
 			fig.subplots_adjust(top=0.3)
 			gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
-		elif Axial + Sagital + Coronal == 2:
+		elif Axial + Sagittal + Coronal == 2:
 			fig.subplots_adjust(top=0.21)
 			gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
-		elif Axial + Sagital + Coronal == 1:
+		elif Axial + Sagittal + Coronal == 1:
 			fig.subplots_adjust(top=0.15)
 			gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
 
@@ -411,7 +409,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 	 	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
 	 	plt.xlabel('Time (TR)', fontsize = 12)
 		plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-		gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagital + Coronal) * .1])
+		gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagittal + Coronal) * .1])
 		right = max(gs0.right, gs1.right)
 		left = max(gs0.left, gs1.left)
 		gs0.update(left = left, right = right)
@@ -720,4 +718,3 @@ def kr_vs_component(comp_table_title):
 	plt.savefig('kappa_rho_vs_components')
 	plt.close()	
 	print '++ finished kappa and rho vs component number figure'
-	

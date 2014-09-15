@@ -140,9 +140,9 @@ parser.add_argument('-ct', '--correlation_threshold', dest = 'corr_threshold', h
 	' the seed voxel map', type = float, default = 1.96)
 parser.add_argument('-min_c', '--min_comp', dest = 'min_component_number', help = 'minimum total component number before warning raised in report', type = int, default = 20)
 parser.add_argument('-min_v', '--min_var', dest = 'min_variance_explained', help = 'minimum variance explained before warning raised in report', type = int, default = 85)
-parser.add_argument('-ax', '--axial' , dest = 'Axial', help = 'option to add axial image from montages', action = 'store_true')
-parser.add_argument('-sag', '--sag' , dest = 'Sagital', help = 'option to add coronal image from montages', action = 'store_true')
-parser.add_argument('-cor', '--coronal', dest = 'Coronal', help = 'option to add coronal image from montages', action = 'store_true')
+parser.add_argument('-ax', '--axial' , dest = 'Axial', help = 'option to add axial images to activation montages', action = 'store_true')
+parser.add_argument('-sag', '--sag' , dest = 'Sagittal', help = 'option to add sagittal images to activation montages', action = 'store_true')
+parser.add_argument('-cor', '--coronal', dest = 'Coronal', help = 'option to add coronal images to activation montages', action = 'store_true')
 parser.add_argument('--ROI' , dest = 'User_ROI', help = 'ex: "--ROI \'(0,0,0),(0,-53,26)\'"   MNI coordinates for seed voxel correlation computation', default = '[]')
 parser.add_argument('--alpha' , dest = 'alpha', help = 'transparency value for montage overlay', type = float, default = 0.8)
 parser.add_argument('--ROI_def', dest = 'ROI_default', help = 'specified if default mode seed voxel analysis to be shown in report. voxels already specified.', action = 'store_true')
@@ -227,16 +227,16 @@ os.chdir('%s/png_dump' % startdir)
 
 #make figures
 print('++ making figures')
-# meica_figures.kr_vs_component('%s/%s_ctab.txt' % (startdir, prefix))#make kappa and rho vs component figure
-# meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
-# meica_figures.tsnr('%s/%s_tsoc.nii.gz' % (startdir,prefix),'%s/%s_medn.nii.gz' % (startdir,prefix))#create tsnr figures
+meica_figures.kr_vs_component('%s/%s_ctab.txt' % (startdir, prefix))#make kappa and rho vs component figure
+meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
+meica_figures.tsnr('%s/%s_tsoc.nii.gz' % (startdir,prefix),'%s/%s_medn.nii.gz' % (startdir,prefix))#create tsnr figures
 print('++ this set of figures may take a while')
-# meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, startdir, setname, prefix, args.Axial, args.Sagital, args.Coronal)#create activation montage
+meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, startdir, setname, prefix, args.Axial, args.Sagittal, args.Coronal)#create activation montage
 if args.anat != '':
-	# meica_figures.coreg(startdir,setname,args.anat)#create corregistration figure
+	meica_figures.coreg(startdir,setname,args.anat)#create corregistration figure
 	if args.MNI == True:
 		if len(accept) > 3:
-			# meica_figures.correlation(startdir, setname, args.anat, ROI_default, ROI_attention, ROI_refference, User_ROI, args.corr_threshold)#create correlation for ROIs
+			meica_figures.correlation(startdir, setname, args.anat, ROI_default, ROI_attention, ROI_refference, User_ROI, args.corr_threshold)#create correlation for ROIs
 			corr = True
 		else:
 			print '++ not enough degrees of freedom to compute standard error'
