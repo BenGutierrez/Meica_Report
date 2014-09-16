@@ -212,7 +212,7 @@ def index_rst(cor):
 	sl.append('.. toctree::')
 	sl.append('   :maxdepth: 2\n')
 	sl.append('   intro\n' + '   diagnostics') 
-	if cor == True:
+	if cor:
 		sl.append('   correlation')
 	sl.append('   analysis')
 	sl.append('\n\n\nSearch')
@@ -237,7 +237,7 @@ def intro_rst():
 		 + 'also in this section is a view of the corregistration if an anatomical was specified when using meica.py\n\n')
 	sl.append('The Correlation section exists if the MNI option was used when running meica.py and contains the correlation maps '
 		 + 'of the whole brain with several different seed voxels.  These seed voxels were chosen based on networks that may be of '
-		 + 'particular interest to the viewer, i.e. seeds for the Default mode.\n\n')
+		 + 'particular interest to the viewer, i.e. seeds for the Default network.\n\n')
 	sl.append('In the Component Visualization section there are two different ways to visualize the information from the accepted components. '
 		 + 'The first is a thresholding of the bold response overlayed onto the anatomical image '
 		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other way to view '
@@ -259,8 +259,8 @@ def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_RO
 		'Intrinsic Functional Connectivity As a Tool For Human Connectomics: Theory, Properties, and Optimization. *J Neurophysiol 103:297-321, 2010*\n')
 	for j in range(3):
 		if j == 0 and ROI_default != []:
-			sl.append('Default mode\n' + '++++++++++++++++++++')
-			sl.append('Below is our seed based correlation for several voxels thought to be part of the default mode.\n')
+			sl.append('Default network\n' + '++++++++++++++++++++')
+			sl.append('Below is our seed based correlation for several voxels thought to be part of the default network.\n')
 		if j == 1 and ROI_attention != []:
 			sl.append('Attention network\n' + '+++++++++++++++++++++')
 			sl.append('Below is our seed based correlation for several voxels thought to be part of the attention network.\n')

@@ -45,11 +45,11 @@ startdir: string starting directory path
 setname: path of directory containing the TED directory
 description: string describing ROI to be ouputted to the user
 """
-def check_ROI(ROI, startdir, setname, description):
+def check_ROI(ROI, startdir, setname, TED,description):
 	fails = 0
 	if ROI != []:
-		beta = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_data()
-		beta_hdr = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_header()
+		beta = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_data()
+		beta_hdr = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_header()
 		corners = np.zeros((3,1,2))
 		cord_matrix = beta_hdr.get_best_affine()[0:3,0:3]
 		corners[:,:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
@@ -73,10 +73,11 @@ series: path to time series data
 i: integer component number
 N: string component number with zeros in front to make all component numbers all the same length
 startdir: string starting directory path
-outprefix: string prefix specified in meica.py
+setname: path of directory containing the TED directory
+TED: TED directory from tedana.py
 """
-def FFT(series, i, N, startdir, outprefix):
-	path = '%s/%s_mefl.nii.gz' % (startdir,outprefix)
+def FFT(series, i, N, startdir, setname, TED):
+	path = '%s/%s/%s/betas_OC.nii' % (startdir,setname,TED)
 	p = subprocess.Popen(['3dinfo','-tr', path], stdout = subprocess.PIPE, stderr = subprocess.PIPE)# retrieve TR
 	TR, err = p.communicate()
 
@@ -269,8 +270,8 @@ Sagittal: true or false. plot sagittal or not
 Coronal: true or false. plot coronal or not
 """
 
-def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial, Sagittal, Coronal):
-	series = '%s/%s/TED/meica_mix.1D' % (startdir,setname)
+def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagittal, Coronal):
+	series = '%s/%s/%s/meica_mix.1D' % (startdir,setname, TED)
 	anat = maps[0]
 	overlay = maps[1]
 	threshold_data = maps[2]
@@ -312,21 +313,21 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 				overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
 			overlay_acc[overlay_mask == 0] = np.nan
 			for j in range(10):#plot montage of accept component onto anatomical
-				if Axial == True:#plot axial
+				if Axial:#plot axial
 					ax1 = fig.add_subplot(gs0[0,j])
 					plt.imshow(anat[:,:,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
 					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
 						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
-				if Sagittal == True:#plot sagittal
+				if Sagittal:#plot sagittal
 					ax2 = fig.add_subplot(gs0[Axial,j])
 					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
 					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
-				if Coronal == True:#plot coronal
+				if Coronal:#plot coronal
 					ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
 					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
@@ -376,18 +377,18 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 		minimum = np.percentile(contrast,2)
 
 		for j in range(10):#plot greyscale component montage
-			if Axial == True:#plot axial
+			if Axial:#plot axial
 				ax1 = fig.add_subplot(gs0[0,j])
 				plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, vmax = maximum)
 				plt.axis('off')
-			if Sagittal == True:#plot sagittal
+			if Sagittal:#plot sagittal
 				ax2 = fig.add_subplot(gs0[Axial,j])
 				plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
 					vmax = maximum)
 				plt.axis('off')
-			if Coronal == True:#plot coronal
+			if Coronal:#plot coronal
 				ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
 				plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r',
 					origin = 'lower', vmin = minimum, 
@@ -420,7 +421,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, outprefix, Axial,
 			N = '0' + N
 		plt.savefig('Component_' + N)
 		plt.close()
-		FFT(series, i, N, startdir, outprefix)
+		FFT(series, i, N, startdir, setname, TED)
 		print ('++ figures created for Component %s' % N)
 
 """
@@ -549,7 +550,7 @@ setname: name of directory containing the TED directory
 nsmprgae: path to the anatomical image
 threshold: z-score to threshold data at.  data symmetrically thresholded about zero with threshold
 """
-def correlation(startdir, setname, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
+def correlation(startdir, setname, TED, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
 	cdict = {'red':  	  ((0.0, 0.0, 0.0),
 						   (0.6, 0.0, 0.0),
 						   (0.7, 0.6, 0.6),
@@ -570,8 +571,8 @@ def correlation(startdir, setname, nsmprage, ROI_default, ROI_attention, ROI_ref
 		        }
 
 	BGYR = LinearSegmentedColormap('BGYR', cdict)
-	beta = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_data()
-	beta_hdr = ni.load('%s/%s/TED/betas_hik_OC.nii' % (startdir, setname)).get_header()
+	beta = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_data()
+	beta_hdr = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_header()
 	anat = ni.load(nsmprage).get_data()
 	anat_hdr = ni.load(nsmprage).get_header()
 
