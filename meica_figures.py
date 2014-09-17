@@ -95,13 +95,13 @@ def FFT(series, i, N, startdir, setname, TED):
 		plt.plot(freq[t.size/2:],FFT[t.size/2:])
 
 	else:
-		plt.plot(freq,FFT)
+		plt.plot(freq[(t.size+1)/2:],FFT[(t.size+1)/2:])
 	plt.title('FFT of the Time Series', fontsize = 15)
 	plt.xlabel('Frequency(Hz)' , fontsize = 15)
 	plt.ylabel('Amplitude' , fontsize = 15)
 	fig.subplots_adjust(bottom = 0.15, top = .90)
 	plt.savefig('FFT_Component_' + N)
-	plt.close
+	plt.close()
 
 """
 Parses ctab file for which components fall into the Accepted, Rejected,
@@ -284,7 +284,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagit
 	co = ['x','z']
 	sag_extreme = np.zeros(8)
 	sa = ['y','z']
-	if anat != '': #if anatomcial specified calculates the native coordinates of the image so that the 
+	if anat != '' and (Axial + Sagittal + Coronal != 0): #if anatomcial specified calculates the native coordinates of the image so that the 
 					# anatomical and the overlay can be overlayed correctly.
 		overlay_corners = np.zeros((3,1,2))
 		anat_corners = np.zeros((3,1,2))
@@ -303,15 +303,16 @@ def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagit
 		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))#accounts for variability in choices of axial, sagittal, cornoal images in final figure
 		gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
 		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
-			overlay_acc = np.absolute(threshold_data[:,:,:,l])
-			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
-			overlay_mask = np.zeros(overlay_acc.shape)
-			overlay_mask[overlay_acc != 0] = 1# 
+			if Axial + Sagittal + Coronal != 0:
+				overlay_acc = np.absolute(threshold_data[:,:,:,l])
+				overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
+				overlay_mask = np.zeros(overlay_acc.shape)
+				overlay_mask[overlay_acc != 0] = 1# 
 
-			itemindex = np.where(overlay_mask == 1)
-			for j in range(len(itemindex[0])):
-				overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
-			overlay_acc[overlay_mask == 0] = np.nan
+				itemindex = np.where(overlay_mask == 1)
+				for j in range(len(itemindex[0])):
+					overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
+				overlay_acc[overlay_mask == 0] = np.nan
 			for j in range(10):#plot montage of accept component onto anatomical
 				if Axial:#plot axial
 					ax1 = fig.add_subplot(gs0[0,j])
@@ -353,13 +354,14 @@ def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagit
 		 	plt.xlabel('Time (TR)', fontsize = 12)
 		 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
 			gs1.tight_layout(fig, rect = [0,0,.95,.65 - (Axial + Sagittal + Coronal) * .1])
-			right = max(gs0.right, gs1.right)
-			left = max(gs0.left, gs1.left)
-			gs0.update(left = left, right = right)
-			gs1.update(left = left, right = right)
-			cbar_ax = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs1.bottom, .01, gs0.top - (gs1.bottom * 2)])
-			fig.colorbar(bar, cax = cbar_ax)
-			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
+			if Axial + Sagittal + Coronal != 0:
+				right = max(gs0.right, gs1.right)
+				left = max(gs0.left, gs1.left)
+				gs0.update(left = left, right = right)
+				gs1.update(left = left, right = right)
+				cbar_ax = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs1.bottom, .01, gs0.top - (gs1.bottom * 2)])
+				fig.colorbar(bar, cax = cbar_ax)
+				plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
 			N = str(i)
 			while len(N) < len(str(overlay.shape[3])):
 				N = '0' + N
@@ -367,14 +369,15 @@ def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagit
 			plt.close()
 		
 		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
-		gs0 = gridspec.GridSpec( Axial + Sagittal + Coronal,10)
+		gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
 
-		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
-		overlay_x = mask(overlay[:,:,:,i],(1,2))
-		overlay_y = mask(overlay[:,:,:,i],(0,2))
-		contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
-		maximum = np.percentile(contrast,98)
-		minimum = np.percentile(contrast,2)
+		if Axial + Sagittal + Coronal != 0:
+			overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
+			overlay_x = mask(overlay[:,:,:,i],(1,2))
+			overlay_y = mask(overlay[:,:,:,i],(0,2))
+			contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+			maximum = np.percentile(contrast,98)
+			minimum = np.percentile(contrast,2)
 
 		for j in range(10):#plot greyscale component montage
 			if Axial:#plot axial
@@ -438,12 +441,15 @@ def coreg(startdir,setname,anat):
 		anat_name = anat[:-7]
 	if '.nii' in anat[-4:]:
 		anat_name = anat[:-4]
-	anat_name= anat_name[len(os.path.dirname(anat_name))+1:]
+	anat_name = anat_name[len(os.path.dirname(anat_name)):]
+	if '/' in anat_name[0]:
+		anat_name = anat_name[1:]
 
 	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
-	subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc.', shell = True)
+	if os.path.isfile('orig ocv_uni_vrm+tlrc.BRIK'):
+		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc.', shell = True)
 	subprocess.call('@AddEdge ocv_uni_vrm+orig. %s+orig.' % (anat_name), shell = True)
-	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr %s -prefix ocv_uni_vrm_e3.nii' % "a", shell = True)
+	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 	os.chdir('../png_dump')

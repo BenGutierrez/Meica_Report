@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Gutierrez, B.  Generates the rst files that sphinx reads to make the eport form
+Gutierrez, B.  Generates the rst files that sphinx reads to make the report form
 """
 import numpy as np
 
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained):
+def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures):
 	sl = []
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
@@ -22,8 +22,9 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 			sl.append('%s !!!! |warning| !!!! variance explained below %s\n'  % (line[i][1:-1], min_variance_explained))
 		else:
 			sl.append('%s' % line[i][1:])
+	print '\n Please remember that the denoised time series is the accepted AND ignored bin and the rejected are BOTH the rejected and middle kappa'
 	sl.append('\n+----------------+------------------+-------------------------+\n' +
-				'|                | %  Total Vairance| %  Total Variance(norm) |\n' + 
+				'|                | %  Total Variance| %  Total Variance(norm) |\n' + 
 				'+================+==================+=========================+')
 	sl.append('| **Accepted**   |        %s    |          %s         |'   % (digit_length(sum(accept[:,3]),6), digit_length(sum(accept[:,4]),6)))
 	sl.append('+----------------+------------------+-------------------------+\n' +
@@ -36,9 +37,9 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 
 	sl.append('Graphs')
 	sl.append('++++++')
-	sl.append('.. image:: .. /png_dump/kappa_vs_rho.png')
+	sl.append('.. image:: ../%s/kappa_vs_rho.png' % figures)
 	sl.append('	:width: 49%')
-	sl.append('.. image:: .. /png_dump/kappa_rho_vs_components.png')
+	sl.append('.. image:: ../%s/kappa_rho_vs_components.png' % figures)
 	sl.append('	:width: 49%\n')
 	sl.append('The size of the scatter plot points is linearly related to the percent variance of that component.\n')
 	sl.append('=============  =============  =================  =============')
@@ -56,10 +57,10 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		for i in accept[:,0]:
 			sl.append('\nComponent %s' % int(i))
 			sl.append('----------'+ '-'*len(str(int(i))) + '\n')
-			sl.append('.. image:: ../png_dump/Accepted_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+			sl.append('.. image:: ../%s/Accepted_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 			sl.append('	:scale: 75%')
 			sl.append('	:align: left\n\n')
-			sl.append('.. image:: .. /png_dump/FFT_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+			sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 			sl.append('	:width: 49%\n')
 			sl.append('=============  =============  =============  =================')
 			sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
@@ -75,10 +76,10 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	for i in accept[:,0]:
 		sl.append('\nComponent %s' % int(i))
 		sl.append('----------'+ '-'*len(str(int(i))) + '\n')
-		sl.append('.. image:: ../png_dump/Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
-		sl.append('.. image:: .. /png_dump/FFT_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
@@ -94,10 +95,10 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	for i in reject[:,0]:
 		sl.append('\nComponent %s' % int(i))
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
-		sl.append('.. image:: ../png_dump/Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
-		sl.append('.. image:: .. /png_dump/FFT_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
@@ -113,10 +114,10 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	for i in middle[:,0]:
 		sl.append('\nComponent %s' % int(i))
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
-		sl.append('.. image:: ../png_dump/Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
-		sl.append('.. image:: .. /png_dump/FFT_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
@@ -132,10 +133,10 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	for i in ignore[:,0]: 
 		sl.append('\nComponent %s' % int(i))
 		sl.append('----------' + '-'*len(str(int(i))) + '\n')
-		sl.append('.. image:: ../png_dump/Component_'  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/Component_' % figures  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
-		sl.append('.. image:: .. /png_dump/FFT_Component_' + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
@@ -144,7 +145,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 			(digit_length(ignore[N,1],8), digit_length(ignore[N,2],7), digit_length(ignore[N,3],4), digit_length(ignore[N,4],4)))
 		sl.append('=============  =============  =============  =================\n\n')
 		N += 1
-	sl.append('.. |warning| image:: ../png_dump/warning.png')
+	sl.append('.. |warning| image:: ../%s/warning.png' % figures)
 	sl.append('    		 :align: middle')
 	sl.append('    		 :alt: warning')
 
@@ -155,7 +156,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 """
 make diagnostics.rst file
 """
-def diagnostics_rst(nsmprage):
+def diagnostics_rst(nsmprage, coreg, figures):
 	sl = []
 	sl.append('Preliminary Diagnostics\n' + '==========================\n')
 	sl.append('The signal to noise ratio (TSNR) for a dataset is defined as the mean over the standard deviation of the dataset.  ' +
@@ -163,30 +164,30 @@ def diagnostics_rst(nsmprage):
 		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
 	sl.append('Absolute TSNR of the medn NIFTI1 dataset:\n')
-	sl.append('.. image:: .. /png_dump/medn_tsnr.png')
+	sl.append('.. image:: .. /%s/medn_tsnr.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
 	sl.append('Absolute TSNR of the tsoc NIFTI1 dataset:\n')
-	sl.append('.. image:: .. /png_dump/tsoc_tsnr.png')
+	sl.append('.. image:: .. /%s/tsoc_tsnr.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
 	sl.append('Ratio of the TSNR of the medn NIFTI1 dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
-	sl.append('.. image:: .. /png_dump/tsnr_ratio.png')
+	sl.append('.. image:: .. /%s/tsnr_ratio.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
 	sl.append('Histograms of the TSNR of the medn NIFTI1 dataset and the TSNR of the tsoc NIFTI1 dataset:\n')
-	sl.append('.. image:: .. /png_dump/medn_tsnr_hist.png')
+	sl.append('.. image:: .. /%s/medn_tsnr_hist.png' % figures)
 	sl.append('	:width: 49%')
-	sl.append('.. image:: .. /png_dump/tsoc_tsnr_hist.png')
+	sl.append('.. image:: .. /%s/tsoc_tsnr_hist.png' % figures)
 	sl.append('	:width: 49%\n')
 	sl.append('Histogram of the ratio of the TSNR of the medn dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
-	sl.append('.. image:: .. /png_dump/tsnr_ratio_hist.png')
+	sl.append('.. image:: .. /%s/tsnr_ratio_hist.png' % figures)
 	sl.append('	:width: 49%\n')
 	
-	if nsmprage != '':
+	if nsmprage != '' and coreg:
 		sl.append('Coregistration\n' + '+++++++++++++++')
 		sl.append('Coregistration of the subject to the anatomical provided:\n')
-		sl.append('.. image:: .. /png_dump/coregistration.png')
+		sl.append('.. image:: .. /%s/coregistration.png' % figures)
 		sl.append('	:scale: 75%')
 	ofh = open("diagnostics.rst","w")
 	ofh.write("\n".join(sl) + "\n")
@@ -249,8 +250,8 @@ def intro_rst():
 	ofh.close()
 
 
-def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_ROI=[]):
-	ROI = [ROI_default,ROI_attention,ROI_refference]
+def correlation_rst(ROI_default, ROI_attention, ROI_reference, User_ROI, figures):
+	ROI = [ROI_default,ROI_attention,ROI_reference]
 	sl = []
 	sl.append('Correlation\n' + '==========================\n')
 	sl.append('In this section, several seeds were chosen to represent a few networks that are common in the literature.  ' +
@@ -259,14 +260,14 @@ def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_RO
 		'Intrinsic Functional Connectivity As a Tool For Human Connectomics: Theory, Properties, and Optimization. *J Neurophysiol 103:297-321, 2010*\n')
 	for j in range(3):
 		if j == 0 and ROI_default != []:
-			sl.append('Default network\n' + '++++++++++++++++++++')
-			sl.append('Below is our seed based correlation for several voxels thought to be part of the default network.\n')
+			sl.append('Default mode network\n' + '++++++++++++++++++++++++')
+			sl.append('Below is our seed based correlation for several voxels thought to be part of the Default mode network.\n')
 		if j == 1 and ROI_attention != []:
 			sl.append('Attention network\n' + '+++++++++++++++++++++')
-			sl.append('Below is our seed based correlation for several voxels thought to be part of the attention network.\n')
-		if j == 2 and ROI_refference != []:
-			sl.append('Refference network\n' + '+++++++++++++++++++++')
-			sl.append('Below is our seed based correlation for several voxels thought to be part of the Refeence network.\n')
+			sl.append('Below is our seed based correlation for several voxels thought to be part of the Attention network.\n')
+		if j == 2 and ROI_reference != []:
+			sl.append('Reference network\n' + '+++++++++++++++++++++')
+			sl.append('Below is our seed based correlation for several voxels thought to be part of the Reference network.\n')
 		for i in range(len(ROI[j])):
 			title = ROI[j][i][3]
 			if '_R' in title:
@@ -276,16 +277,16 @@ def correlation_rst(ROI_default=[], ROI_attention=[], ROI_refference=[], User_RO
 			sl.append('%s' % title)
 			sl.append('-'*(len(title)+1))
 			sl.append('MNI coordinates(%s,%s,%s)\n' % (ROI[j][i][0], ROI[j][i][1], ROI[j][i][2]))
-			sl.append('.. image:: .. /png_dump/%s_seed.png\n' % ROI[j][i][3])
-			sl.append('.. image:: .. /png_dump/%s_correlation.png' % ROI[j][i][3])
+			sl.append('.. image:: .. /%s/%s_seed.png\n' % (figures,ROI[j][i][3]))
+			sl.append('.. image:: .. /%s/%s_correlation.png' % (figures,ROI[j][i][3]))
 			sl.append('	:scale: 75%\n')
 	if User_ROI != []:
 		sl.append('User ROI\n' + '+++++++++++++++')
 		for i in range(len(User_ROI)):
 			sl.append('MNI coordinates(%s,%s,%s)' % (User_ROI[i][0], User_ROI[i][1], User_ROI[i][2]))
 			sl.append('------------------------------')
-			sl.append('.. image:: .. /png_dump/(%s,%s,%s)_seed.png\n' % (User_ROI[i][0], User_ROI[i][1], User_ROI[i][2]))
-			sl.append('.. image:: .. /png_dump/(%s,%s,%s)_correlation.png' % (User_ROI[i][0], User_ROI[i][1], User_ROI[i][2]))
+			sl.append('.. image:: .. /%s/(%s,%s,%s)_seed.png\n' % (figures,User_ROI[i][0], User_ROI[i][1], User_ROI[i][2]))
+			sl.append('.. image:: .. /%s/(%s,%s,%s)_correlation.png' % (figures,User_ROI[i][0], User_ROI[i][1], User_ROI[i][2]))
 			sl.append('	:scale: 75%\n')
 
 	ofh = open("correlation.rst","w")

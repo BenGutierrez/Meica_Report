@@ -13,6 +13,28 @@ import ast
 import os
 import re
 
+
+ROI_default = 	[[0,-53,26,'pC'],#default mode MNI coordinates
+				[0,52,6,'mPFC'],
+				[-48,-62,36,'LatPar_L',],
+				[46,-62,32,'Latpar_R'],
+				[-24,-22,-20,'HF_L'],
+				[24,-20,-22,'HF_R']]
+
+ROI_attention = [[-38,-4,48,'FEF_L'],#attention network MNI coordinates
+				[40,-4,48,'FEF_R'],
+				[-24,-58,52,'IPS_L'],
+				[22,-58,54,'IPS_R'],
+				[-56,-60,-2,'MT+_L'],
+				[54,-58,-4,'MT+_R']]
+
+ROI_reference =[[-36,-25,57,'Mot_L'],#reference network MNI coordinates
+				[36,-25,57,'Mot_R'],
+				[-43,-26,12,'Aud_L'],
+				[43,-26,12,'Aud_R'],
+				[-30,-88,0,'Vis_L'],
+				[30,-88,0,'Vis_R']]
+
 def MNI_check(MNI, User_ROI, ROI_def, ROI_att, ROI_ref):
 	if not MNI:
 		if User_ROI or ROI_att or ROI_def or ROI_ref:
@@ -38,9 +60,8 @@ def seed_split(ROI):
 		List = [List]
 	return List
 
-def file_check(anat, startdir, TED, setname, MNI, reportdir):
+def file_check(anat, startdir, TED, setname, MNI, reportdir, figures):
 	fails = 0
-
 	if not os.path.isfile(anat) and anat !='': 
 		print '*+ Can\'t find the specified anantomical'
 		fails += 1
@@ -83,7 +104,7 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir):
 	if fails != 0:
 		print "*+ EXITING. Please see error messages."
 		sys.exit()
-
+	return figures
 #Run dependency check
 def dep_check():
 	print '++ Checking system for dependencies...'
@@ -147,7 +168,7 @@ def dep_check():
 
 def path_name(setname, startdir, TED, anat):
 	if setname == '':
-		print '*+ Need to at least specify the option --setname to run meica_report.py'
+		print '*+ Need to specify the option -setname to run meica_report.py'
 		sys.exit()
 
 	if startdir == '':#make sure paths are in correct form and remove like "~/"
@@ -178,29 +199,39 @@ def path_name(setname, startdir, TED, anat):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-mt','--montage_threshold', dest = 'montage_threshold', help = 'normalized z-score value for thresholding' + 
-	' the accepted component w/ anatomical activation map', type = float, default = 1.96)
-parser.add_argument('-ct', '--correlation_threshold', dest = 'corr_threshold', help = 'normalized z-score value for thresholding' + 
-	' the seed voxel map', type = float, default = 1.96)
+parser.add_argument('-setname', dest = 'setname', help = 'Directory meica.py creates (required)', default = '')
+parser.add_argument('-label', dest = 'label', help = 'Label to tag directory for all output files, default is "Report"  ', default = 'Report')
+parser.add_argument('-f_label', dest = 'figures', help = 'Label to tag directory for all figures to be places, default is "Report_Figures"', default = 'Report_Figures')
+parser.add_argument('-overwrite', dest = 'overwrite', help = 'If -label specified but directory already exists, will overwrite', action = 'store_false')
+parser.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 parser.add_argument('-dir', dest = 'startdir', help = 'Directory that meica.py was run from.  Default is current directory', default = '')
 parser.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is TED', default = 'TED')
-parser.add_argument('-min_c', '--min_comp', dest = 'min_component_number', help = 'minimum total component number before warning raised in report', type = int, default = 20)
-parser.add_argument('--setname', dest = 'setname', help = 'directory meica.py creates', default = '')
-parser.add_argument('-min_v', '--min_var', dest = 'min_variance_explained', help = 'minimum variance explained before warning raised in report', type = int, default = 85)
-parser.add_argument('-ax', '--axial' , dest = 'Axial', help = 'option to add axial images to activation montages', action = 'store_true')
-parser.add_argument('-sag', '--sag' , dest = 'Sagittal', help = 'option to add sagittal images to activation montages', action = 'store_true')
-parser.add_argument('-cor', '--coronal', dest = 'Coronal', help = 'option to add coronal images to activation montages', action = 'store_true')
-parser.add_argument('--ROI' , dest = 'User_ROI', help = 'ex: "--ROI \'(0,0,0),(0,-53,26)\'"   MNI coordinates for seed voxel correlation computation', default = '[]')
-parser.add_argument('--alpha' , dest = 'alpha', help = 'transparency value for montage overlay', type = float, default = 0.8)
-parser.add_argument('--ROI_def', dest = 'ROI_default', help = 'specified if default mode seed voxel analysis to be shown in report. voxels already specified.', action = 'store_true')
-parser.add_argument('--ROI_att', dest = 'ROI_attention', help = 'specified if attention network seed voxel analysis to be shown in report. voxels already specified.', action = 'store_true')
-parser.add_argument('--ROI_ref', dest = 'ROI_refference', help = 'specified if refference network seed voxel analysis to be shown in report. voxels already specified.', action = 'store_true')
-parser.add_argument('--anat', dest = 'anat', help = 'anatomical specified in meica.py (optional)', default = '')
-parser.add_argument('--MNI', dest = 'MNI', help = 'specified if seed voxel coorelation wanted and MNI option was specified in meica.py', action = 'store_true')
-parser.add_argument('--montage', dest = 'montage', help = 'if specified, will NOT show activation montage of all ICA components', action = 'store_false')
+parser.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages, recommended', action = 'store_true')
+parser.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to activation montages', action = 'store_true')
+parser.add_argument('-cor', dest = 'Coronal', help = 'Add coronal images to activation montages', action = 'store_true')
+parser.add_argument('-coreg', dest = 'coreg', help = 'If specified, perform corregistration.  Need anatomical', action = 'store_true')
+parser.add_argument('-show_ROI', dest = 'show', help = 'Shows prespecified MNI coordinates for Default mode, attention network, and reference network for seed based correlation.  Will NOT make report if specified.', action = 'store_true')
+parser.add_argument('-ROI' , dest = 'User_ROI', help = 'ex: "--ROI \'(0,0,0),(0,-53,26)\'"   MNI coordinates for seed voxel correlation computation', default = '[]')
+parser.add_argument('-ROI_def', dest = 'ROI_default', help = 'If specified default mode network seed voxel analysis to be shown in report. voxels already specified in code.', action = 'store_true')
+parser.add_argument('-ROI_att', dest = 'ROI_attention', help = 'If specified attention network seed voxel analysis to be shown in report. voxels already specified in code.', action = 'store_true')
+parser.add_argument('-ROI_ref', dest = 'ROI_reference', help = 'If specified reference network seed voxel analysis to be shown in report. voxels already specified in code.', action = 'store_true')
+parser.add_argument('-MNI', dest = 'MNI', help = 'If specified will compute seed voxel correlation needs MNI option specified in meica.py', action = 'store_true')
+parser.add_argument('-mt', dest = 'montage_threshold', help = 'Normalized z-score value for thresholding the accepted component w/ anatomical activation map, default = 1.96', type = float, default = 1.96)
+parser.add_argument('-ct', dest = 'corr_threshold', help = 'Normalized z-score value for thresholding the seed voxel map, default = 1.96', type = float, default = 1.96)
+parser.add_argument('-latex', dest = 'latex', help = 'If specified, will use pdfLatex to build tex version of meica report.', action = 'store_true')
+parser.add_argument('-min_v', dest = 'min_variance_explained', help = 'Minimum variance explained before warning raised in report, default = 85', type = int, default = 85)
+parser.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum total component number before warning raised in report, default = 20', type = int, default = 20)
+parser.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
 args = parser.parse_args()
 
 dep_check()
+
+if args.show:
+	print 'Default mode netowrk seed MNI coordinates:\n' + str(ROI_default).replace('],','],\n')
+	print '\nAttention network seed MNI cooridnates:\n' + str(ROI_attention).replace('],','],\n')
+	print '\nReference network seed MNI coordinates:\n' + str(ROI_reference).replace('],','],\n')
+	print '++ To create report, do not specify -show_ROI'
+	sys.exit()
 
 import meica_figures
 import sphinx_files
@@ -209,83 +240,69 @@ import rst_files
 setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, args.anat)
 reportdir = os.path.dirname(sys.argv[0])
 User_ROI = seed_split(args.User_ROI)
-file_check(anat, startdir, TED, setname, args.MNI, reportdir)
+figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures)
+label = args.label
+
+if os.path.isdir(label) and args.overwrite:
+	print '%s directory already exits and -overwrite not specified' % label
+	sys.exit()
+if os.path.isdir('%s/%s' % (startdir,label)):
+	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
+
 
 ctab = '%s/%s/%s/comp_table.txt' % (startdir,setname,TED)
 tsoc = '%s/%s/%s/ts_OC.nii' % (startdir,setname,TED)
 medn = '%s/%s/%s/dn_ts_OC.nii' % (startdir,setname,TED)
 mefl = '%s/%s/%s/betas_OC.nii' % (startdir,setname,TED)
 
-if args.ROI_default == True:#default mode MNI coordinates
-	ROI_default = 	[[0,-53,26,'pC'],
-					[0,52,6,'mPFC'],
-					[-48,-62,36,'LatPar_L',],
-					[46,-62,32,'Latpar_R'],
-					[-24,-22,-20,'HF_L'],
-					[24,-20,-22,'HF_R']]
-else:
+if not args.ROI_default:
 	ROI_default = []
-
-if args.ROI_attention == True:#attention network MNI coordinates
-	ROI_attention = [[-38,-4,48,'FEF_L'],
-					[40,-4,48,'FEF_R'],
-					[-24,-58,52,'IPS_L'],
-					[22,-58,54,'IPS_R'],
-					[-56,-60,-2,'MT+_L'],
-					[54,-58,-4,'MT+_R']]
-else:
+if not args.ROI_attention:
 	ROI_attention = []
-				
-if args.ROI_refference == True:#refference network MNI coordinates
-	ROI_refference =[[-36,-25,57,'Mot_L'],
-					[36,-25,57,'Mot_R'],
-					[-43,-26,12,'Aud_L'],
-					[43,-26,12,'Aud_R'],
-					[-30,-88,0,'Vis_L'],
-					[30,-88,0,'Vis_R']]
-else:
-	ROI_refference = []
+if not args.ROI_reference:
+	ROI_reference = []
 
-corr = MNI_check(args.MNI, User_ROI, ROI_default, ROI_attention, ROI_refference)#checks to make sure MNI is True if ROI's are specified
+corr = MNI_check(args.MNI, User_ROI, ROI_default, ROI_attention, ROI_reference)#checks to make sure MNI is True if ROI's are specified
 if args.MNI:
 	if ROI_default != []:
 		meica_figures.check_ROI(ROI_default,startdir,setname, TED,'Default mode')#check default MNI within bounds
 	if ROI_attention != []:
 		meica_figures.check_ROI(ROI_attention,startdir,setname, TED,'Attention network')#check attention MNI within bounds
-	if ROI_refference != []:
-		meica_figures.check_ROI(ROI_refference,startdir,setname, TED,'Refference netowrk')#check refference MNI within bounds
+	if ROI_reference != []:
+		meica_figures.check_ROI(ROI_reference,startdir,setname, TED,'Reference netowrk')#check reference MNI within bounds
 	if User_ROI != []:
 		meica_figures.check_ROI(User_ROI,startdir,setname, TED,'User specified')#check User_ROI MNI within bounds
 
-os.chdir(startdir)
+subprocess.call('mkdir %s/%s' % (startdir,label), shell = True)#make directories
+subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
+subprocess.call('mkdir %s/%s/_static' % (startdir,label), shell = True)
+subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
 
-subprocess.call('mkdir %s/sphinx' % startdir, shell = True)#make directories
-subprocess.call('mkdir %s/sphinx/_build' % startdir, shell = True)
-subprocess.call('mkdir %s/sphinx/_static' % startdir, shell = True)
-subprocess.call('mkdir %s/sphinx/_templates' % startdir, shell = True)
+
 
 components = meica_figures.file_parse(ctab)#collect components from ctab
 maps = meica_figures.collect_data(anat,mefl,'%s/%s/%s/feats_OC2.nii' % (startdir,setname,TED))#collect nifti data
 accept, reject, middle, ignore = meica_figures.split_components(ctab, components)#seperate components into their respective bins
 
-subprocess.call('mkdir %s/png_dump' % startdir, shell = True)
-subprocess.call('cp %s/warning.png %s/png_dump' % (reportdir,startdir), shell = True)
-os.chdir('%s/png_dump' % startdir)
+subprocess.call('mkdir %s/%s' % (startdir,figures), shell = True)
+subprocess.call('cp %s/warning.png %s/%s' % (reportdir,startdir,figures), shell = True)
+os.chdir('%s/%s' % (startdir,figures))
 
 #make figures
 print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
-if args.montage:
-	print('++ this set of figures may take a while')
-	meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, startdir, setname, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
+print('++ this set of figures may take a while')
+meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, startdir, setname, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
 if anat != '':
-	meica_figures.coreg(startdir,setname,anat)#create corregistration figure
+	if args.coreg:
+		meica_figures.coreg(startdir,setname,anat)#create corregistration figure
 	if args.MNI:
 		if len(accept) > 3:
-			meica_figures.correlation(startdir, setname, TED, anat, ROI_default, ROI_attention, ROI_refference, User_ROI, args.corr_threshold)#create correlation for ROIs
-			corr = True
+			meica_figures.correlation(startdir, setname, TED, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
+			if args.ROI_reference + args.ROI_attention + args.ROI_default + len(args.User_ROI) != 0:
+				corr = True
 		else:
 			print '++ not enough degrees of freedom to compute standard error'
 	else:
@@ -293,7 +310,7 @@ if anat != '':
 else:
 	print '++ no anatomical specified, cannot create coregistration or correlation maps'
 
-os.chdir('%s/sphinx' % startdir)
+os.chdir('%s/%s' % (startdir,label))
 
 #set up sphinx documentation
 sphinx_files.conf(__version__)
@@ -302,14 +319,28 @@ sphinx_files.make_file()
 
 #make .rst files for sphinx to use to generate the report
 print('++ occupying sphinx directory with .rst files')
-rst_files.diagnostics_rst(anat)
+rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained)
-if anat != '' and args.MNI and (len(ROI_default)>0 or len(ROI_attention)>0 or len(ROI_refference)>0 or len(User_ROI)>0):
-	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_refference,User_ROI)
+	args.min_component_number, args.min_variance_explained, figures)
+if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
+	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 
 #run sphinx build
 subprocess.call('make html', shell = True)
 subprocess.call('make latex', shell = True)
+
+if args.latex:
+	subprocess.call('make latexpdf', shell = True)
+
+subprocess.call('mv %s/%s/_build/* %s/%s' % (startdir,label,startdir,label), shell = True)
+subprocess.call('rm -rf _*', shell = True)
+subprocess.call('mkdir %s/%s/sphinx_files' % (startdir,label), shell = True)
+subprocess.call('mv %s/%s/*.rst %s/%s/sphinx_files/' % (startdir,label,startdir,label), shell = True)
+subprocess.call('mv %s/%s/Makefile %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
+subprocess.call('mv %s/%s/make.bat %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
+subprocess.call('mv %s/%s/conf.py %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
+subprocess.call('mv %s/%s %s/%s' % (startdir,figures,startdir,label), shell = True)
+
+
