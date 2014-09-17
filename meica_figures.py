@@ -231,6 +231,14 @@ def collect_data(anatomical, overlay, threshold_map):
 		anatomical = ni.load(anatomical)
 		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
+		anat_quat = anat_hdr.get_qform_quaternion()
+		anat_orient = np.zeros(shape = (3,2))
+		for i in range(3):
+			anat_orient[i,0] = i
+			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
+		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
+	if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+		anat_orient[2,1] = anat_orient[2,1]* -1
 	else:
 		anat_data = ''
 		anat_hdr = ''
@@ -240,6 +248,16 @@ def collect_data(anatomical, overlay, threshold_map):
 	overlay_data = overlay.get_data()
 	threshold_data = threshold.get_data()
 	overlay_hdr = overlay.get_header()
+	overlay_quat = overlay_hdr.get_qform_quaternion()
+	overlay_orient = np.zeros(shape = (3,2))
+	for i in range(3):
+			overlay_orient[i,0] = i
+			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
+	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+		overlay_orient[2,1] = overlay_orient[2,1]* -1
+	for i in range(overlay_data.shape[3]):
+		overlay_data = ni.orientations.apply_orientation(overlay_data,overlay_orient)
+		
 	
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
 
@@ -247,9 +265,7 @@ def collect_data(anatomical, overlay, threshold_map):
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
 def Rotation_matrix(quaternion):
-	a, b, c, d = quaternion[0], quaternion[1], quaternion[2], quaternion[3]
-	R = np.array([[a*a+b*b-c*c-d*d, 2*b*c-2*a*d, 2*b*d+2*a*c], [2*b*c+2*a*d, a*a-b*b+c*c-d*d,
-		2*c*d-2*a*b], [2*b*d-2*a*c, 2*c*d+2*a*b, a*a-b*b-c*c+d*d]]).astype('float64')
+	R = ni.quaternions.quat2mat(quaternion).astype('float64')
 	if np.linalg.det(R) == -1:
 		q_fac = -1
 	else:
