@@ -249,7 +249,6 @@ if os.path.isdir(label) and args.overwrite:
 if os.path.isdir('%s/%s' % (startdir,label)):
 	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
 
-
 ctab = '%s/%s/%s/comp_table.txt' % (startdir,setname,TED)
 tsoc = '%s/%s/%s/ts_OC.nii' % (startdir,setname,TED)
 medn = '%s/%s/%s/dn_ts_OC.nii' % (startdir,setname,TED)
