@@ -65,30 +65,30 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir, figures):
 	if not os.path.isfile(anat) and anat !='': 
 		print '*+ Can\'t find the specified anantomical'
 		fails += 1
-	if not os.path.isfile('%s/%s/%s/comp_table.txt' % (startdir,setname,TED)):
-		print '*+ Can\'t find "%s/%s/%s/comp_table.txt" check starting directory and file\'s existance.' % (startdir,setname,TED)
+	if not os.path.isfile('%s/comp_table.txt' % TED):
+		print '*+ Can\'t find "%s/comp_table.txt" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('%s/%s/%s/betas_OC.nii' % (startdir,setname,TED)):
-		print '*+ Can\'t find "%s/%s/%s/betas_OC.nii" check starting directory and file\'s existance.' % (startdir,setname,TED)
+	if not os.path.isfile('%s/betas_OC.nii' % TED):
+		print '*+ Can\'t find "%s/betas_OC.nii" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('%s/%s/%s/ts_OC.nii' % (startdir,setname,TED)):
-		print '*+ Can\'t find "%s/%s/%s/ts_OC.nii" check directory and file\'s existance.' % (startdir,setname,TED)
+	if not os.path.isfile('%s/ts_OC.nii' % TED):
+		print '*+ Can\'t find "%s/ts_OC.nii" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('%s/%s/%s/dn_ts_OC.nii' % (startdir,setname,TED)):
-		print '*+ Can\'t find "%s/%s/%s/dn_ts_OC.nii" check directory and file\'s existance.' % (startdir,setname,TED)
+	if not os.path.isfile('%s/dn_ts_OC.nii' % TED):
+		print '*+ Can\'t find "%s/dn_ts_OC.nii" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('%s/%s/ocv_uni_vr.nii.gz' % (startdir,setname)):
-		print '*+ Can\'t find "%s/%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % (startdir,setname)
+	if not os.path.isfile('ocv_uni_vr.nii.gz'):
+		print '*+ Can\'t find "%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % setname
 		fails += 1
-	if not os.path.isfile('%s/%s/%s/meica_mix.1D' % (startdir,setname,TED)):
-		print '*+ Can\'t find "%s/%s/%s/meica_mix.1D" check directory and file\'s existance.' % (startdir,setname,TED)
+	if not os.path.isfile('%s/meica_mix.1D' % TED):
+		print '*+ Can\'t find "%s/meica_mix.1D" check directory and file\'s existance.' % TED
 		fails += 1
 	if MNI == True:
-		if not os.path.isfile('%s/%s/eBvrmask.nii.gz' % (startdir,setname)):
-			print '*+ Can\'t find "%s/%s/eBvrmask.nii.gz check directory and file\'s existance.' % (startdir,setname)
+		if not os.path.isfile('eBvrmask.nii.gz'):
+			print '*+ Can\'t find "%s/eBvrmask.nii.gz check directory and file\'s existance.' % setname
 			fails += 1
-		if not os.path.isfile('%s/%s/%s/feats_OC2.nii' % (startdir,setname,TED)):
-			print '*+ Can\'t find "%s/%s/%s/feats_OC2.nii" check directory and file\'s existance.' % (startdir,setname,TED)
+		if not os.path.isfile('%s/feats_OC2.nii' % TED):
+			print '*+ Can\'t find "%s/feats_OC2.nii" check directory and file\'s existance.' % TED
 			fails += 1
 	if not os.path.isfile('%s/meica_figures.py' % reportdir):
 		print '*+ Can\'t find meica_figures.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
@@ -178,23 +178,18 @@ def path_name(setname, startdir, TED, anat):
 	else:
 		startdir = os.path.expanduser(startdir)
 
-	if startdir in os.path.expanduser(setname[:len(startdir)]):
-		setname = os.path.expanduser(setname[len(startdir):])
+	setname = os.path.abspath(os.path.expanduser(setname))
+	TED_ = os.path.abspath(os.path.expanduser(TED))
+	if not os.path.isdir(TED):
+		TED_ = setname + '/' + TED
+	TED = TED_
 
-	if startdir in os.path.expanduser(TED[:len(startdir)]):
-		TED = os.path.expanduser(TED[len(startdir):])
-		if setname in TED[:len(setname)]:
-			TED = TED[len(setname):]
-
-	anat = os.path.expanduser(anat)
-
+	anat = os.path.abspath(os.path.expanduser(anat))
 	if '/' in startdir[-1:]:#remove "/" at the end of the paths
 		startdir = startdir[:-1]
-	if '/' in setname[-1:]:
-		setname = setname[:-1]
-	if '/' in TED[-1:]:
-		TED = TED[:-1]
-
+	if './' in startdir or './' in setname or './' in TED or './' in anat:
+		print 'please remove elipses short cuts(.) from the path names.' 
+		sys.exit()
 	return(setname, startdir, TED, anat)
 
 
@@ -206,7 +201,7 @@ lab.add_argument('-label', dest = 'label', help = 'Label to tag directory for al
 lab.add_argument('-f_label', dest = 'figures', help = 'Label to tag directory for all figures to be places, default is "Report_Figures"', default = 'Report_Figures')
 lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 lab.add_argument('-dir', dest = 'startdir', help = 'Directory that meica.py was run from.  Default is current directory', default = '')
-lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is TED', default = 'TED')
+lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
 lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -label specified but directory already exists, will overwrite', action = 'store_false')
 options = parser.add_argument_group('Report options')
 options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages', action = 'store_true')
@@ -243,6 +238,7 @@ import rst_files
 setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, args.anat)
 reportdir = os.path.dirname(sys.argv[0])
 User_ROI = seed_split(args.User_ROI)
+os.chdir(setname)
 figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures)
 label = args.label
 
@@ -252,10 +248,10 @@ if os.path.isdir(label) and args.overwrite:
 if os.path.isdir('%s/%s' % (startdir,label)):
 	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
 
-ctab = '%s/%s/%s/comp_table.txt' % (startdir,setname,TED)
-tsoc = '%s/%s/%s/ts_OC.nii' % (startdir,setname,TED)
-medn = '%s/%s/%s/dn_ts_OC.nii' % (startdir,setname,TED)
-mefl = '%s/%s/%s/betas_OC.nii' % (startdir,setname,TED)
+ctab = '%s/comp_table.txt' % TED
+tsoc = '%s/ts_OC.nii' % TED
+medn = '%s/dn_ts_OC.nii' % TED
+mefl = '%s/betas_OC.nii' % TED
 
 if not args.ROI_default:
 	ROI_default = []
@@ -267,13 +263,14 @@ if not args.ROI_reference:
 corr = MNI_check(args.MNI, User_ROI, ROI_default, ROI_attention, ROI_reference)#checks to make sure MNI is True if ROI's are specified
 if args.MNI:
 	if ROI_default != []:
-		meica_figures.check_ROI(ROI_default,startdir,setname, TED,'Default mode')#check default MNI within bounds
+		meica_figures.check_ROI(ROI_default,setname, TED,'Default mode')#check default MNI within bounds
 	if ROI_attention != []:
-		meica_figures.check_ROI(ROI_attention,startdir,setname, TED,'Attention network')#check attention MNI within bounds
+		meica_figures.check_ROI(ROI_attention,setname, TED,'Attention network')#check attention MNI within bounds
 	if ROI_reference != []:
-		meica_figures.check_ROI(ROI_reference,startdir,setname, TED,'Reference netowrk')#check reference MNI within bounds
+		meica_figures.check_ROI(ROI_reference,setname, TED,'Reference netowrk')#check reference MNI within bounds
 	if User_ROI != []:
-		meica_figures.check_ROI(User_ROI,startdir,setname, TED,'User specified')#check User_ROI MNI within bounds
+		meica_figures.check_ROI(User_ROI,setname, TED,'User specified')#check User_ROI MNI within bounds
+
 
 subprocess.call('mkdir %s/%s' % (startdir,label), shell = True)#make directories
 subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
@@ -283,7 +280,7 @@ subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
 
 
 components = meica_figures.file_parse(ctab)#collect components from ctab
-maps = meica_figures.collect_data(anat,mefl,'%s/%s/%s/feats_OC2.nii' % (startdir,setname,TED))#collect nifti data
+maps = meica_figures.collect_data(anat,mefl,'%s/feats_OC2.nii' % TED)#collect nifti data
 accept, reject, middle, ignore = meica_figures.split_components(ctab, components)#seperate components into their respective bins
 
 subprocess.call('mkdir %s/%s' % (startdir,figures), shell = True)
@@ -296,13 +293,13 @@ meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
 print('++ this set of figures may take a while')
-meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, startdir, setname, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
+meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
 if anat != '':
 	if args.coreg:
-		meica_figures.coreg(startdir,setname,anat)#create corregistration figure
+		meica_figures.coreg(startdir, setname, figures, anat)#create corregistration figure
 	if args.MNI:
 		if len(accept) > 3:
-			meica_figures.correlation(startdir, setname, TED, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
+			meica_figures.correlation(TED, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
 			if args.ROI_reference + args.ROI_attention + args.ROI_default + len(args.User_ROI) != 0:
 				corr = True
 		else:

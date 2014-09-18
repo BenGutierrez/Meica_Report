@@ -41,15 +41,14 @@ GYR = LinearSegmentedColormap('GYR', cdict)
 """
 Check that the MNI coordinates of the ROI's are within the image MNI range
 ROI: array of MNI coordinates
-startdir: string starting directory path
 setname: path of directory containing the TED directory
 description: string describing ROI to be ouputted to the user
 """
-def check_ROI(ROI, startdir, setname, TED,description):
+def check_ROI(ROI, TED, description):
 	fails = 0
 	if ROI != []:
-		beta = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_data()
-		beta_hdr = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_header()
+		beta = ni.load('%s/betas_hik_OC.nii' % TED).get_data()
+		beta_hdr = ni.load('%s/betas_hik_OC.nii' % TED).get_header()
 		corners = np.zeros((3,1,2))
 		cord_matrix = beta_hdr.get_best_affine()[0:3,0:3]
 		corners[:,:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
@@ -76,8 +75,8 @@ startdir: string starting directory path
 setname: path of directory containing the TED directory
 TED: TED directory from tedana.py
 """
-def FFT(series, i, N, startdir, setname, TED):
-	path = '%s/%s/%s/betas_OC.nii' % (startdir,setname,TED)
+def FFT(TED, series, i, N):
+	path = '%s/betas_OC.nii' % TED
 	p = subprocess.Popen(['3dinfo','-tr', path], stdout = subprocess.PIPE, stderr = subprocess.PIPE)# retrieve TR
 	TR, err = p.communicate()
 
@@ -237,8 +236,8 @@ def collect_data(anatomical, overlay, threshold_map):
 			anat_orient[i,0] = i
 			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
 		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
-	if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-		anat_orient[2,1] = anat_orient[2,1]* -1
+		# if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+		# 	anat_orient[2,1] = anat_orient[2,1]* -1
 	else:
 		anat_data = ''
 		anat_hdr = ''
@@ -253,8 +252,8 @@ def collect_data(anatomical, overlay, threshold_map):
 	for i in range(3):
 			overlay_orient[i,0] = i
 			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-		overlay_orient[2,1] = overlay_orient[2,1]* -1
+	# if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+	# 	overlay_orient[2,1] = overlay_orient[2,1]* -1
 	for i in range(overlay_data.shape[3]):
 		overlay_data = ni.orientations.apply_orientation(overlay_data,overlay_orient)
 		
@@ -286,8 +285,8 @@ Sagittal: true or false. plot sagittal or not
 Coronal: true or false. plot coronal or not
 """
 
-def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagittal, Coronal):
-	series = '%s/%s/%s/meica_mix.1D' % (startdir,setname, TED)
+def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
+	series = '%s/meica_mix.1D' % TED
 	anat = maps[0]
 	overlay = maps[1]
 	threshold_data = maps[2]
@@ -440,7 +439,7 @@ def montage(maps, accept, threshold, alpha, startdir, setname, TED, Axial, Sagit
 			N = '0' + N
 		plt.savefig('Component_' + N)
 		plt.close()
-		FFT(series, i, N, startdir, setname, TED)
+		FFT(TED, series, i, N)
 		print ('++ figures created for Component %s' % N)
 
 """
@@ -448,11 +447,11 @@ Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
 anat: path of the anatomcial image
 """
-def coreg(startdir,setname,anat):
+def coreg(startdir, setname, figures, anat):
 	fig = plt.figure(figsize = (3.2*5,4))
 	gs0 = gridspec.GridSpec(1,3)
-	os.chdir('%s/%s' % (startdir,setname))
-	os.system('rm -f ocv_uni_vrm*')
+	os.chdir(setname)
+	subprocess.call('rm -f %s/ocv_uni_vrm*' % setname, shell = True)
 	if '.nii.gz' in anat[-7:]:
 		anat_name = anat[:-7]
 	if '.nii' in anat[-4:]:
@@ -462,13 +461,12 @@ def coreg(startdir,setname,anat):
 		anat_name = anat_name[1:]
 
 	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
-	if os.path.isfile('orig ocv_uni_vrm+tlrc.BRIK'):
-		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc.', shell = True)
-	subprocess.call('@AddEdge ocv_uni_vrm+orig. %s+orig.' % (anat_name), shell = True)
+	if os.path.isfile('ocv_uni_vrm+tlrc.BRIK'):
+		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
+	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
-	os.chdir('../png_dump')
 	overlay[overlay == 0] = np.nan
 
 	fig = plt.figure(figsize = (3.2*5,4))
@@ -480,6 +478,7 @@ def coreg(startdir,setname,anat):
 		plt.axis('off')
 	gs0.tight_layout(fig, w_pad = -2)
 	fig.subplots_adjust(right = 0.9)
+	os.chdir('%s/%s' % (startdir,figures))
 	plt.savefig('coregistration')
 	plt.close()
 	print '++ finished corregistration figure'
@@ -572,7 +571,7 @@ setname: name of directory containing the TED directory
 nsmprgae: path to the anatomical image
 threshold: z-score to threshold data at.  data symmetrically thresholded about zero with threshold
 """
-def correlation(startdir, setname, TED, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
+def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
 	cdict = {'red':  	  ((0.0, 0.0, 0.0),
 						   (0.6, 0.0, 0.0),
 						   (0.7, 0.6, 0.6),
@@ -593,8 +592,8 @@ def correlation(startdir, setname, TED, nsmprage, ROI_default, ROI_attention, RO
 		        }
 
 	BGYR = LinearSegmentedColormap('BGYR', cdict)
-	beta = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_data()
-	beta_hdr = ni.load('%s/%s/%s/betas_hik_OC.nii' % (startdir, setname, TED)).get_header()
+	beta = ni.load('%s/betas_hik_OC.nii' % TED).get_data()
+	beta_hdr = ni.load('%s/betas_hik_OC.nii' % TED).get_header()
 	anat = ni.load(nsmprage).get_data()
 	anat_hdr = ni.load(nsmprage).get_header()
 
@@ -730,7 +729,7 @@ comptable title: path to the ctab file
 """
 def kr_vs_component(comp_table_title):
 	fig = plt.figure()
-	components = np.loadtxt(str(comp_table_title))
+	components = np.loadtxt(comp_table_title)
 	plt.figure()
 	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' and ' + r'$\rho$' + ' vs Component Rank', fontsize = 14)
 	plt.ylabel(r'$\kappa$' ', ' + r'$\rho$', fontsize = 15)
