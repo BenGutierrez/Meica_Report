@@ -28,7 +28,7 @@ ROI_attention = [[-38,-4,48,'FEF_L'],#attention network MNI coordinates
 				[-56,-60,-2,'MT+_L'],
 				[54,-58,-4,'MT+_R']]
 
-ROI_reference =[[-36,-25,57,'Mot_L'],#reference network MNI coordinates
+ROI_reference = [[-36,-25,57,'Mot_L'],#reference network MNI coordinates
 				[36,-25,57,'Mot_R'],
 				[-43,-26,12,'Aud_L'],
 				[43,-26,12,'Aud_R'],
@@ -62,7 +62,7 @@ def seed_split(ROI):
 
 def file_check(anat, startdir, TED, setname, MNI, reportdir, figures):
 	fails = 0
-	if not os.path.isfile(anat) and anat !='': 
+	if not os.path.isfile(anat) and anat != '': 
 		print '*+ Can\'t find the specified anantomical'
 		fails += 1
 	if not os.path.isfile('%s/comp_table.txt' % TED):
@@ -184,7 +184,8 @@ def path_name(setname, startdir, TED, anat):
 		TED_ = setname + '/' + TED
 	TED = TED_
 
-	anat = os.path.abspath(os.path.expanduser(anat))
+	if anat != '':
+		anat = os.path.abspath(os.path.expanduser(anat))
 	if '/' in startdir[-1:]:#remove "/" at the end of the paths
 		startdir = startdir[:-1]
 	if './' in startdir or './' in setname or './' in TED or './' in anat:

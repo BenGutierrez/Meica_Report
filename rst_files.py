@@ -7,7 +7,7 @@ import numpy as np
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, N):
+def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, num):
 	sl = []
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
@@ -48,7 +48,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('     %s             %s              %s                 %s    ' % 
 		(len(accept), len(reject), len(middle), len(ignore)))
 	sl.append('=============  =============  =================  =============\n\n')
-	if nsmprage != '' or N != 0:
+	if nsmprage != '' and num != 0:
 		sl.append('Accepted Components with anatomical')
 		sl.append('+++++++++++++++++++++++++++++++++++')	
 		sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)

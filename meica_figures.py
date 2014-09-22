@@ -401,24 +401,22 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
 						plt.tight_layout(pad = 2)
 					else:
 						plt.tight_layout(pad = 2, h_pad = -8)
-			if Axial + Sagittal + Coronal == 0:
-				gs1 = gridspec.GridSpec(1,1)
-				ax4 = fig.add_subplot(gs1[0,0])
-				gs1.tight_layout(fig, rect = [0.025/2,.05,1,.65])
+			
+				# gs1 = gridspec.GridSpec(1,1)
+				# ax5 = fig.add_subplot(gs1[0,0])
+				# gs1.tight_layout(fig, rect = [0.025/2,.05,1,.65])
 
-			time_series = np.loadtxt(series)#plots time series of the component
-			plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-			plt.xlabel('Time (TR)', fontsize = 12)
-			plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-
-			if Axial + Sagittal + Coronal != 0:	
+				time_series = np.loadtxt(series)#plots time series of the component
+				plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
+				plt.xlabel('Time (TR)', fontsize = 12)
+				plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+		
 				cbar_ax = fig.add_axes([.95,.3,.01,.65])
 				fig.colorbar(bar, cax = cbar_ax)
 				plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
-			
-			plt.savefig('Accepted_Component_' + N)
-			plt.close()
-		if i not in accept or anat == '':
+				plt.savefig('Accepted_Component_' + N)
+				plt.close()
+		else:
 			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N)
 		FFT(TED, series, i, N)
 		print ('++ figures created for Component %s' % N)
