@@ -180,7 +180,7 @@ def path_name(setname, startdir, TED, anat):
 
 	setname = os.path.abspath(os.path.expanduser(setname))
 	TED_ = os.path.abspath(os.path.expanduser(TED))
-	if not os.path.isdir(TED):
+	if not os.path.isdir(TED_):
 		TED_ = setname + '/' + TED
 	TED = TED_
 
@@ -188,10 +188,9 @@ def path_name(setname, startdir, TED, anat):
 	if '/' in startdir[-1:]:#remove "/" at the end of the paths
 		startdir = startdir[:-1]
 	if './' in startdir or './' in setname or './' in TED or './' in anat:
-		print 'please remove elipses short cuts(.) from the path names.' 
+		print 'please remove elipses short cuts, i.e: "../foo", from the path names.' 
 		sys.exit()
 	return(setname, startdir, TED, anat)
-
 
 parser = argparse.ArgumentParser('Options')
 Required = parser.add_argument_group('Required arguments')
@@ -271,13 +270,10 @@ if args.MNI:
 	if User_ROI != []:
 		meica_figures.check_ROI(User_ROI,setname, TED,'User specified')#check User_ROI MNI within bounds
 
-
 subprocess.call('mkdir %s/%s' % (startdir,label), shell = True)#make directories
 subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_static' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
-
-
 
 components = meica_figures.file_parse(ctab)#collect components from ctab
 maps = meica_figures.collect_data(anat,mefl,'%s/feats_OC2.nii' % TED)#collect nifti data
@@ -322,7 +318,7 @@ rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained, figures)
+	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 
@@ -341,5 +337,4 @@ subprocess.call('mv %s/%s/Makefile %s/%s/sphinx_files' % (startdir,label,startdi
 subprocess.call('mv %s/%s/make.bat %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s/conf.py %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s %s/%s' % (startdir,figures,startdir,label), shell = True)
-
 

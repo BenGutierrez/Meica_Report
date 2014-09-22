@@ -315,8 +315,10 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
 			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
 
 	for i in range(overlay.shape[3]):# number of components
-		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))#accounts for variability in choices of axial, sagittal, cornoal images in final figure
-		gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
+		N = str(i)
+		while len(N) < len(str(overlay.shape[3])):
+			N = '0' + N
+		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2.5))
 		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
 			if Axial + Sagittal + Coronal != 0:
 				overlay_acc = np.absolute(threshold_data[:,:,:,l])
@@ -328,119 +330,147 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
 				for j in range(len(itemindex[0])):
 					overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
 				overlay_acc[overlay_mask == 0] = np.nan
-			for j in range(10):#plot montage of accept component onto anatomical
-				if Axial:#plot axial
-					ax1 = fig.add_subplot(gs0[0,j])
-					plt.imshow(anat[:,:,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
-						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
-						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
-					plt.axis('off')
-				if Sagittal:#plot sagittal
-					ax2 = fig.add_subplot(gs0[Axial,j])
-					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
-						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
-					plt.axis('off')
-				if Coronal:#plot coronal
-					ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
-					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
-						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
-					plt.axis('off')
-			l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
-			
-			gs1 = gridspec.GridSpec(1,1)#plot time series of component
-			ax4 = fig.add_subplot(gs1[0,0])#formatting
-			if Axial + Sagittal + Coronal == 3:
-				fig.subplots_adjust(top = 0.3)
-				gs0.tight_layout(fig, h_pad = -5, w_pad = 0.5, rect = [0,.3,.95,1])
-			elif Axial + Sagittal + Coronal == 2:
-				fig.subplots_adjust(top = 0.21)
-				gs0.tight_layout(fig, h_pad = -13, w_pad = 1.5, rect = [0,.2,.95,1])
-			elif Axial + Sagittal + Coronal == 1:
-				fig.subplots_adjust(top = 0.21)
-				gs0.tight_layout(fig, rect = [0,.2,.95,1])
+
+				#accounts for variability in choices of axial, sagittal, cornoal images in final figure
+				hieght = [1]
+				width = [1]
+				if (Axial + Sagittal + Coronal) ==3:
+					height = [1.25,1,1,.75]
+					width = [2,.05]
+				elif (Axial + Sagittal + Coronal) ==2:
+					if Sagittal:
+						height = [1.25,1,.75]
+						width = [3,.05]
+					else:
+						height = [1,1,.75]
+						width = [3,.05]
+				elif (Axial + Sagittal + Coronal) ==1:
+					height = [1,.75]
+					width = [3,.05]
+				gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,2, height_ratios = height, width_ratios = width)
+
+				contrast = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+				maximum = np.percentile(contrast,98)
+				minimum = np.percentile(contrast,2)
+				for j in range(10):#plot montage of accept component onto anatomical
+					if Axial:#plot axial
+						gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
+						ax1 = fig.add_subplot(gs01[0,j])
+						plt.imshow(anat[:,::-1,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
+							interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
+						bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
+							,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+						plt.axis('off')
+						ax1 = fig.add_subplot(gs01[1,j])
+						plt.imshow(overlay[:,:,overlay.shape[2]*j*.1,l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+						plt.axis('off')
+					if Sagittal:#plot sagittal
+						gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
+						ax2 = fig.add_subplot(gs02[0,j])
+						plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
+							origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
+						bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
+							overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+						plt.axis('off')
+						ax2 = fig.add_subplot(gs02[1,j])
+						plt.imshow(overlay[overlay.shape[0]*j*.1,:,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+						plt.axis('off')
+					if Coronal:#plot coronal
+						gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
+						ax3 = fig.add_subplot(gs03[0,j])
+						plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
+							origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
+						bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
+							overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
+						plt.axis('off')
+						ax3 = fig.add_subplot(gs03[1,j])
+						plt.imshow(overlay[:,overlay.shape[2]*j*.1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+						plt.axis('off')
+				l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
+				
+				
+				gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
+				ax4 = fig.add_subplot(gs04[0,0])#formatting
+				# plt.tight_layout(h_pad = -7, w_pad = -10, pad = 2.5)
+				if Axial + Sagittal + Coronal == 3:
+					plt.tight_layout(pad = 2.5, h_pad = -10)
+				elif Axial + Sagittal + Coronal == 2:
+					plt.tight_layout(h_pad = -10, pad = 2)
+				else:
+					if Sagittal:
+						plt.tight_layout(pad = 2)
+					else:
+						plt.tight_layout(pad = 2, h_pad = -8)
+			if Axial + Sagittal + Coronal == 0:
+				gs1 = gridspec.GridSpec(1,1)
+				ax4 = fig.add_subplot(gs1[0,0])
+				gs1.tight_layout(fig, rect = [0.025/2,.05,1,.65])
 
 			time_series = np.loadtxt(series)#plots time series of the component
-		 	plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-		 	plt.xlabel('Time (TR)', fontsize = 12)
-		 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-			gs1.tight_layout(fig, rect = [0,0,.95,.65 - (Axial + Sagittal + Coronal) * .1])
-			if Axial + Sagittal + Coronal != 0:
-				right = max(gs0.right, gs1.right)
-				left = max(gs0.left, gs1.left)
-				gs0.update(left = left, right = right)
-				gs1.update(left = left, right = right)
-				cbar_ax = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs1.bottom, .01, gs0.top - (gs1.bottom * 2)])
+			plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
+			plt.xlabel('Time (TR)', fontsize = 12)
+			plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+
+			if Axial + Sagittal + Coronal != 0:	
+				cbar_ax = fig.add_axes([.95,.3,.01,.65])
 				fig.colorbar(bar, cax = cbar_ax)
 				plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
-			N = str(i)
-			while len(N) < len(str(overlay.shape[3])):
-				N = '0' + N
+			
 			plt.savefig('Accepted_Component_' + N)
 			plt.close()
-		
-		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
-		gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
-
-		if Axial + Sagittal + Coronal != 0:
-			overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
-			overlay_x = mask(overlay[:,:,:,i],(1,2))
-			overlay_y = mask(overlay[:,:,:,i],(0,2))
-			contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
-			maximum = np.percentile(contrast,98)
-			minimum = np.percentile(contrast,2)
-
-		for j in range(10):#plot greyscale component montage
-			if Axial:#plot axial
-				ax1 = fig.add_subplot(gs0[0,j])
-				plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r',
-					origin = 'lower', vmin = minimum, vmax = maximum)
-				plt.axis('off')
-			if Sagittal:#plot sagittal
-				ax2 = fig.add_subplot(gs0[Axial,j])
-				plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',
-					origin = 'lower', vmin = minimum, 
-					vmax = maximum)
-				plt.axis('off')
-			if Coronal:#plot coronal
-				ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
-				plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r',
-					origin = 'lower', vmin = minimum, 
-					vmax = maximum)
-				plt.axis('off')
-		if Axial + Sagittal + Coronal == 3:#formatting image
-			fig.subplots_adjust(top=0.3)
-			gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
-		elif Axial + Sagittal + Coronal == 2:
-			fig.subplots_adjust(top=0.21)
-			gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
-		elif Axial + Sagittal + Coronal == 1:
-			fig.subplots_adjust(top=0.15)
-			gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
-
-		gs1 = gridspec.GridSpec(1,1)#plot time series of component
-		ax4 = fig.add_subplot(gs1[0,0])
-		time_series = np.loadtxt(series)
-	 	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
-	 	plt.xlabel('Time (TR)', fontsize = 12)
-		plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-		gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagittal + Coronal) * .1])
-		right = max(gs0.right, gs1.right)
-		left = max(gs0.left, gs1.left)
-		gs0.update(left = left, right = right)
-		gs1.update(left = left, right = right)
-
-		N = str(i)
-		while len(N) < len(str(overlay.shape[3])):
-			N = '0' + N
-		plt.savefig('Component_' + N)
-		plt.close()
+		if i not in accept or anat == '':
+			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N)
 		FFT(TED, series, i, N)
 		print ('++ figures created for Component %s' % N)
+
+def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N):
+	fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
+	gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
+
+	if Axial + Sagittal + Coronal != 0:
+		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
+		overlay_x = mask(overlay[:,:,:,i],(1,2))
+		overlay_y = mask(overlay[:,:,:,i],(0,2))
+		contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+		maximum = np.percentile(contrast,98)
+		minimum = np.percentile(contrast,2)
+
+	for j in range(10):#plot greyscale component montage
+		if Axial:#plot axial
+			ax1 = fig.add_subplot(gs0[0,j])
+			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.axis('off')
+		if Sagittal:#plot sagittal
+			ax2 = fig.add_subplot(gs0[Axial,j])
+			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.axis('off')
+		if Coronal:#plot coronal
+			ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
+			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.axis('off')
+	if Axial + Sagittal + Coronal == 3:#formatting image
+		fig.subplots_adjust(top=0.3)
+		gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
+	elif Axial + Sagittal + Coronal == 2:
+		fig.subplots_adjust(top=0.21)
+		gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
+	elif Axial + Sagittal + Coronal == 1:
+		fig.subplots_adjust(top=0.15)
+		gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
+
+	gs1 = gridspec.GridSpec(1,1)#plot time series of component
+	ax4 = fig.add_subplot(gs1[0,0])
+	time_series = np.loadtxt(series)
+ 	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
+ 	plt.xlabel('Time (TR)', fontsize = 12)
+	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+	gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagittal + Coronal) * .1])
+	right = max(gs0.right, gs1.right)
+	left = max(gs0.left, gs1.left)
+	gs0.update(left = left, right = right)
+	gs1.update(left = left, right = right)
+	plt.savefig('Component_' + N)
+	plt.close()
 
 """
 Create a figure of the corregistration of the overlay onto the anatomcial image
