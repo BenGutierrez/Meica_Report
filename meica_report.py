@@ -170,7 +170,9 @@ def path_name(setname, startdir, TED, anat):
 	if setname == '':
 		print '*+ Need to specify the option -setname to run meica_report.py'
 		sys.exit()
-
+	if not os.path.isdir(setname):
+		print '*+ -setname argument "%s" not found' % setname
+		sys.exit()
 	if startdir == '':#make sure paths are in correct form and remove like "~/"
 		p = subprocess.Popen('pwd', stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 		startdir, err = p.communicate()
@@ -191,6 +193,7 @@ def path_name(setname, startdir, TED, anat):
 	if './' in startdir or './' in setname or './' in TED or './' in anat:
 		print 'please remove elipses short cuts, i.e: "../foo", from the path names.' 
 		sys.exit()
+
 	return(setname, startdir, TED, anat)
 
 parser = argparse.ArgumentParser('Options')
@@ -202,7 +205,7 @@ lab.add_argument('-f_label', dest = 'figures', help = 'Label to tag directory fo
 lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 lab.add_argument('-dir', dest = 'startdir', help = 'Directory that meica.py was run from.  Default is current directory', default = '')
 lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
-lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -label specified but directory already exists, will overwrite', action = 'store_false')
+lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -overwrite specified and -label directory already exists, will overwrite', action = 'store_false')
 options = parser.add_argument_group('Report options')
 options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages', action = 'store_true')
 options.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to activation montages', action = 'store_true')
@@ -242,7 +245,7 @@ os.chdir(setname)
 figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures)
 label = args.label
 
-if os.path.isdir(label) and args.overwrite:
+if os.path.isdir('%s/%s' % (startdir,label)) and args.overwrite:
 	print '%s directory already exits and -overwrite not specified' % label
 	sys.exit()
 if os.path.isdir('%s/%s' % (startdir,label)):
