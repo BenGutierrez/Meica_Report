@@ -20,20 +20,20 @@ import os
 
 
 #frequently used green yellow red color map
-cdict = {'red':  ((0.0,  0.0, 0.0),
-						   (0.2, 0.6, 0.6),
-						   (0.35, 0.9, 0.9),
-						   (0.5, 1.0, 1.0),
-		                   (1.0, 1.0, 1.0)),
+cdict = {'red':  			((0.0,  0.0, 0.0),
+						    (0.2, 0.6, 0.6),
+						    (0.35, 0.9, 0.9),
+						    (0.5, 1.0, 1.0),
+		                    (1.0, 1.0, 1.0)),
 
-		         'green': ((0.0, 1.0, 1.0),
-		         		   (0.5, 1.0, 1.0),
-		         		   (0.65, 0.9, 0.9),
-		                   (0.9, 0.5, 0.5),
-		                   (1.0, 0.0, 0.0)),
+		         'green':   ((0.0, 1.0, 1.0),
+		         		    (0.5, 1.0, 1.0),
+		         		    (0.65, 0.9, 0.9),
+		                    (0.9, 0.5, 0.5),
+		                    (1.0, 0.0, 0.0)),
 
-		         'blue':  ((0.0, 0.0, 0.0),
-		                   (1.0, 0.0, 0.0))
+		         'blue':    ((0.0, 0.0, 0.0),
+		                    (1.0, 0.0, 0.0))
 		        }
 
 GYR = LinearSegmentedColormap('GYR', cdict)
@@ -742,7 +742,7 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
 	plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
 		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
-	plt.gca().xaxis.set_major_locator( MaxNLocator(nbins = 5))
+	plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
 	plt.tick_params(axis = 'x', which = 'both', top = 'off')
 	plt.tick_params(axis = 'y', which = 'both', right = 'off')
 	plt.xlabel(r'$\kappa$', fontsize = 15)
@@ -758,7 +758,6 @@ comptable title: path to the ctab file
 def kr_vs_component(comp_table_title):
 	fig = plt.figure()
 	components = np.loadtxt(comp_table_title)
-	plt.figure()
 	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' and ' + r'$\rho$' + ' vs Component Rank', fontsize = 14)
 	plt.ylabel(r'$\kappa$' ', ' + r'$\rho$', fontsize = 15)
 	plt.xlabel('Component Rank', fontsize = 15)
@@ -768,3 +767,36 @@ def kr_vs_component(comp_table_title):
 	plt.savefig('kappa_rho_vs_components')
 	plt.close()	
 	print '++ finished kappa and rho vs component number figure'
+
+def motion(startdir,figures,setname):
+	os.chdir(setname)
+	motion = np.loadtxt('motion.1D')
+	if os.path.isfile('e.norm.1D'):
+		subprocess.call('rm -f e.norm.1D', shell = True)
+	subprocess.call('1d_tool.py -infile motion.1D -set_nruns 1 -derivative -collapse_cols euclidean_norm -write e.norm.1D', shell = True)
+	deriv = np.loadtxt('e.norm.1D')
+
+	os.chdir('%s/%s' % (startdir,figures))
+	plt.figure()
+	fig, ax = plt.subplots(nrows=6, ncols=1, sharex=True, sharey = True)
+	ax[0].set_title('Subject Motion', fontsize = 14)
+	plt.xlabel('Time (TR)', fontsize = 14)
+	plt.ylabel('distance (mm)', fontsize = 14)
+	label = ['x', 'y', 'z', 'pitch', 'roll', 'yaw']
+	for i in range(6):
+		ax[i].plot(np.arange(motion.shape[0]),motion[:,5-i])
+		ax[i].plot(np.arange(motion.shape[0]),np.zeros(shape = (motion.shape[0],1)), ls = '--', c = 'k')
+		ax[i].set_ylabel(label[i])
+
+	ax[0].set_yticks([ax[0].get_ylim()[0], 0, ax[0].get_ylim()[1]])
+	plt.setp([a.get_xticklabels() for a in fig.axes[:-1]], visible=False)
+	plt.savefig('motion_plot')
+	plt.close()
+
+	plt.figure()
+	plt.plot(np.arange(motion.shape[0]),deriv[:])
+	plt.xlabel('Time (TR)', fontsize = 14)
+	plt.ylabel('rate (mm/TR)', fontsize = 14)
+	plt.title('rate of motion')
+	plt.savefig('motion_rate')
+	plt.close()

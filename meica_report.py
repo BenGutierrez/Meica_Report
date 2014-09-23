@@ -289,6 +289,7 @@ print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
+meica_figures.motion(startdir,figures,setname)
 print('++ this set of figures may take a while')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
 if anat != '':
@@ -322,6 +323,7 @@ rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_thresh
 	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
+
 
 #run sphinx build
 subprocess.call('make html', shell = True)
