@@ -283,7 +283,10 @@ components = meica_figures.file_parse(ctab)#collect components from ctab
 maps = meica_figures.collect_data(anat,mefl,'%s/feats_OC2.nii' % TED)#collect nifti data
 accept, reject, middle, ignore = meica_figures.split_components(ctab, components)#seperate components into their respective bins
 
-subprocess.call('mkdir %s/%s' % (startdir,figures), shell = True)
+if os.path.isdir('%s/%s' % (startdir,figures)):
+	print ' %s/%s exits already.  Older image files will be overwritten.' % (startdir,figures)
+else:
+	subprocess.call('mkdir %s/%s' % (startdir,figures), shell = True)
 subprocess.call('cp %s/warning.png %s/%s' % (reportdir,startdir,figures), shell = True)
 os.chdir('%s/%s' % (startdir,figures))
 
