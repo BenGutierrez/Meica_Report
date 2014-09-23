@@ -1,9 +1,9 @@
 meica-figure
 ============
 
-Report form for meica.py from https://bitbucket.org/prantikk/me-ica
+Report generator for meica.py from https://bitbucket.org/prantikk/me-ica
 
-Use meica_report.py to generate the report.  The report will appear in the sphinx directory in html format and also latex format.
+Use meica_report.py to generate the report.  The report will appear in the specified directory in html format and also latex format.  To open the html format, just open the Report_form directory and then the html directory and open index.html.
 
 use 'meica_report.py -h' for help
 
