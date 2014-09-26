@@ -157,7 +157,6 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	ofh = open("analysis.rst","w")
 	ofh.write("\n".join(sl) + "\n")
 	ofh.close()
-
 """
 make diagnostics.rst file
 """
@@ -197,7 +196,6 @@ def diagnostics_rst(nsmprage, coreg, figures):
 	ofh = open("diagnostics.rst","w")
 	ofh.write("\n".join(sl) + "\n")
 	ofh.close()
-
 """
 make index.rst file
 """
@@ -228,7 +226,6 @@ def index_rst(cor):
 	ofh = open("index.rst","w")
 	ofh.write("\n".join(sl) + "\n")
 	ofh.close()
-
 """
 make intro.rst file
 """
@@ -249,12 +246,11 @@ def intro_rst():
 		 + 'that was used for correlation (if one was used).  If no anatomical specified, this last option does not exist.  The other way to view '
 		 + 'the accepted component, which will always be present, are the non-thresholded grey scale images without an anatomical underlay.  '
 		 + 'For the rejected, middle kappa, and ignored components, the grey scale image is always displayed as well.\n')
-	sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n'  + '* parse\n\n' + '* sphinx\n')
+	sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n' + '* sphinx\n')
 	ofh = open("intro.rst","w")
 	ofh.write("\n".join(sl) + "\n")
 	ofh.close()
-
-
+	
 def correlation_rst(ROI_default, ROI_attention, ROI_reference, User_ROI, figures):
 	ROI = [ROI_default,ROI_attention,ROI_reference]
 	sl = []
@@ -308,7 +304,6 @@ def digit_length(n,length):
 	elif len(n_string) > length:
 		n_string = str(round(n,length))
 	return(n_string)
-
 """
 Pulls the header from ctab
 """

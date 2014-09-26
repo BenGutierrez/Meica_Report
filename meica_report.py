@@ -3,7 +3,7 @@
 Gutierrez, B.  Generates Meica report form.
 
 """
-__version__ = "v2.5 beta8"
+__version__ = "v2.5 beta10"
 
 import commands
 import subprocess
@@ -12,7 +12,6 @@ import sys
 import ast
 import os
 import re
-
 
 ROI_default = 	[[0,-53,26,'pC'],#default mode MNI coordinates
 				[0,52,6,'mPFC'],
@@ -128,12 +127,6 @@ def dep_check():
 		print "*+ Can't import Nibabel! Please check Nibabel installation."
 		fails += 1
 	try:
-		import parse
-		sphinx_installed = 1
-	except:
-		print "*+ Can't import Parse! Please check Parse installation."
-		fails += 1
-	try:
 		import sphinx
 	except:	
 		print "*+ Can't import Sphinx! Please check Sphinx installation."
@@ -210,7 +203,9 @@ options = parser.add_argument_group('Report options')
 options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages', action = 'store_true')
 options.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to activation montages', action = 'store_true')
 options.add_argument('-cor', dest = 'Coronal', help = 'Add coronal images to activation montages', action = 'store_true')
-options.add_argument('-coreg', dest = 'coreg', help = 'If specified, perform corregistration.  Need anatomical', action = 'store_true')
+options.add_argument('-coreg', dest = 'coreg', help = 'If specified, redering corregistration.  Need anatomical', action = 'store_true')
+options.add_argument('-flood', dest = 'flood', help = 'Tells flood fill algorithm how many voxels above threshold need to be clustered together (in 3D) to be kept in activation map. Specify as "0" if you want no clustering', type = int, default = 10)
+options.add_argument('-contrast', dest = 'contrast', help = 'Give contrast to greyscale images in montage.  Ex: "5" will give values in the 5-95 percentile of values.  Default = "2"',type = int, default = 2)
 options.add_argument('-show_ROI', dest = 'show', help = 'Shows prespecified MNI coordinates for Default mode, attention network, and reference network for seed based correlation.  Will NOT make report if specified.', action = 'store_true')
 options.add_argument('-ROI' , dest = 'User_ROI', help = 'ex: "--ROI \'(0,0,0),(0,-53,26)\'"   MNI coordinates for seed voxel correlation computation', default = '[]')
 options.add_argument('-ROI_def', dest = 'ROI_default', help = 'If specified default mode network seed voxel analysis to be shown in report. voxels already specified in code.', action = 'store_true')
@@ -246,7 +241,7 @@ figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.fig
 label = args.label
 
 if os.path.isdir('%s/%s' % (startdir,label)) and args.overwrite:
-	print '%s directory already exits and -overwrite not specified' % label
+	print '*+ %s directory already exits and -overwrite not specified' % label
 	sys.exit()
 if os.path.isdir('%s/%s' % (startdir,label)):
 	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
@@ -279,9 +274,8 @@ subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_static' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
 
-components = meica_figures.file_parse(ctab)#collect components from ctab
 maps = meica_figures.collect_data(anat,mefl,'%s/feats_OC2.nii' % TED)#collect nifti data
-accept, reject, middle, ignore = meica_figures.split_components(ctab, components)#seperate components into their respective bins
+accept, reject, middle, ignore = meica_figures.components(TED)
 
 if os.path.isdir('%s/%s' % (startdir,figures)):
 	print ' %s/%s exits already.  Older image files will be overwritten.' % (startdir,figures)
@@ -297,7 +291,7 @@ meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rh
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
 meica_figures.motion(startdir,figures,setname)
 print('++ this set of figures may take a while')
-meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal)#create activation montage
+meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
 	if args.coreg:
 		meica_figures.coreg(startdir, setname, figures, anat)#create corregistration figure

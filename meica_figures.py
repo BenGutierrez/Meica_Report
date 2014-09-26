@@ -11,13 +11,12 @@ from numpy.core.umath_tests import inner1d
 from matplotlib.ticker import MaxNLocator
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
-from parse import parse
 import nibabel as ni
 import numpy as np
 import subprocess
 import sys
+import ast
 import os
-
 
 #frequently used green yellow red color map
 cdict = {'red':  			((0.0,  0.0, 0.0),
@@ -37,7 +36,6 @@ cdict = {'red':  			((0.0,  0.0, 0.0),
 		        }
 
 GYR = LinearSegmentedColormap('GYR', cdict)
-
 """
 Check that the MNI coordinates of the ROI's are within the image MNI range
 ROI: array of MNI coordinates
@@ -65,7 +63,6 @@ def check_ROI(ROI, TED, description):
 		sys.exit()
 	else:
 		print '++ %s MNI coordinates within image bounds' % description
-
 """
 Make a figure of the FFT for the ICA component across the time series
 series: path to time series data
@@ -101,64 +98,41 @@ def FFT(TED, series, i, N):
 	fig.subplots_adjust(bottom = 0.15, top = .90)
 	plt.savefig('FFT_Component_' + N)
 	plt.close()
+"""
+Seperates the components into their respective bins.
+TED: TED directory from tedana.py
+returns component numbers from accepted, rejected, middle kappa, and ignored bin along with their kappa, rho, and variance explained
+"""
+def components(TED):
+	accept_ = np.array(ast.literal_eval('['+ open('%s/accepted.txt' % TED).readline() + ']'))
+	reject_ = np.array(ast.literal_eval('['+ open('%s/rejected.txt' % TED).readline() + ']'))
+	middle_ = np.array(ast.literal_eval('['+ open('%s/midk_rejected.txt' % TED).readline() + ']'))
+	ignore_ = []
+	ctab = np.loadtxt('%s/comp_table.txt' % TED)
+	for i in ctab[:,0]:
+		if not((int(i) in accept_) or (int(i) in reject_) or (int(i) in middle_)):
+			ignore_.append(int(i))
+	accept = np.zeros(shape = (len(accept_),5))
+	reject = np.zeros(shape = (len(reject_),5))
+	middle = np.zeros(shape = (len(middle_),5))
+	ignore = np.zeros(shape = (len(ignore_),5))
 
-"""
-Parses ctab file for which components fall into the Accepted, Rejected,
-Middle kappa, and Ignored bins
-file: comp table path
-components: array with 4 elements, each an array containing the components from
-	accepted, rejected, middle, or ignored respectively.
-"""
-def file_parse(file):
-	txt_file = open(str(file))
-	components = [None,'#REJ ','#MID ','#IGN ']
-	txt_file.seek(0)
-	while components[0] == None:
-		line = txt_file.readline()
-		if line == '':
-			print('unable to parse the ctab txt_file')
-			break
-		else:	
-			components[0] = parse('#ACC {:S} {}\n', line)
-	for i in range(1,4):
-		components[i] = parse(components[i]+'{:S} {}\n', txt_file.readline())
-	for i in range(4):
-		components[i] = map(int, components[i][0].split(','))
-	txt_file.close()
-	return components
-
-"""
-Take the information from the comp file and separate it into 4 2D matrices
-for the accepted, rejected, middle, ignore bins.
-file: comp table path
-components: array with 4 elements, each an array containing the components from
-	accepted, rejected, middle, or ignored respectively. 
-"""
-def split_components(comp_table_title,components):
-	a = 0
-	b = 0
-	c = 0
-	d = 0
-	comp_table = np.loadtxt(str(comp_table_title))
-	accept = np.zeros(shape = (len(components[0]),5))
-	reject = np.zeros(shape = (len(components[1]),5))
-	middle = np.zeros(shape = (len(components[2]),5))
-	ignore = np.zeros(shape = (len(components[3]),5))
-	for i in comp_table[:,0]:
-		if i in components[0]:
-			accept[a,:] = comp_table[i,:]
+	a = b = c = d = 0
+	for i in ctab[:,0]:
+		if i in accept_:
+			accept[a,:] = ctab[i,:]
 			a = a + 1
-		elif i in components[1]:
-			reject[b,:] = comp_table[i,:]
+		elif i in reject_:
+			reject[b,:] = ctab[i,:]
 			b = b + 1
-		elif i in components[2]:
-			middle[c,:] = comp_table[i,:]
+		elif i in middle_:
+			middle[c,:] = ctab[i,:]
 			c = c + 1
-		elif i in components[3]:
-			ignore[d,:] = comp_table[i,:]
+		elif i in ignore_:
+			ignore[d,:] = ctab[i,:]
 			d = d + 1
-	return accept,reject,middle,ignore
 
+	return (accept,reject,middle,ignore)
 """
 Removes two dimensional slices from 3d matrix image that contain all zero elements
 image: three dim array
@@ -180,7 +154,6 @@ def mask(image, axis):
 		im_mask = np.sum(im_mask, axis = 0)
 		im_mask = np.sum(im_mask, axis = 1)
 		return image[:,im_mask > 0,:]
-
 """
 set up floodfill algorithm.  acts as a clustering algorithm.  x,y,z designates where to begin algorithm in matrix
 matrix: 2D array
@@ -188,26 +161,25 @@ x: integer index of matrix
 y: integer index of matrix
 z: integer index of matrix
 """
-def flood(matrix, x, y, z):
+def flood(matrix, x, y, z, flood_num):
 	N = 0
 	itemindex = [[],[],[]]
 	original = matrix.copy()
-	N = floodfill(matrix, x, y, z, N, itemindex)
-	if N >= 20: # twenty is arbitrary choosen
+	N = floodfill(matrix, x, y, z, N, itemindex, flood_num)
+	if N >= flood_num: #
 		return original
 	else:
 		return matrix
-
 """
 Rest of the flood fill algorithm.
 itemindex: array containing location of non-zero elements of matrix next to (x,y,z)
 """
-def floodfill(matrix, x, y, z, N, itemindex):
+def floodfill(matrix, x, y, z, N, itemindex, flood_num):
 	itemindex[0] = itemindex[0][1:len(itemindex[0]) + 1]
 	itemindex[1] = itemindex[1][1:len(itemindex[0]) + 1]
 	itemindex[2] = itemindex[2][1:len(itemindex[0]) + 1]
 	N += np.sum(matrix[max(x-1,0):min(x+2,matrix.shape[0]),max(y-1,0):min(y+2,matrix.shape[1]),max(z-1,0):min(z+2,matrix.shape[2])])
-	if N <= 19: #20 -1
+	if N <= flood_num -1:
 		matrix[x,y,z] = 0
 		test = np.where(matrix[max(x-1,0):min(x+2,matrix.shape[0]-1),max(y-1,0):min(y+2,matrix.shape[1]-1),max(z-1,0):min(z+2,matrix.shape[2]-1)] == 1)
 		itemindex[0].extend(test[0]+ x + (2 - (min(x+2,matrix.shape[0]) - max(x - 1,0)))) #(2-...) is a fudge factor for being on the edge of the matrix
@@ -215,9 +187,8 @@ def floodfill(matrix, x, y, z, N, itemindex):
 		itemindex[2].extend(test[2]+ z + (2 - (min(z+2,matrix.shape[2]) - max(z - 1,0))))
 		matrix[max(x-1,0):min(x+2,matrix.shape[0]),max(y-1,0):min(y+2,matrix.shape[1]),max(z-1,0):min(z+2,matrix.shape[2])] = 0
 		if len(itemindex[0])>0:#ensures that if no more 1's around (x,y,z) not calling function again
-			N = floodfill(matrix,itemindex[0][0],itemindex[1][0],itemindex[2][0], N, itemindex)
+			N = floodfill(matrix,itemindex[0][0],itemindex[1][0],itemindex[2][0], N, itemindex, flood_num)
 	return N
-
 """
 Collects data from the anatomical, overlay, and threshold data sets.  
 Also collects the header from the anatomical and overlay.
@@ -235,9 +206,9 @@ def collect_data(anatomical, overlay, threshold_map):
 		for i in range(3):
 			anat_orient[i,0] = i
 			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
+		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+			anat_orient[2,1] = anat_orient[2,1]* -1
 		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
-		# if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-		# 	anat_orient[2,1] = anat_orient[2,1]* -1
 	else:
 		anat_data = ''
 		anat_hdr = ''
@@ -252,14 +223,13 @@ def collect_data(anatomical, overlay, threshold_map):
 	for i in range(3):
 			overlay_orient[i,0] = i
 			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	# if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-	# 	overlay_orient[2,1] = overlay_orient[2,1]* -1
+	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+		overlay_orient[2,1] = overlay_orient[2,1]* -1
 	for i in range(overlay_data.shape[3]):
-		overlay_data = ni.orientations.apply_orientation(overlay_data,overlay_orient)
+		overlay_data = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
 		
 	
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
-
 """
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
@@ -271,7 +241,6 @@ def Rotation_matrix(quaternion):
 		q_fac = 1
 
 	return(R, q_fac)
-
 """
 Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
@@ -284,8 +253,7 @@ Axial: true or false. plot axial or not
 Sagittal: true or false. plot sagittal or not
 Coronal: true or false. plot coronal or not
 """
-
-def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
+def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood_num, contrast):
 	series = '%s/meica_mix.1D' % TED
 	anat = maps[0]
 	overlay = maps[1]
@@ -314,114 +282,115 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal):
 		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anat.shape[0]*anat_hdr['pixdim'][1]], [anat.shape[1]*anat_hdr['pixdim'][2]], 
 			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
 
-	for i in range(overlay.shape[3]):# number of components
+	for i in range(overlay.shape[3]):#number of components
 		N = str(i)
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
 		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2.5))
-		if anat != '' and i in accept:#if anatomcial specified and i in accept place overlay over the anatomcial
-			if Axial + Sagittal + Coronal != 0:
-				overlay_acc = np.absolute(threshold_data[:,:,:,l])
-				overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
-				overlay_mask = np.zeros(overlay_acc.shape)
-				overlay_mask[overlay_acc != 0] = 1# 
-
+		if anat != '' and i in accept and Axial + Sagittal + Coronal != 0:#if anatomcial specified and i in accept place overlay over the anatomcial
+			overlay_acc = np.absolute(threshold_data[:,:,:,l])
+			
+			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
+			overlay_mask = np.zeros(overlay_acc.shape)
+			overlay_mask[overlay_acc != 0] = 1# 
+			if flood_num != 0:
 				itemindex = np.where(overlay_mask == 1)
 				for j in range(len(itemindex[0])):
-					overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j])#flood fill algorithm
-				overlay_acc[overlay_mask == 0] = np.nan
+					overlay_mask = flood(overlay_mask,itemindex[0][j],itemindex[1][j],itemindex[2][j],flood_num)#flood fill algorithm
 
-				#accounts for variability in choices of axial, sagittal, cornoal images in final figure
-				hieght = [1]
-				width = [1]
-				if (Axial + Sagittal + Coronal) ==3:
-					height = [1.25,1,1,.75]
-					width = [2,.05]
-				elif (Axial + Sagittal + Coronal) ==2:
-					if Sagittal:
-						height = [1.25,1,.75]
-						width = [3,.05]
-					else:
-						height = [1,1,.75]
-						width = [3,.05]
-				elif (Axial + Sagittal + Coronal) ==1:
-					height = [1,.75]
-					width = [3,.05]
-				gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,2, height_ratios = height, width_ratios = width)
+			overlay_acc[overlay_mask == 0] = np.nan
 
-				contrast = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
-				maximum = np.percentile(contrast,98)
-				minimum = np.percentile(contrast,2)
-				for j in range(10):#plot montage of accept component onto anatomical
-					if Axial:#plot axial
-						gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
-						ax1 = fig.add_subplot(gs01[0,j])
-						plt.imshow(anat[:,::-1,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
-							interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-						bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
-							,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
-						plt.axis('off')
-						ax1 = fig.add_subplot(gs01[1,j])
-						plt.imshow(overlay[:,:,overlay.shape[2]*j*.1,l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
-						plt.axis('off')
-					if Sagittal:#plot sagittal
-						gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
-						ax2 = fig.add_subplot(gs02[0,j])
-						plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
-							origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
-						bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
-							overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
-						plt.axis('off')
-						ax2 = fig.add_subplot(gs02[1,j])
-						plt.imshow(overlay[overlay.shape[0]*j*.1,:,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
-						plt.axis('off')
-					if Coronal:#plot coronal
-						gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
-						ax3 = fig.add_subplot(gs03[0,j])
-						plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
-							origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
-						bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
-							overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
-						plt.axis('off')
-						ax3 = fig.add_subplot(gs03[1,j])
-						plt.imshow(overlay[:,overlay.shape[2]*j*.1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
-						plt.axis('off')
-				l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
-				
-				
-				gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
-				ax4 = fig.add_subplot(gs04[0,0])#formatting
-				# plt.tight_layout(h_pad = -7, w_pad = -10, pad = 2.5)
-				if Axial + Sagittal + Coronal == 3:
-					plt.tight_layout(pad = 2.5, h_pad = -10)
-				elif Axial + Sagittal + Coronal == 2:
-					plt.tight_layout(h_pad = -10, pad = 2)
+			#accounts for variability in choices of axial, sagittal, cornoal images in final figure
+			if (Axial + Sagittal + Coronal) ==3:
+				height = [1.25,1,1,.75]
+				width = [2,.05]
+			elif (Axial + Sagittal + Coronal) ==2:
+				if Sagittal:
+					height = [1.25,1,.75]
 				else:
-					if Sagittal:
-						plt.tight_layout(pad = 2)
-					else:
-						plt.tight_layout(pad = 2, h_pad = -8)
-			
-				# gs1 = gridspec.GridSpec(1,1)
-				# ax5 = fig.add_subplot(gs1[0,0])
-				# gs1.tight_layout(fig, rect = [0.025/2,.05,1,.65])
+					height = [1,1,.75]
+				width = [3,.05]
+			elif (Axial + Sagittal + Coronal) ==1:
+				height = [1,.75]
+				width = [3,.05]
+			gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,2, height_ratios = height, width_ratios = width)
 
-				time_series = np.loadtxt(series)#plots time series of the component
-				plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
-				plt.xlabel('Time (TR)', fontsize = 12)
-				plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-		
-				cbar_ax = fig.add_axes([.95,.3,.01,.65])
-				fig.colorbar(bar, cax = cbar_ax)
-				plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
-				plt.savefig('Accepted_Component_' + N)
-				plt.close()
+			contrast_ = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+			maximum = np.percentile(contrast_,100 - contrast)
+			minimum = np.percentile(contrast_,contrast)
+			for j in range(10):#plot montage of accept component onto anatomical
+				if Axial:#plot axial
+					gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
+					ax1 = fig.add_subplot(gs01[0,j])
+					plt.imshow(anat[:,::-1,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
+						interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
+					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
+						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+					plt.axis('off')
+					ax1 = fig.add_subplot(gs01[1,j])
+					plt.imshow(overlay[:,:,overlay.shape[2]*j*.1,l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.axis('off')
+				if Sagittal:#plot sagittal
+					gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
+					ax2 = fig.add_subplot(gs02[0,j])
+					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
+						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
+					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
+						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+					plt.axis('off')
+					ax2 = fig.add_subplot(gs02[1,j])
+					plt.imshow(overlay[overlay.shape[0]*j*.1,:,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.axis('off')
+				if Coronal:#plot coronal
+					gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
+					ax3 = fig.add_subplot(gs03[0,j])
+					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
+						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
+					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
+						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
+					plt.axis('off')
+					ax3 = fig.add_subplot(gs03[1,j])
+					plt.imshow(overlay[:,overlay.shape[2]*j*.1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.axis('off')
+			gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
+			ax4 = fig.add_subplot(gs04[0,0])#formatting
+			if Axial + Sagittal + Coronal == 3:
+				plt.tight_layout(pad = 2.5, h_pad = -10)
+			elif Axial + Sagittal + Coronal == 2:
+				plt.tight_layout(h_pad = -10, pad = 2)
+			else:
+				if Sagittal:
+					plt.tight_layout(pad = 2)
+				else:
+					plt.tight_layout(pad = 2, h_pad = -8)
+			time_series = np.loadtxt(series)#plots time series of the component
+			plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
+			plt.xlabel('Time (TR)', fontsize = 12)
+			plt.ylabel('Arbitrary BOLD units', fontsize = 12)
+	
+			cbar_ax = fig.add_axes([.95,.3,.01,.65])
+			fig.colorbar(bar, cax = cbar_ax)
+			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
+			plt.savefig('Accepted_Component_' + N)
+			plt.close()
+			l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
 		else:
-			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N)
+			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast)
 		FFT(TED, series, i, N)
 		print ('++ figures created for Component %s' % N)
-
-def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N):
+"""
+Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
+accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
+maps: array of 5 elements [anat dataset, mefl dataset, feats dataset, anat header, overlay header]
+overlay: mefl dataset
+Axial: true or false. plot axial or not
+Sagittal: true or false. plot sagittal or not
+Coronal: true or false. plot coronal or not
+series: string meica_mix.1D path
+i: component number
+N: component number as string of standardized length
+"""
+def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 	fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
 	gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
 
@@ -429,9 +398,9 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N):
 		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
 		overlay_x = mask(overlay[:,:,:,i],(1,2))
 		overlay_y = mask(overlay[:,:,:,i],(0,2))
-		contrast = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
-		maximum = np.percentile(contrast,98)
-		minimum = np.percentile(contrast,2)
+		contrast_ = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+		maximum = np.percentile(contrast_,100 - contrast)
+		minimum = np.percentile(contrast_,contrast)
 
 	for j in range(10):#plot greyscale component montage
 		if Axial:#plot axial
@@ -469,7 +438,6 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N):
 	gs1.update(left = left, right = right)
 	plt.savefig('Component_' + N)
 	plt.close()
-
 """
 Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
@@ -510,7 +478,6 @@ def coreg(startdir, setname, figures, anat):
 	plt.savefig('coregistration')
 	plt.close()
 	print '++ finished corregistration figure'
-
 """
 Makes TSNR figures of medn, tsoc, and medn/tsoc datasets
 tsoc: string path to tsoc dataset
@@ -589,7 +556,6 @@ def tsnr(tsoc,medn):
 	plt.savefig('tsnr_ratio_hist')
 	plt.close()
 	print '++ finished tsnr figures'
-
 """
 calculates the statistical correlation between a voxel and the rest of the brain
 and makes a montage image of it.  MNI option must have been stippulated
@@ -718,7 +684,6 @@ def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refferen
 				plt.savefig('(%s,%s,%s)_correlation' % (ROI[i][0], ROI[i][1], ROI[i][2]))
 				print '++ (%s,%s,%s) correlation complete'  % (ROI[i][0], ROI[i][1], ROI[i][2])
 			plt.close()
-			
 """
 plot kappa vs rho and represent percent varaince by the size of the markers.
 accept: array of all accepted components
@@ -750,7 +715,6 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.savefig('kappa_vs_rho')
 	plt.close()
 	print '++ finished kappa vs rho figure'
-
 """
 plot kappa and rho vs their component number.
 comptable title: path to the ctab file
