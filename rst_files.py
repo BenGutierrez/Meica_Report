@@ -60,8 +60,8 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		N = 0	
 
 		for i in accept[:,0]:
-			sl.append('\nComponent %s' % int(i))
-			sl.append('----------'+ '-'*len(str(int(i))) + '\n')
+			sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
+			sl.append('-----------------------------\n')
 			sl.append('.. image:: ../%s/Accepted_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 			sl.append('	:scale: 75%')
 			sl.append('	:align: left\n\n')
@@ -79,8 +79,8 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
 		N = 0	
 		for i in accept[:,0]:
-			sl.append('\nComponent %s' % int(i))
-			sl.append('----------'+ '-'*len(str(int(i))) + '\n')
+			sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
+			sl.append('-----------------------------\n')
 			sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 			sl.append('	:scale: 75%')
 			sl.append('	:align: left\n\n')
@@ -98,8 +98,8 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('The following images are the grey scale components from the rejected bin of meica.py.')
 	N = 0
 	for i in reject[:,0]:
-		sl.append('\nComponent %s' % int(i))
-		sl.append('----------' + '-'*len(str(int(i))) + '\n')
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(reject[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
@@ -117,8 +117,8 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('The following images are the grey scale components from the middle kappa bin of meica.py.')
 	N = 0
 	for i in middle[:,0]:
-		sl.append('\nComponent %s' % int(i))
-		sl.append('----------' + '-'*len(str(int(i))) + '\n')
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(middle[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
@@ -136,8 +136,8 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('The following images are the grey scale components from the ignore bin of meica.py.')
 	N = 0
 	for i in ignore[:,0]: 
-		sl.append('\nComponent %s' % int(i))
-		sl.append('----------' + '-'*len(str(int(i))) + '\n')
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(ignore[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')

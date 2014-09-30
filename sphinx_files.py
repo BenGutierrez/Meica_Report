@@ -110,7 +110,7 @@ def conf(__version__):
 	sl.append('# Theme options are theme-specific and customize the look and feel of a theme')
 	sl.append('# further.  For a list of options available for each theme, see the')
 	sl.append('# documentation.')
-	sl.append('html_theme_options = {"stickysidebar" : "true"}\n')
+	sl.append('html_theme_options = {"sidebarwidth" : 270, "stickysidebar" : "true"}\n')
 
 	sl.append('# Add any paths that contain custom themes here, relative to this directory.')
 	sl.append('#html_theme_path = []\n')

@@ -201,14 +201,14 @@ def collect_data(anatomical, overlay, threshold_map):
 		anatomical = ni.load(anatomical)
 		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
-	# 	anat_quat = anat_hdr.get_qform_quaternion()
-	# 	anat_orient = np.zeros(shape = (3,2))
-	# 	for i in range(3):
-	# 		anat_orient[i,0] = i
-	# 		anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
-	# 	if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-	# 		anat_orient[2,1] = anat_orient[2,1]* -1
-	# 	anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
+		anat_quat = anat_hdr.get_qform_quaternion()
+		anat_orient = np.zeros(shape = (3,2))
+		for i in range(3):
+			anat_orient[i,0] = i
+			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
+		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+			anat_orient[2,1] = anat_orient[2,1]* -1
+		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
 	else:
 		anat_data = ''
 	 	anat_hdr = ''
@@ -218,15 +218,15 @@ def collect_data(anatomical, overlay, threshold_map):
 	overlay_data = overlay.get_data()
 	threshold_data = threshold.get_data()
 	overlay_hdr = overlay.get_header()
-	# overlay_quat = overlay_hdr.get_qform_quaternion()
-	# overlay_orient = np.zeros(shape = (3,2))
-	# for i in range(3):
-	# 		overlay_orient[i,0] = i
-	# 		overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	# if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-	# 	overlay_orient[2,1] = overlay_orient[2,1]* -1
-	# for i in range(overlay_data.shape[3]):
-	# 	overlay_data = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
+	overlay_quat = overlay_hdr.get_qform_quaternion()
+	overlay_orient = np.zeros(shape = (3,2))
+	for i in range(3):
+			overlay_orient[i,0] = i
+			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
+	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+		overlay_orient[2,1] = overlay_orient[2,1]* -1
+	for i in range(overlay_data.shape[3]):
+		overlay_data[:,:,:,i] = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
 		
 	
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
@@ -286,7 +286,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 		N = str(i)
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
-		fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2.5))
+		fig = plt.figure(figsize = (3.2*4,3 + (Axial + Sagittal + Coronal)*2.5))
 		if anat != '' and i in accept and Axial + Sagittal + Coronal != 0:#if anatomcial specified and i in accept place overlay over the anatomcial
 			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			
@@ -314,6 +314,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 				height = [1,.75]
 				width = [3,.05]
 			gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,2, height_ratios = height, width_ratios = width)
+			gs0.update(left = .05, right = 1.03)
 
 			contrast_ = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 			maximum = np.percentile(contrast_,100 - contrast)
@@ -354,23 +355,15 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					plt.axis('off')
 			gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
 			ax4 = fig.add_subplot(gs04[0,0])#formatting
-			if Axial + Sagittal + Coronal == 3:
-				plt.tight_layout(pad = 2.5, h_pad = -10)
-			elif Axial + Sagittal + Coronal == 2:
-				plt.tight_layout(h_pad = -10, pad = 2)
-			else:
-				if Sagittal:
-					plt.tight_layout(pad = 2)
-				else:
-					plt.tight_layout(pad = 2, h_pad = -8)
+
 			time_series = np.loadtxt(series)#plots time series of the component
 			plt.plot(np.arange(time_series.shape[0]),time_series[:,i])
 			plt.xlabel('Time (TR)', fontsize = 12)
 			plt.ylabel('Arbitrary BOLD units', fontsize = 12)
 	
-			cbar_ax = fig.add_axes([.95,.3,.01,.65])
+			cbar_ax = fig.add_axes([.94,.3,.01,.65])
 			fig.colorbar(bar, cax = cbar_ax)
-			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270)
+			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270, labelpad=20)
 			plt.savefig('Accepted_Component_' + N)
 			plt.close()
 			l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
@@ -378,6 +371,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast)
 		FFT(TED, series, i, N)
 		print ('++ figures created for Component %s' % N)
+		plt.show()
 """
 Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
