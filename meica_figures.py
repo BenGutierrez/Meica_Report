@@ -201,32 +201,32 @@ def collect_data(anatomical, overlay, threshold_map):
 		anatomical = ni.load(anatomical)
 		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
-		anat_quat = anat_hdr.get_qform_quaternion()
-		anat_orient = np.zeros(shape = (3,2))
-		for i in range(3):
-			anat_orient[i,0] = i
-			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
-		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-			anat_orient[2,1] = anat_orient[2,1]* -1
-		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
+	# 	anat_quat = anat_hdr.get_qform_quaternion()
+	# 	anat_orient = np.zeros(shape = (3,2))
+	# 	for i in range(3):
+	# 		anat_orient[i,0] = i
+	# 		anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
+	# 	if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+	# 		anat_orient[2,1] = anat_orient[2,1]* -1
+	# 	anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
 	else:
 		anat_data = ''
-		anat_hdr = ''
+	 	anat_hdr = ''
 
 	overlay = ni.load(overlay)
 	threshold = ni.load(threshold_map)
 	overlay_data = overlay.get_data()
 	threshold_data = threshold.get_data()
 	overlay_hdr = overlay.get_header()
-	overlay_quat = overlay_hdr.get_qform_quaternion()
-	overlay_orient = np.zeros(shape = (3,2))
-	for i in range(3):
-			overlay_orient[i,0] = i
-			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-		overlay_orient[2,1] = overlay_orient[2,1]* -1
-	for i in range(overlay_data.shape[3]):
-		overlay_data = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
+	# overlay_quat = overlay_hdr.get_qform_quaternion()
+	# overlay_orient = np.zeros(shape = (3,2))
+	# for i in range(3):
+	# 		overlay_orient[i,0] = i
+	# 		overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
+	# if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+	# 	overlay_orient[2,1] = overlay_orient[2,1]* -1
+	# for i in range(overlay_data.shape[3]):
+	# 	overlay_data = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
 		
 	
 	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
