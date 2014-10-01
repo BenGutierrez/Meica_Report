@@ -128,6 +128,7 @@ def dep_check():
 		fails += 1
 	try:
 		import sphinx
+		sphinx_installed = 1
 	except:	
 		print "*+ Can't import Sphinx! Please check Sphinx installation."
 		fails += 1
@@ -340,4 +341,3 @@ subprocess.call('mv %s/%s/Makefile %s/%s/sphinx_files' % (startdir,label,startdi
 subprocess.call('mv %s/%s/make.bat %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s/conf.py %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s %s/%s' % (startdir,figures,startdir,label), shell = True)
-

@@ -142,18 +142,46 @@ def mask(image, axis):
 	im_mask = np.zeros(image.shape)
 	image[np.isnan(image)] = 0
 	im_mask[image != 0] = 1
+	lower = 0
+	upper = 0
+	i = 0
+	j = 0 
 	if axis == (0,1):
 		im_mask = np.sum(im_mask, axis = 0)
 		im_mask = np.sum(im_mask, axis = 0)
-		return image[:,:,im_mask > 0]
+		while i == 0:
+			if im_mask[i] == 0:
+				lower += 1
+			i = im_mask[lower]
+		while j == 0:
+			if im_mask[j] == 0:
+				upper += 1
+			j = im_mask[im_mask.shape[0]-1-upper]
+		return (image[:,:,im_mask > 0], lower,im_mask.shape[0]-1-upper)
 	elif axis == (1,2):
 		im_mask = np.sum(im_mask, axis = 1)
 		im_mask = np.sum(im_mask, axis = 1)
-		return image[im_mask > 0,:,:]
+		while i == 0:
+			if im_mask[i] == 0:
+				lower += 1
+			i = im_mask[lower]
+		while j == 0:
+			if im_mask[j] == 0:
+				upper += 1
+			j = im_mask[im_mask.shape[0]-1-upper]
+		return (image[im_mask > 0,:,:],lower,im_mask.shape[0]-1-upper)
 	elif axis == (0,2):
 		im_mask = np.sum(im_mask, axis = 0)
 		im_mask = np.sum(im_mask, axis = 1)
-		return image[:,im_mask > 0,:]
+		while i == 0:
+			if im_mask[i] == 0:
+				lower += 1
+			i = im_mask[lower]
+		while j == 0:
+			if im_mask[j] == 0:
+				upper += 1
+			j = im_mask[im_mask.shape[0]-1-upper]
+		return (image[:,im_mask > 0,:],lower,im_mask.shape[0]-1-upper)
 """
 set up floodfill algorithm.  acts as a clustering algorithm.  x,y,z designates where to begin algorithm in matrix
 matrix: 2D array
@@ -197,22 +225,6 @@ overlay: path to overlay mefl.nii.gz
 threshold_map: path to feats_OC2.nii
 """
 def collect_data(anatomical, overlay, threshold_map):
-	if anatomical != '':
-		anatomical = ni.load(anatomical)
-		anat_data = anatomical.get_data()
-		anat_hdr = anatomical.get_header()
-		anat_quat = anat_hdr.get_qform_quaternion()
-		anat_orient = np.zeros(shape = (3,2))
-		for i in range(3):
-			anat_orient[i,0] = i
-			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
-		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-			anat_orient[2,1] = anat_orient[2,1]* -1
-		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
-	else:
-		anat_data = ''
-	 	anat_hdr = ''
-
 	overlay = ni.load(overlay)
 	threshold = ni.load(threshold_map)
 	overlay_data = overlay.get_data()
@@ -227,9 +239,40 @@ def collect_data(anatomical, overlay, threshold_map):
 		overlay_orient[2,1] = overlay_orient[2,1]* -1
 	for i in range(overlay_data.shape[3]):
 		overlay_data[:,:,:,i] = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
-		
+
+	if anatomical != '':
+		anatomical = ni.load(anatomical)
+		anat_data = anatomical.get_data()
+		anat_hdr = anatomical.get_header()
+		anat_quat = anat_hdr.get_qform_quaternion()
+		anat_orient = np.zeros(shape = (3,2))
+		for i in range(3):
+			anat_orient[i,0] = i
+			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
+		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
+			anat_orient[2,1] = anat_orient[2,1]* -1
+		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
+
+		overlay_corners = np.zeros((3,1,2))
+		anat_corners = np.zeros((3,1,2))
+
+		overlay_R, overlay_q_fac = Rotation_matrix(overlay_hdr.get_qform_quaternion())
+		overlay_corners[:,:,0] = np.array([[overlay_hdr['qoffset_x']] ,[overlay_hdr['qoffset_y']], [overlay_hdr['qoffset_z']]])# calculate extremes of overlay
+		overlay_corners[:,:,1] = (np.dot(overlay_R,np.array([[overlay.shape[0]*overlay_hdr['pixdim'][1]], [overlay.shape[1]*overlay_hdr['pixdim'][2]],
+			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
+
+		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
+		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
+
+		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
+		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anatomical.shape[0]*anat_hdr['pixdim'][1]], [anatomical.shape[1]*anat_hdr['pixdim'][2]], 
+			[anat_q_fac*anatomical.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
+	else:
+		anat_data = ''
+	 	anat_corners = ''
+	 	overlay_corners = ''
 	
-	return(anat_data, overlay_data, threshold_data, anat_hdr, overlay_hdr)
+	return(anat_data, overlay_data, threshold_data, anat_corners, overlay_corners)
 """
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
@@ -258,31 +301,10 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 	anat = maps[0]
 	overlay = maps[1]
 	threshold_data = maps[2]
-	anat_hdr = maps[3]
-	overlay_hdr = maps[4]
+	anat_corners = maps[3]
+	overlay_corners = maps[4]
 	l = 0
-	ax_extreme = np.zeros(8)
-	ax = ['x','y']
-	cor_extreme = np.zeros(8)
-	co = ['x','z']
-	sag_extreme = np.zeros(8)
-	sa = ['y','z']
-	if anat != '' and (Axial + Sagittal + Coronal != 0): #if anatomcial specified calculates the native coordinates of the image so that the 
-					# anatomical and the overlay can be overlayed correctly.
-		overlay_corners = np.zeros((3,1,2))
-		anat_corners = np.zeros((3,1,2))
-
-		overlay_R, overlay_q_fac = Rotation_matrix(overlay_hdr.get_qform_quaternion())
-		overlay_corners[:,:,0] = np.array([[overlay_hdr['qoffset_x']] ,[overlay_hdr['qoffset_y']], [overlay_hdr['qoffset_z']]])# calculate extremes of overlay
-		overlay_corners[:,:,1] = (np.dot(overlay_R,np.array([[overlay.shape[0]*overlay_hdr['pixdim'][1]], [overlay.shape[1]*overlay_hdr['pixdim'][2]],
-			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
-
-		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
-		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
-		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anat.shape[0]*anat_hdr['pixdim'][1]], [anat.shape[1]*anat_hdr['pixdim'][2]], 
-			[anat_q_fac*anat.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
-
-	for i in range(overlay.shape[3]):#number of components
+	for i in range(overlay.shape[3]):
 		N = str(i)
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
@@ -319,39 +341,44 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			contrast_ = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 			maximum = np.percentile(contrast_,100 - contrast)
 			minimum = np.percentile(contrast_,contrast)
+			tmp,lower,upper = mask(overlay[:,:,:,l],(0,1))
+			ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
+			tmp,lower,upper = mask(overlay[:,:,:,l],(1,2))
+			sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
+			tmp,lower,upper = mask(overlay[:,:,:,l],(1,2))
+			cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 			for j in range(10):#plot montage of accept component onto anatomical
 				if Axial:#plot axial
 					gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
 					ax1 = fig.add_subplot(gs01[0,j])
-					plt.imshow(anat[:,::-1,anat.shape[2]*j*.1].T, cmap = 'Greys_r', 
+					plt.imshow(anat[:,::-1,anat.shape[2]*ax_montage_spacing[j]].T, cmap = 'Greys_r', 
 						interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*j*.1].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1]
-						,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1] ,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax1 = fig.add_subplot(gs01[1,j])
-					plt.imshow(overlay[:,:,overlay.shape[2]*j*.1,l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[:,:,overlay_acc.shape[2]*ax_montage_spacing[j],l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Sagittal:#plot sagittal
 					gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 					ax2 = fig.add_subplot(gs02[0,j])
-					plt.imshow(anat[anat.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r', 
+					plt.imshow(anat[anat.shape[0]*sag_montage_spacing[j],::-1,:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*j*.1,::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
+					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*sag_montage_spacing[j],::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax2 = fig.add_subplot(gs02[1,j])
-					plt.imshow(overlay[overlay.shape[0]*j*.1,:,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[overlay.shape[0]*sag_montage_spacing[j],::-1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Coronal:#plot coronal
 					gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
-					ax3 = fig.add_subplot(gs03[0,j])
-					plt.imshow(anat[:,anat.shape[1]*j*.1,:].T, cmap = 'Greys_r', 
+					ax3 = fig.add_subplot(gs03[0,9-j])
+					plt.imshow(anat[:,anat.shape[1]*cor_montage_spacing[j],:].T, cmap = 'Greys_r', 
 						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*j*.1,:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
+					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*cor_montage_spacing[j],:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
 					plt.axis('off')
-					ax3 = fig.add_subplot(gs03[1,j])
-					plt.imshow(overlay[:,overlay.shape[2]*j*.1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					ax3 = fig.add_subplot(gs03[1,9-j])
+					plt.imshow(overlay[:,overlay.shape[1]*cor_montage_spacing[j],:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 			gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
 			ax4 = fig.add_subplot(gs04[0,0])#formatting
@@ -385,52 +412,42 @@ i: component number
 N: component number as string of standardized length
 """
 def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
-	fig = plt.figure(figsize = (3.2*5,3 + (Axial + Sagittal + Coronal)*2))
-	gs0 = gridspec.GridSpec(Axial + Sagittal + Coronal,10)
-
+	fig = plt.figure(figsize = (3.2*4,3 + (Axial + Sagittal + Coronal)*2))
+	gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,1)
+	gs0.update(left = .05, right = .95)
 	if Axial + Sagittal + Coronal != 0:
-		overlay_z = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
-		overlay_x = mask(overlay[:,:,:,i],(1,2))
-		overlay_y = mask(overlay[:,:,:,i],(0,2))
+		overlay_z,lower,upper = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
+		overlay_x,lower,upper = mask(overlay[:,:,:,i],(1,2))
+		overlay_y,lower,upper = mask(overlay[:,:,:,i],(0,2))
 		contrast_ = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 		maximum = np.percentile(contrast_,100 - contrast)
 		minimum = np.percentile(contrast_,contrast)
 
 	for j in range(10):#plot greyscale component montage
 		if Axial:#plot axial
-			ax1 = fig.add_subplot(gs0[0,j])
+			gs01 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
+			ax1 = fig.add_subplot(gs01[0,j])
 			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Sagittal:#plot sagittal
-			ax2 = fig.add_subplot(gs0[Axial,j])
+			gs02 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
+			ax2 = fig.add_subplot(gs02[0,j])
 			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Coronal:#plot coronal
-			ax3 = fig.add_subplot(gs0[Axial + Sagittal,j])
+			gs03 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
+			ax3 = fig.add_subplot(gs03[0,9-j])
 			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
 			plt.axis('off')
-	if Axial + Sagittal + Coronal == 3:#formatting image
-		fig.subplots_adjust(top=0.3)
-		gs0.tight_layout(fig, h_pad = -4, w_pad = 1, rect = [0,.3,1,1])
-	elif Axial + Sagittal + Coronal == 2:
-		fig.subplots_adjust(top=0.21)
-		gs0.tight_layout(fig, h_pad = -13, w_pad = 2.5, rect = [0,.2,1,1])
-	elif Axial + Sagittal + Coronal == 1:
-		fig.subplots_adjust(top=0.15)
-		gs0.tight_layout(fig, w_pad = 4, rect = [0,.2,1,1]) 
 
-	gs1 = gridspec.GridSpec(1,1)#plot time series of component
-	ax4 = fig.add_subplot(gs1[0,0])
+	gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
+	ax4 = fig.add_subplot(gs04[0,0])#formatting
 	time_series = np.loadtxt(series)
  	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
  	plt.xlabel('Time (TR)', fontsize = 12)
 	plt.ylabel('Arbitrary BOLD units', fontsize = 12)
-	gs1.tight_layout(fig, rect = [0,0,1,.65 - (Axial + Sagittal + Coronal) * .1])
-	right = max(gs0.right, gs1.right)
-	left = max(gs0.left, gs1.left)
-	gs0.update(left = left, right = right)
-	gs1.update(left = left, right = right)
 	plt.savefig('Component_' + N)
+	plt.close()
 	plt.close()
 """
 Create a figure of the corregistration of the overlay onto the anatomcial image
@@ -487,9 +504,9 @@ def tsnr(tsoc,medn):
 	tsoc_tsnr = tsoc_data.mean(-1)/tsoc_data.std(-1)
 	frac = medn_tsnr/tsoc_tsnr
 
-	medn_tsnr = mask(image = medn_tsnr, axis = (0,1))#remove z slices without nonzero elements
-	tsoc_tsnr = mask(image = tsoc_tsnr, axis = (0,1))
-	frac_tsnr = mask(image = frac, axis = (0,1))#remove z slices without nonzero elements
+	medn_tsnr,lower,upper = mask(image = medn_tsnr, axis = (0,1))#remove z slices without nonzero elements
+	tsoc_tsnr,lower,upper = mask(image = tsoc_tsnr, axis = (0,1))
+	frac_tsnr,lower,upper = mask(image = frac, axis = (0,1))#remove z slices without nonzero elements
 	medn_tsnr[medn_tsnr == 0] = np.nan
 	tsoc_tsnr[tsoc_tsnr == 0] = np.nan
 	frac_tsnr[frac_tsnr == 0] = np.nan
