@@ -226,9 +226,9 @@ threshold_map: path to feats_OC2.nii
 """
 def collect_data(anatomical, overlay, threshold_map):
 	overlay = ni.load(overlay)
-	threshold = ni.load(threshold_map)
+	
 	overlay_data = overlay.get_data()
-	threshold_data = threshold.get_data()
+	
 	overlay_hdr = overlay.get_header()
 	overlay_quat = overlay_hdr.get_qform_quaternion()
 	overlay_orient = np.zeros(shape = (3,2))
@@ -271,7 +271,12 @@ def collect_data(anatomical, overlay, threshold_map):
 		anat_data = ''
 	 	anat_corners = ''
 	 	overlay_corners = ''
-	
+	if threshold_map != '':
+		threshold = ni.load(threshold_map)
+		threshold_data = threshold.get_data()
+	else:
+		threshold = ''
+		threshold_data = ''
 	return(anat_data, overlay_data, threshold_data, anat_corners, overlay_corners)
 """
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
