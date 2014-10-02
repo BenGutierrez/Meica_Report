@@ -473,9 +473,9 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		anat_name = anat_name[1:]
 	if not os.path.isfile(anat_name + '.nii.gz') and not os.path.isfile(anat + '.nii'):
 		if os.path.isfile(anat_name[:-2] + 'ob.nii.gz'):
-			anat_name = anat_name[:-2] + 'ob.nii.gz'
+			anat_name = anat_name[:-2] + 'ob'
 		elif os.path.isfile(anat_name[:-5] + 'ob.nii.gz'):
-			anat_name = anat_name[:-5] + 'ob.nii.gz'
+			anat_name = anat_name[:-5] + 'ob'
 		else:
 			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Exiting' % anat_name
 			sys.exit()
