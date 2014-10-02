@@ -59,7 +59,7 @@ def seed_split(ROI):
 		List = [List]
 	return List
 
-def file_check(anat, startdir, TED, setname, MNI, reportdir, figures):
+def file_check(anat, startdir, TED, setname, MNI, reportdir, figures, coreg_anat):
 	fails = 0
 	if not os.path.isfile(anat) and anat != '': 
 		print '*+ Can\'t find the specified anantomical'
@@ -100,6 +100,10 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir, figures):
 		fails += 1
 	if not os.path.isfile('%s/warning.png' % reportdir):
 		print '*+ Can\'t find warning.png in %s.  This means that picture warning flags for too few components or low variance will not appear. This is not a fatal error' % reportdir
+	if coreg_anat != '':	
+		if not os.path.isfile('%s/%s' % (setname,coreg_anat)):
+			print '*+ Can\'t find %s in %s. Please check that specified file exists' % (coreg_anat,setname)
+			fails += 1
 	if fails != 0:
 		print "*+ EXITING. Please see error messages."
 		sys.exit()
@@ -205,6 +209,7 @@ options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activat
 options.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to activation montages', action = 'store_true')
 options.add_argument('-cor', dest = 'Coronal', help = 'Add coronal images to activation montages', action = 'store_true')
 options.add_argument('-coreg', dest = 'coreg', help = 'If specified, redering corregistration.  Need anatomical', action = 'store_true')
+options.add_argument('-coreg_anat', dest = 'coreg_anat', help = 'Optional name of anatomical to corregister with.  MUST be in the -\'setname directory\'.  If none specified, will attempt to guess name', default = '')
 options.add_argument('-flood', dest = 'flood', help = 'Tells flood fill algorithm how many voxels above threshold need to be clustered together (in 3D) to be kept in activation map. Specify as "0" if you want no clustering', type = int, default = 10)
 options.add_argument('-contrast', dest = 'contrast', help = 'Give contrast to greyscale images in montage.  Ex: "5" will give values in the 5-95 percentile of values.  Default = "2"',type = int, default = 2)
 options.add_argument('-show_ROI', dest = 'show', help = 'Shows prespecified MNI coordinates for Default mode, attention network, and reference network for seed based correlation.  Will NOT make report if specified.', action = 'store_true')
@@ -238,7 +243,7 @@ setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, 
 reportdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 User_ROI = seed_split(args.User_ROI)
 os.chdir(setname)
-figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures)
+figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures, args.coreg_anat)
 label = 'meica.' + args.label
 
 if os.path.isdir('%s/%s' % (startdir,label)) and args.overwrite:
@@ -291,15 +296,15 @@ os.chdir('%s/%s' % (startdir,figures))
 
 #make figures
 print('++ making figures')
-meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
-meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
-meica_figures.tsnr(tsoc,medn)#create tsnr figures
-meica_figures.motion(startdir,figures,setname)
+# meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
+# meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
+# meica_figures.tsnr(tsoc,medn)#create tsnr figures
+# meica_figures.motion(startdir,figures,setname)
 print('++ this set of figures may take a while')
-meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
+# meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
 	if args.coreg:
-		meica_figures.coreg(startdir, setname, figures, anat)#create corregistration figure
+		meica_figures.coreg(startdir, setname, figures, anat, args.coreg_anat)#create corregistration figure
 	if args.MNI:
 		if len(accept) > 3:
 			meica_figures.correlation(TED, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs

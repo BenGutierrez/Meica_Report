@@ -459,18 +459,26 @@ Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
 anat: path of the anatomcial image
 """
-def coreg(startdir, setname, figures, anat):
+def coreg(startdir, setname, figures, anat, coreg_anat):
 	fig = plt.figure(figsize = (3.2*5,4))
 	gs0 = gridspec.GridSpec(1,3)
 	os.chdir(setname)
 	subprocess.call('rm -f %s/ocv_uni_vrm*' % setname, shell = True)
+	if coreg_anat != '':
+		anat = coreg_anat
 	if '.nii.gz' in anat[-7:]:
 		anat_name = anat[:-7]
-	if '.nii' in anat[-4:]:
-		anat_name = anat[:-4]
 	anat_name = anat_name[len(os.path.dirname(anat_name)):]
 	if '/' in anat_name[0]:
 		anat_name = anat_name[1:]
+	if not os.path.isfile(anat_name + '.nii.gz') and not os.path.isfile(anat + '.nii'):
+		if os.path.isfile(anat_name[:-2] + 'ob.nii.gz'):
+			anat_name = anat_name[:-2] + 'ob.nii.gz'
+		elif os.path.isfile(anat_name[:-5] + 'ob.nii.gz'):
+			anat_name = anat_name[:-5] + 'ob.nii.gz'
+		else:
+			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Exiting' % anat_name
+			sys.exit()
 
 	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
 	if os.path.isfile('ocv_uni_vrm+tlrc.BRIK'):
@@ -494,6 +502,7 @@ def coreg(startdir, setname, figures, anat):
 	plt.savefig('coregistration')
 	plt.close()
 	print '++ finished corregistration figure'
+
 """
 Makes TSNR figures of medn, tsoc, and medn/tsoc datasets
 tsoc: string path to tsoc dataset
