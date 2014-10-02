@@ -493,6 +493,8 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
 	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
+	subprocess.call('3daxialize -overwrite ocv_uni_vrm_e3.nii', shell = True)
+	subprocess.call('3daxialize -overwrite %s' % anat, shell = True)
 
 	anatomical, overlay, threshold_data, anat_corners, overlay_corners = collect_data(anat, 'ocv_uni_vrm_e3.nii', '')
 
