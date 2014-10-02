@@ -468,23 +468,31 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		anat = coreg_anat
 	if '.nii.gz' in anat[-7:]:
 		anat_name = anat[:-7]
+	if '.nii' in anat[-4:]:
+		anat_name = anat[:-4]
 	anat_name = anat_name[len(os.path.dirname(anat_name)):]
 	if '/' in anat_name[0]:
 		anat_name = anat_name[1:]
 	if not os.path.isfile(anat_name + '.nii.gz') and not os.path.isfile(anat + '.nii'):
-		if os.path.isfile(anat_name[:-2] + 'ob.nii.gz'):
-			anat_name = anat_name[:-2] + 'ob'
-		elif os.path.isfile(anat_name[:-5] + 'ob.nii.gz'):
-			anat_name = anat_name[:-5] + 'ob'
+		if os.path.isfile(anat_name[:-2] + 'ns.nii.gz'):
+			anat_name = anat_name[:-2] + 'ns'
+		elif os.path.isfile(anat_name[:-5] + 'ns.nii.gz'):
+			anat_name = anat_name[:-5] + 'ns'
 		else:
 			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Exiting' % anat_name
 			sys.exit()
+
+	if os.path.isfile('%s.nii.gz' % anat_name) and not os.path.isfile('%s+orig.HEAD' % anat_name):
+		subprocess.call('3dcopy %s.nii.gz %s' % (anat_name,anat_name), shell = True)
+	if os.path.isfile('%s.nii') and not os.path.isfile('%s+orig.HEAD' % anat_name):
+		subprocess.call('3dcopy %s.nii %s' % (anat_name,anat_name), shell = True)
 
 	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
 	if os.path.isfile('ocv_uni_vrm+tlrc.BRIK'):
 		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
 	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
+
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 	overlay[overlay == 0] = np.nan
