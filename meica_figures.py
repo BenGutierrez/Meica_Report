@@ -502,8 +502,10 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 	gs0 = gridspec.GridSpec(1,10)
 	for i in np.arange(0,1,.1):#plot montage of corregistration onto anatomcial
 		ax1 = fig.add_subplot(gs0[0,int(i*10)])
-		plt.imshow(anatomical[:,::-1,anatomical.shape[2]*i].T, cmap = 'Greys_r')
-		plt.imshow(overlay[:,::-1,overlay.shape[2]*i].T, alpha = 0.8, cmap = GYR)
+		plt.imshow(anatomical[:,::-1,anatomical.shape[2]*i].T, cmap = 'Greys_r', extent = [anat_corners[0,0,0], anat_corners[0,0,1],
+			anat_corners[1,0,0], anat_corners[1,0,1]])
+		plt.imshow(overlay[:,:,overlay.shape[2]*i].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1],
+			overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = 0.8, origin = 'lower')
 		plt.axis('off')
 	gs0.tight_layout(fig, w_pad = -2)
 	fig.subplots_adjust(right = 0.9)
