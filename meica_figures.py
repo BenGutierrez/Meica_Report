@@ -237,8 +237,11 @@ def collect_data(anatomical, overlay, threshold_map):
 			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
 	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
 		overlay_orient[2,1] = overlay_orient[2,1]* -1
-	for i in range(overlay_data.shape[3]):
-		overlay_data[:,:,:,i] = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
+	if len(overlay_data.shape) == 3:
+		overlay_data = ni.orientations.apply_orientation(overlay_data,overlay_orient)
+	else:
+		for i in range(overlay_data.shape[3]):
+			overlay_data[:,:,:,i] = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
 
 	if anatomical != '':
 		anatomical = ni.load(anatomical)
@@ -262,8 +265,6 @@ def collect_data(anatomical, overlay, threshold_map):
 			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
 
 		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
-		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
-
 		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
 		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anatomical.shape[0]*anat_hdr['pixdim'][1]], [anatomical.shape[1]*anat_hdr['pixdim'][2]], 
 			[anat_q_fac*anatomical.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
@@ -492,19 +493,8 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
 	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
-	subprocess.call('3daxialize -overwrite ocv_uni_vrm_e3.nii', shell = True)
 
-
-	anatomical = ni.load(anat).get_data()
-	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
-	overlay_hdr = ni.load('ocv_uni_vrm_e3.nii').get_header()
-	overlay_quat = overlay_hdr.get_qform_quaternion()
-	overlay_orient = np.zeros(shape = (3,2))
-	for i in range(3):
-			overlay_orient[i,0] = i
-			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-		overlay_orient[2,1] = overlay_orient[2,1]* -1
+	anatomical, overlay, threshold_data, anat_corners, overlay_corners = collect_data(anat, 'ocv_uni_vrm_e3.nii', '')
 
 	overlay[overlay == 0] = np.nan
 
