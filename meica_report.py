@@ -255,7 +255,7 @@ if os.path.isfile('%s/feats_OC2.nii' % TED):
 	feats = '%s/feats_OC2.nii' % TED
 else:
 	feats = ''
-	
+
 if not args.ROI_default:
 	ROI_default = []
 if not args.ROI_attention:
@@ -279,7 +279,7 @@ subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_static' % (startdir,label), shell = True)
 subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
 
-maps = meica_figures.collect_data(anat,mefl,'%s/feats_OC2.nii' % TED)#collect nifti data
+maps = meica_figures.collect_data(anat,mefl,feats)#collect nifti data
 accept, reject, middle, ignore = meica_figures.components(TED)
 
 if os.path.isdir('%s/%s' % (startdir,figures)):
