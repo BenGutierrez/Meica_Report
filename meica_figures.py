@@ -492,6 +492,7 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
 	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
+	subprocess.call('3daxialize -overwrite ocv_uni_vrm_e3.nii', shell = True)
 
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
@@ -502,7 +503,7 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 	for i in np.arange(0,1,.1):#plot montage of corregistration onto anatomcial
 		ax1 = fig.add_subplot(gs0[0,int(i*10)])
 		plt.imshow(anatomical[:,::-1,anatomical.shape[2]*i].T, cmap = 'Greys_r')
-		plt.imshow(overlay[:,:,overlay.shape[2]*i].T, alpha = 0.8, cmap = GYR)
+		plt.imshow(overlay[:,::-1,overlay.shape[2]*i].T, alpha = 0.8, cmap = GYR)
 		plt.axis('off')
 	gs0.tight_layout(fig, w_pad = -2)
 	fig.subplots_adjust(right = 0.9)
