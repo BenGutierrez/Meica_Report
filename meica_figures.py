@@ -494,8 +494,18 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
 	subprocess.call('3daxialize -overwrite ocv_uni_vrm_e3.nii', shell = True)
 
+
 	anatomical = ni.load(anat).get_data()
 	overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
+	overlay_hdr = ni.load('ocv_uni_vrm_e3.nii').get_header()
+	overlay_quat = overlay_hdr.get_qform_quaternion()
+	overlay_orient = np.zeros(shape = (3,2))
+	for i in range(3):
+			overlay_orient[i,0] = i
+			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
+	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
+		overlay_orient[2,1] = overlay_orient[2,1]* -1
+
 	overlay[overlay == 0] = np.nan
 
 	fig = plt.figure(figsize = (3.2*5,4))
