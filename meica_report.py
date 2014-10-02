@@ -251,7 +251,11 @@ ctab = '%s/comp_table.txt' % TED
 tsoc = '%s/ts_OC.nii' % TED
 medn = '%s/dn_ts_OC.nii' % TED
 mefl = '%s/betas_OC.nii' % TED
-
+if os.path.isfile('%s/feats_OC2.nii' % TED):
+	feats = '%s/feats_OC2.nii' % TED
+else:
+	feats = ''
+	
 if not args.ROI_default:
 	ROI_default = []
 if not args.ROI_attention:
