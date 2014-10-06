@@ -253,9 +253,10 @@ if os.path.isdir('%s/%s' % (startdir,label)):
 	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
 
 ctab = '%s/comp_table.txt' % TED
-tsoc = '%s/ts_OC.nii' % TED
-medn = '%s/dn_ts_OC.nii' % TED
+tsoc = '%s/%s/axialized_nifti/tsoc.nii.gz' % (startdir,label)
+medn =  '%s/%s/axialized_nifti/medn.nii.gz' % (startdir,label)
 mefl = '%s/betas_OC.nii' % TED
+
 if os.path.isfile('%s/feats_OC2.nii' % TED):
 	feats = '%s/feats_OC2.nii' % TED
 else:
@@ -280,11 +281,9 @@ if args.MNI:
 		meica_figures.check_ROI(User_ROI,setname, TED,'User specified')#check User_ROI MNI within bounds
 
 subprocess.call('mkdir %s/%s' % (startdir,label), shell = True)#make directories
-subprocess.call('mkdir %s/%s/_build' % (startdir,label), shell = True)
-subprocess.call('mkdir %s/%s/_static' % (startdir,label), shell = True)
-subprocess.call('mkdir %s/%s/_templates' % (startdir,label), shell = True)
+subprocess.call('mkdir %s/%s/axialized_nifti' % (startdir,label), shell = True)
 
-maps = meica_figures.collect_data(anat,mefl,feats)#collect nifti data
+maps = meica_figures.collect_data(startdir,label,TED,anat,mefl,feats)#collect nifti data
 accept, reject, middle, ignore = meica_figures.components(TED)
 
 if os.path.isdir('%s/%s' % (startdir,figures)):

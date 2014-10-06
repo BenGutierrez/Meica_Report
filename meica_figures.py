@@ -144,42 +144,40 @@ def mask(image, axis):
 	im_mask[image != 0] = 1
 	lower = 0
 	upper = 0
-	i = 0
-	j = 0 
 	if axis == (0,1):
 		im_mask = np.sum(im_mask, axis = 0)
 		im_mask = np.sum(im_mask, axis = 0)
+		i = im_mask[0]
+		j = im_mask[im_mask.shape[0]-1]
 		while i == 0:
-			if im_mask[i] == 0:
-				lower += 1
+			lower += 1
 			i = im_mask[lower]
 		while j == 0:
-			if im_mask[j] == 0:
-				upper += 1
+			upper += 1
 			j = im_mask[im_mask.shape[0]-1-upper]
 		return (image[:,:,im_mask > 0], lower,im_mask.shape[0]-1-upper)
-	elif axis == (1,2):
+	if axis == (1,2):
 		im_mask = np.sum(im_mask, axis = 1)
 		im_mask = np.sum(im_mask, axis = 1)
+		i = im_mask[0]
+		j = im_mask[im_mask.shape[0]-1]
 		while i == 0:
-			if im_mask[i] == 0:
-				lower += 1
+			lower += 1
 			i = im_mask[lower]
 		while j == 0:
-			if im_mask[j] == 0:
-				upper += 1
+			upper += 1
 			j = im_mask[im_mask.shape[0]-1-upper]
 		return (image[im_mask > 0,:,:],lower,im_mask.shape[0]-1-upper)
-	elif axis == (0,2):
+	if axis == (0,2):
 		im_mask = np.sum(im_mask, axis = 0)
 		im_mask = np.sum(im_mask, axis = 1)
+		i = im_mask[0]
+		j = im_mask[im_mask.shape[0]-1]
 		while i == 0:
-			if im_mask[i] == 0:
-				lower += 1
+			lower += 1
 			i = im_mask[lower]
 		while j == 0:
-			if im_mask[j] == 0:
-				upper += 1
+			upper += 1
 			j = im_mask[im_mask.shape[0]-1-upper]
 		return (image[:,im_mask > 0,:],lower,im_mask.shape[0]-1-upper)
 """
@@ -224,37 +222,39 @@ anatomical: path to anatomical image
 overlay: path to overlay mefl.nii.gz 
 threshold_map: path to feats_OC2.nii
 """
-def collect_data(anatomical, overlay, threshold_map):
+def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
+	tsoc = '%s/ts_OC.nii' % TED
+	medn = '%s/dn_ts_OC.nii' % TED
+	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/tsoc.nii.gz %s' % (startdir,label,tsoc), shell = True)
+	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/medn.nii.gz %s' % (startdir,label,medn), shell = True)
+	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/mefl.nii.gz %s' % (startdir,label,overlay), shell = True)
+	overlay = '%s/%s/axialized_nifti/mefl.nii.gz' % (startdir,label)
 	overlay = ni.load(overlay)
-	
 	overlay_data = overlay.get_data()
-	
 	overlay_hdr = overlay.get_header()
 	overlay_quat = overlay_hdr.get_qform_quaternion()
-	overlay_orient = np.zeros(shape = (3,2))
-	for i in range(3):
-			overlay_orient[i,0] = i
-			overlay_orient[i,1] = ni.quaternions.quat2mat(overlay_quat)[i,i]
-	if np.linalg.det(ni.quaternions.quat2mat(overlay_quat).astype('float64')) == -1:
-		overlay_orient[2,1] = overlay_orient[2,1]* -1
-	if len(overlay_data.shape) == 3:
-		overlay_data = ni.orientations.apply_orientation(overlay_data,overlay_orient)
-	else:
-		for i in range(overlay_data.shape[3]):
-			overlay_data[:,:,:,i] = ni.orientations.apply_orientation(overlay_data[:,:,:,i],overlay_orient)
 
 	if anatomical != '':
-		anatomical = ni.load(anatomical)
+		if '.nii.gz' in anatomical[-7:]:
+			anat_name = anatomical[:-7]
+		if '.nii' in anatomical[-4:]:
+			anat_name = anatomical[:-4]
+		anat_name = anat_name[len(os.path.dirname(anat_name)):]
+		if '/' in anat_name[0]:
+			anat_name = anat_name[1:]
+		subprocess.call('3daxialize -prefix %s/%s/axialized_nifti/%s %s' % (startdir,label,anat_name,anatomical), shell = True)
+		if os.path.isfile('%s/%s/axialized_nifti/%s+tlrc.BRIK' % (startdir,label,anat_name)):
+			suffix = '+tlrc'
+		if os.path.isfile('%s/%s/axialized_nifti/%s+orig.BRIK' % (startdir,label,anat_name)):
+			suffix = '+orig'
+		if os.path.isfile('%s/%s/axialized_nifti/%s+acpc.BRIK' % (startdir,label,anat_name)):
+			suffix = '+acpc'
+		subprocess.call('3dcopy %s/%s/axialized_nifti/%s%s %s/%s/axialized_nifti/%s.nii' % (startdir,label,anat_name,suffix,startdir,label,anat_name), shell = True)
+		anatomical = ni.load('%s/%s/axialized_nifti/%s.nii' % (startdir,label,anat_name))
 		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
 		anat_quat = anat_hdr.get_qform_quaternion()
 		anat_orient = np.zeros(shape = (3,2))
-		for i in range(3):
-			anat_orient[i,0] = i
-			anat_orient[i,1] = ni.quaternions.quat2mat(anat_quat)[i,i]
-		if np.linalg.det(ni.quaternions.quat2mat(anat_quat).astype('float64')) == -1:
-			anat_orient[2,1] = anat_orient[2,1]* -1
-		anat_data = ni.orientations.apply_orientation(anat_data,anat_orient)
 
 		overlay_corners = np.zeros((3,1,2))
 		anat_corners = np.zeros((3,1,2))
@@ -273,6 +273,8 @@ def collect_data(anatomical, overlay, threshold_map):
 	 	anat_corners = ''
 	 	overlay_corners = ''
 	if threshold_map != '':
+		subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/betas.nii.gz %s' % (startdir,label,threshold_map), shell = True)
+		threshold_map = '%s/%s/axialized_nifti/betas.nii.gz' % (startdir,label)
 		threshold = ni.load(threshold_map)
 		threshold_data = threshold.get_data()
 	else:
@@ -315,7 +317,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
 		fig = plt.figure(figsize = (3.2*4,3 + (Axial + Sagittal + Coronal)*2.5))
-		if anat != '' and i in accept and Axial + Sagittal + Coronal != 0:#if anatomcial specified and i in accept place overlay over the anatomcial
+		if anat != '' and i in accept and Axial + Sagittal + Coronal != 0 and threshold_data != '':#if anatomcial specified and i in accept place overlay over the anatomcial
 			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			
 			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset
@@ -357,34 +359,35 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 				if Axial:#plot axial
 					gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
 					ax1 = fig.add_subplot(gs01[0,j])
-					plt.imshow(anat[:,::-1,anat.shape[2]*ax_montage_spacing[j]].T, cmap = 'Greys_r', 
+					plt.imshow(anat[:,:,(anat.shape[2]-1)*ax_montage_spacing[j]].T, cmap = 'Greys_r', 
 						interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-					bar = plt.imshow(overlay_acc[:,:,overlay_acc.shape[2]*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1] ,overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha,origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+					bar = plt.imshow(overlay_acc[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1],
+						overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax1 = fig.add_subplot(gs01[1,j])
-					plt.imshow(overlay[:,:,overlay_acc.shape[2]*ax_montage_spacing[j],l].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j],l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Sagittal:#plot sagittal
 					gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 					ax2 = fig.add_subplot(gs02[0,j])
-					plt.imshow(anat[anat.shape[0]*sag_montage_spacing[j],::-1,:].T, cmap = 'Greys_r', 
-						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[overlay_acc.shape[0]*sag_montage_spacing[j],::-1,:].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax = 5)
+					plt.imshow(anat[(anat.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = 'Greys_r', 
+						interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
+					bar = plt.imshow(overlay_acc[(overlay_acc.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
+						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax2 = fig.add_subplot(gs02[1,j])
-					plt.imshow(overlay[overlay.shape[0]*sag_montage_spacing[j],::-1,:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Coronal:#plot coronal
 					gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
 					ax3 = fig.add_subplot(gs03[0,9-j])
-					plt.imshow(anat[:,anat.shape[1]*cor_montage_spacing[j],:].T, cmap = 'Greys_r', 
-						origin = 'lower', interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[:,overlay_acc.shape[1]*cor_montage_spacing[j],:].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, origin = 'lower', interpolation = 'gaussian', vmin = threshold, vmax =5)
+					plt.imshow(anat[:,(anat.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = 'Greys_r', 
+						interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
+					bar = plt.imshow(overlay_acc[:,(overlay_acc.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
+						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax =5)
 					plt.axis('off')
 					ax3 = fig.add_subplot(gs03[1,9-j])
-					plt.imshow(overlay[:,overlay.shape[1]*cor_montage_spacing[j],:,l].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 			gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
 			ax4 = fig.add_subplot(gs04[0,0])#formatting
@@ -433,17 +436,17 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		if Axial:#plot axial
 			gs01 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
 			ax1 = fig.add_subplot(gs01[0,j])
-			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Sagittal:#plot sagittal
 			gs02 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 			ax2 = fig.add_subplot(gs02[0,j])
-			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,::-1,:].T, cmap = 'Greys_r',origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,:,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Coronal:#plot coronal
 			gs03 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
 			ax3 = fig.add_subplot(gs03[0,9-j])
-			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,:].T, cmap = 'Greys_r', origin = 'lower', vmin = minimum, vmax = maximum)
+			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 
 	gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
@@ -465,56 +468,65 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 	gs0 = gridspec.GridSpec(1,3)
 	os.chdir(setname)
 	subprocess.call('rm -f %s/ocv_uni_vrm*' % setname, shell = True)
+	anat = anat[len(os.path.dirname(anat)):]
+	fails = 0
 	if coreg_anat != '':
 		anat = coreg_anat
 	if '.nii.gz' in anat[-7:]:
 		anat_name = anat[:-7]
 	if '.nii' in anat[-4:]:
 		anat_name = anat[:-4]
-	anat_name = anat_name[len(os.path.dirname(anat_name)):]
 	if '/' in anat_name[0]:
 		anat_name = anat_name[1:]
+		anat = anat[1:]
 	if not os.path.isfile(anat_name + '.nii.gz') and not os.path.isfile(anat + '.nii'):
 		if os.path.isfile(anat_name[:-2] + 'ns.nii.gz'):
-			anat_name = anat_name[:-2] + 'ns'
+			anat_name = anat_name[:-2]
 		elif os.path.isfile(anat_name[:-5] + 'ns.nii.gz'):
 			anat_name = anat_name[:-5] + 'ns'
+		elif os.path.isfile(anat_name + '_ns.nii.gz'):
+			anat_name = anat_name + '_ns'
 		else:
-			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Exiting' % anat_name
-			sys.exit()
+			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Coregistration will not be performed' % anat
+			fails = 1
 
-	if os.path.isfile('%s.nii.gz' % anat_name) and not os.path.isfile('%s+orig.HEAD' % anat_name):
-		subprocess.call('3dcopy %s.nii.gz %s' % (anat_name,anat_name), shell = True)
-	if os.path.isfile('%s.nii') and not os.path.isfile('%s+orig.HEAD' % anat_name):
-		subprocess.call('3dcopy %s.nii %s' % (anat_name,anat_name), shell = True)
+	if not fails:
+		if os.path.isfile('%s.nii.gz' % anat_name):
+			suffix = '.nii.gz'
+			if not os.path.isfile('%s+orig.HEAD' % anat_name):
+				subprocess.call('3dcopy %s.nii.gz %s' % (anat_name,anat_name), shell = True)	
+		if os.path.isfile('%s.nii' % anat_name):
+			suffix = '.nii'
+			if not os.path.isfile('%s+orig.HEAD' % anat_name):
+				subprocess.call('3dcopy %s.nii %s' % (anat_name,anat_name), shell = True)
+			
 
-	subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
-	if os.path.isfile('ocv_uni_vrm+tlrc.BRIK'):
-		subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
-	subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
-	subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
-	subprocess.call('3daxialize -overwrite ocv_uni_vrm_e3.nii', shell = True)
-	subprocess.call('3daxialize -overwrite %s' % anat, shell = True)
+		subprocess.call('3dcalc -a ocv_uni_vr.nii.gz -b eBvrmask.nii.gz -expr "step(b)*a" -prefix ocv_uni_vrm', shell = True)
+		if os.path.isfile('ocv_uni_vrm+tlrc.BRIK'):
+			subprocess.call('3drefit -view orig ocv_uni_vrm+tlrc', shell = True)
+		subprocess.call('@AddEdge ocv_uni_vrm+orig %s+orig' % anat_name, shell = True)
+		subprocess.call('3dcalc -a ocv_uni_vrm_e3+orig -expr "a" -prefix ocv_uni_vrm_e3.nii', shell = True)
+		subprocess.call('3daxialize -overwrite -prefix axialized_%s%s %s%s'% (anat_name,suffix,anat_name,suffix), shell = True)
+		subprocess.call('3daxialize -overwrite -prefix ocv_uni_vrm_e3.nii ocv_uni_vrm_e3.nii', shell = True)
+		overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 
-	anatomical, overlay, threshold_data, anat_corners, overlay_corners = collect_data(anat, 'ocv_uni_vrm_e3.nii', '')
-
-	overlay[overlay == 0] = np.nan
-
-	fig = plt.figure(figsize = (3.2*5,4))
-	gs0 = gridspec.GridSpec(1,10)
-	for i in np.arange(0,1,.1):#plot montage of corregistration onto anatomcial
-		ax1 = fig.add_subplot(gs0[0,int(i*10)])
-		plt.imshow(anatomical[:,::-1,anatomical.shape[2]*i].T, cmap = 'Greys_r', extent = [anat_corners[0,0,0], anat_corners[0,0,1],
-			anat_corners[1,0,0], anat_corners[1,0,1]])
-		plt.imshow(overlay[:,:,overlay.shape[2]*i].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1],
-			overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = 0.8, origin = 'lower')
-		plt.axis('off')
-	gs0.tight_layout(fig, w_pad = -2)
-	fig.subplots_adjust(right = 0.9)
-	os.chdir('%s/%s' % (startdir,figures))
-	plt.savefig('coregistration')
-	plt.close()
-	print '++ finished corregistration figure'
+		anatomical = ni.load('axialized_%s%s'% (anat_name,suffix)).get_data()
+		tmp,lower,upper = mask(overlay,(0,1))
+		overlay[overlay == 0] = np.nan
+		ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
+		fig = plt.figure(figsize = (3.2*5,4))
+		gs0 = gridspec.GridSpec(1,10)
+		for i in range(10):#plot montage of corregistration onto anatomcial
+			ax1 = fig.add_subplot(gs0[0,i])
+			plt.imshow(anatomical[:,:,(anatomical.shape[2]-1)*ax_montage_spacing[i]].T, cmap = 'Greys_r')
+			plt.imshow(overlay[:,:,(overlay.shape[2]-1)*ax_montage_spacing[i]].T, cmap = GYR, alpha = 0.8)
+			plt.axis('off')
+		gs0.tight_layout(fig, w_pad = -2)
+		fig.subplots_adjust(right = 0.9)
+		os.chdir('%s/%s' % (startdir,figures))
+		plt.savefig('coregistration')
+		plt.close()
+		print '++ finished corregistration figure'
 
 """
 Makes TSNR figures of medn, tsoc, and medn/tsoc datasets
@@ -551,7 +563,7 @@ def tsnr(tsoc,medn):
 		for i in range(0,10):
 			ax1 = fig.add_subplot(gs0[0,i])#plot montage
 			plt.imshow(background, cmap = 'Greys_r')
-			plot = plt.imshow(tsnr[:,::-1,i*.1*tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
+			plot = plt.imshow(tsnr[:,:,i*.1*tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
 			plt.axis('off')
 		gs0.tight_layout(fig, w_pad = -1, rect = [0,0,0.95,1])
 		cbar = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs0.bottom, .01, gs0.top - gs0.bottom])
@@ -657,9 +669,9 @@ def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refferen
 			seed_location[native[0,0]-1:native[0,0]+1, native[1,0]-1:native[1,0]+1, native[2,0]] = 1
 			fig = plt.figure(figsize = (2.5,2.5))
 			gs1 = gridspec.GridSpec(1,1)
-			plt.imshow(anat[:,::-1,int(anat.shape[2]*native[2,0]/beta.shape[2])].T, cmap = 'Greys_r', 
+			plt.imshow(anat[:,:,int(anat.shape[2]*native[2,0]/beta.shape[2])].T, cmap = 'Greys_r', 
 					extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-			plt.imshow(seed_location[:,::-1,native[2,0]].T, cmap = 'autumn', extent = [beta_corners[0,0,0],beta_corners[0,0,1],
+			plt.imshow(seed_location[:,:,native[2,0]].T, cmap = 'autumn', extent = [beta_corners[0,0,0],beta_corners[0,0,1],
 					beta_corners[1,0,0], beta_corners[1,0,1]])
 			plt.axis('off')
 			if len(ROI[i]) > 3:
@@ -703,11 +715,11 @@ def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refferen
 				ax1 = fig.add_subplot(gs0[0,N])
 				if j == 1:
 					j = (float(anat.shape[2]-1))/anat.shape[2]
-				plt.imshow(anat[:,::-1,int(anat.shape[2]*j)].T, cmap = 'Greys_r', 
+				plt.imshow(anat[:,:,int(anat.shape[2]*j)].T, cmap = 'Greys_r', 
 					extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[1,0,0],anat_corners[1,0,1]])
 				if j == (float(anat.shape[2]-1))/anat.shape[2]:
 					j = float(z_scores.shape[2]-1)/z_scores.shape[2]
-				plot = plt.imshow(z_scores[:,::-1,int(z_scores.shape[2]*j)].T, alpha = 0.8, cmap = BGYR , extent = [beta_corners[0,0,0], beta_corners[0,0,1],
+				plot = plt.imshow(z_scores[:,:,int(z_scores.shape[2]*j)].T, alpha = 0.8, cmap = BGYR , extent = [beta_corners[0,0,0], beta_corners[0,0,1],
 					beta_corners[1,0,0],beta_corners[1,0,1]], interpolation = 'gaussian', vmin = minimum, vmax = maximum)
 				plt.axis('off')
 				N += 1
