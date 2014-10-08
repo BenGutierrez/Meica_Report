@@ -317,7 +317,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 		while len(N) < len(str(overlay.shape[3])):
 			N = '0' + N
 		fig = plt.figure(figsize = (3.2*4,3 + (Axial + Sagittal + Coronal)*2.5))
-		if anat != '' and i in accept and Axial + Sagittal + Coronal != 0 and threshold_data != '':#if anatomcial specified and i in accept place overlay over the anatomcial
+		if anat != '' and i in accept[:,0] and Axial + Sagittal + Coronal != 0 and threshold_data != '':#if anatomcial specified and i in accept place overlay over the anatomcial
 			overlay_acc = np.absolute(threshold_data[:,:,:,l])
 			
 			overlay_acc[overlay_acc < threshold] = 0 #threshold mefl.nii.gz by feats dataset

@@ -299,7 +299,7 @@ meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
 meica_figures.motion(startdir,figures,setname)
-print('++ this set of figures may take a while')
+print('++ this set of figures may take awhile')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
 	if args.coreg:
