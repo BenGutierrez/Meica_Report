@@ -566,7 +566,7 @@ def tsnr(tsoc,medn):
 			plot = plt.imshow(tsnr[:,:,i*.1*tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
 			plt.axis('off')
 		gs0.tight_layout(fig, w_pad = -1, rect = [0,0,0.95,1])
-		cbar = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), gs0.bottom, .01, gs0.top - gs0.bottom])
+		cbar = fig.add_axes([(gs0.right + ((gs0.right + 1)/2 - gs0.right)/2), .2875, .01, .425])
 		fig.subplots_adjust(right = 0.9)
 		fig.colorbar(plot, cax = cbar)
 		if j == 0:

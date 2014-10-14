@@ -167,11 +167,11 @@ def diagnostics_rst(nsmprage, coreg, figures):
 		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset having a greater ' + 
 		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
-	sl.append('Absolute TSNR of the medn NIFTI1 dataset:\n')
+	sl.append('Absolute TSNR of the medn NIFTI1 dataset, Accepted and Ignroed components:\n')
 	sl.append('.. image:: .. /%s/medn_tsnr.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
-	sl.append('Absolute TSNR of the tsoc NIFTI1 dataset:\n')
+	sl.append('Absolute TSNR of the tsoc NIFTI1 dataset, all components:\n')
 	sl.append('.. image:: .. /%s/tsoc_tsnr.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
