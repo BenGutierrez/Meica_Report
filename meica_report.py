@@ -165,7 +165,7 @@ def dep_check():
 		sys.exit()
 
 def path_name(setname, startdir, TED, anat):
-	if setname == '':
+	if setname == '' or setname == None:
 		print '*+ Need to specify the option -setname to run meica_report.py'
 		sys.exit()
 	if not os.path.isdir(setname):
@@ -225,8 +225,6 @@ options.add_argument('-min_v', dest = 'min_variance_explained', help = 'Minimum 
 options.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum total component number before warning raised in report, default = 20', type = int, default = 20)
 options.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
 args = parser.parse_args()
-
-dep_check()
 
 if args.show:
 	print 'Default mode netowrk seed MNI coordinates:\n' + str(ROI_default).replace('],','],\n')

@@ -346,14 +346,14 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,2, height_ratios = height, width_ratios = width)
 			gs0.update(left = .05, right = 1.03)
 
-			contrast_ = overlay[overlay[:,:,:,l] != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+			contrast_ = overlay[overlay[:,:,:,i] != 0,i]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 			maximum = np.percentile(contrast_,100 - contrast)
 			minimum = np.percentile(contrast_,contrast)
-			tmp,lower,upper = mask(overlay[:,:,:,l],(0,1))
+			tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))
 			ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
-			tmp,lower,upper = mask(overlay[:,:,:,l],(1,2))
+			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
 			sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
-			tmp,lower,upper = mask(overlay[:,:,:,l],(1,2))
+			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
 			cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 			for j in range(10):#plot montage of accept component onto anatomical
 				if Axial:#plot axial
@@ -365,7 +365,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 						overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax1 = fig.add_subplot(gs01[1,j])
-					plt.imshow(overlay[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j],l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j],i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Sagittal:#plot sagittal
 					gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
@@ -376,7 +376,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax2 = fig.add_subplot(gs02[1,j])
-					plt.imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 				if Coronal:#plot coronal
 					gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
@@ -387,7 +387,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax =5)
 					plt.axis('off')
 					ax3 = fig.add_subplot(gs03[1,9-j])
-					plt.imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,l].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+					plt.imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 					plt.axis('off')
 			gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
 			ax4 = fig.add_subplot(gs04[0,0])#formatting
@@ -400,7 +400,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			cbar_ax = fig.add_axes([.94,.3,.01,.65])
 			fig.colorbar(bar, cax = cbar_ax)
 			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270, labelpad=20)
-			plt.savefig('Accepted_Component_' + N)
+			plt.savefig('Component_' + N)
 			plt.close()
 			l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
 		else:
@@ -429,27 +429,26 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		overlay_x,lower,upper = mask(overlay[:,:,:,i],(1,2))
 		overlay_y,lower,upper = mask(overlay[:,:,:,i],(0,2))
 		contrast_ = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
-		maximum = np.percentile(contrast_,100 - contrast)
-		minimum = np.percentile(contrast_,contrast)
+		maximum = np.percentile(contrast_, 100 - contrast)
+		minimum = np.percentile(contrast_, contrast)
 
 	for j in range(10):#plot greyscale component montage
 		if Axial:#plot axial
-			gs01 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
+			gs01 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[0,0], hspace = 0.0, wspace = 0)
 			ax1 = fig.add_subplot(gs01[0,j])
 			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Sagittal:#plot sagittal
-			gs02 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
+			gs02 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 			ax2 = fig.add_subplot(gs02[0,j])
 			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,:,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Coronal:#plot coronal
-			gs03 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
+			gs03 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
 			ax3 = fig.add_subplot(gs03[0,9-j])
 			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
-
-	gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec=gs0[Axial + Sagittal + Coronal,0])
+	gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = gs0[Axial + Sagittal + Coronal,0])
 	ax4 = fig.add_subplot(gs04[0,0])#formatting
 	time_series = np.loadtxt(series)
  	plt.plot(np.arange(time_series.shape[0]), time_series[:,i])
@@ -510,7 +509,7 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 		subprocess.call('3daxialize -overwrite -prefix ocv_uni_vrm_e3.nii ocv_uni_vrm_e3.nii', shell = True)
 		overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 
-		anatomical = ni.load('axialized_%s%s'% (anat_name,suffix)).get_data()
+		anatomical = ni.load('axialized_%s%s' % (anat_name,suffix)).get_data()
 		tmp,lower,upper = mask(overlay,(0,1))
 		overlay[overlay == 0] = np.nan
 		ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
