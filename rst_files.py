@@ -62,7 +62,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		for i in accept[:,0]:
 			sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
 			sl.append('-----------------------------\n')
-			sl.append('.. image:: ../%s/Accepted_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+			sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 			sl.append('	:scale: 75%')
 			sl.append('	:align: left\n\n')
 			sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
