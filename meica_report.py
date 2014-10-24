@@ -196,12 +196,12 @@ def path_name(setname, startdir, TED, anat):
 
 parser = argparse.ArgumentParser('Options')
 Required = parser.add_argument_group('Required arguments')
-Required.add_argument('-setname', dest = 'setname', help = 'Directory meica.py creates.  Will be of the form "meica.foo", default = ')
+Required.add_argument('-setname', dest = 'setname', help = 'Directory meica.py creates.  Will be of the form "meica.foo"')
 lab = parser.add_argument_group('File and directory labels')
 lab.add_argument('-label', dest = 'label', help = 'Label to tag directory for all output files, default is "Report"  ', default = 'Report')
 lab.add_argument('-f_label', dest = 'figures', help = 'Label to tag directory for all figures to be places, default is "Report_Figures"', default = 'Report_Figures')
 lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
-lab.add_argument('-dir', dest = 'startdir', help = 'Directory that meica.py was run from.  Default is current directory', default = '')
+lab.add_argument('-dir', dest = 'startdir', help = 'Directory to place report directory.  Default is current directory', default = '')
 lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
 lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -overwrite specified and -label directory already exists, will overwrite', action = 'store_false')
 options = parser.add_argument_group('Report options')
@@ -320,7 +320,7 @@ else:
 
 os.chdir('%s/%s' % (startdir,label))
 
-#set up sphinx documentation
+set up sphinx documentation
 sphinx_files.conf(__version__)
 sphinx_files.make_bat()
 sphinx_files.make_file()
@@ -334,20 +334,17 @@ rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_thresh
 	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
+ofh = open("meica_report.txt","w")
+ofh.write(" ".join(sys.argv))
+ofh.close()
 
-
-#run sphinx build
+run sphinx build
 subprocess.call('make html', shell = True)
 subprocess.call('make latex', shell = True)
 
 if args.latex:
 	subprocess.call('make latexpdf', shell = True)
 
-ofh = open("meica_report.txt","w")
-ofh.write('#'+" ".join(sys.argv))
-ofh.close()
-
-subprocess.call('mv %s/meica_report.txt %s/%s/meica_report.txt' % (startdir,startdir,label), shell = True)
 subprocess.call('mv %s/%s/_build/* %s/%s' % (startdir,label,startdir,label), shell = True)
 subprocess.call('rm -rf _*', shell = True)
 subprocess.call('mkdir %s/%s/sphinx_files' % (startdir,label), shell = True)
