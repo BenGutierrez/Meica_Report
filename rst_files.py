@@ -79,7 +79,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		N += 1
 
 	sl.append('\nRejected Components\n' + '+++++++++++++++++++')
-	sl.append('The following images are the rejected components from meica ouput'
+	sl.append('The following images are the rejected components from meica ouput')
 	N = 0
 	for i in reject[:,0]:
 		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(reject[N,3],2)))
