@@ -64,13 +64,13 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	N = 0	
 	for i in accept[:,0]:
 		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(accept[N,1],8), digit_length(accept[N,2],7), digit_length(accept[N,3],3), digit_length(accept[N,4],3)))
 		sl.append('=============  =============  =============  =================\n')
-		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
