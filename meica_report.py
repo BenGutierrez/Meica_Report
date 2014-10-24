@@ -224,7 +224,7 @@ options.add_argument('-latex', dest = 'latex', help = 'If specified, will use pd
 options.add_argument('-min_v', dest = 'min_variance_explained', help = 'Minimum variance explained before warning raised in report, default = 85', type = int, default = 85)
 options.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum total component number before warning raised in report, default = 20', type = int, default = 20)
 options.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
-options.add_argument('-title', dest = 'title', help = 'Title of ME-ICA report.  Will be shown on browser tab name for easier identification between multiple reports.', default = 'Your ME-ICA Report!')
+options.add_argument('-title', dest = 'title', help = 'Title of ME-ICA report.  Will be shown on browser tab for easier identification between multiple reports.', default = 'Your ME-ICA Report!')
 args = parser.parse_args()
 
 if args.show:
@@ -343,6 +343,11 @@ subprocess.call('make latex', shell = True)
 if args.latex:
 	subprocess.call('make latexpdf', shell = True)
 
+ofh = open("meica_report.txt","w")
+ofh.write('#'+" ".join(sys.argv))
+ofh.close()
+
+subprocess.call('mv %s/meica_report.txt %s/%s/meica_report.txt' % (startdir,startdir,label), shell = True)
 subprocess.call('mv %s/%s/_build/* %s/%s' % (startdir,label,startdir,label), shell = True)
 subprocess.call('rm -rf _*', shell = True)
 subprocess.call('mkdir %s/%s/sphinx_files' % (startdir,label), shell = True)
