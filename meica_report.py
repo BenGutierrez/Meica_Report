@@ -320,7 +320,7 @@ else:
 
 os.chdir('%s/%s' % (startdir,label))
 
-set up sphinx documentation
+# set up sphinx documentation
 sphinx_files.conf(__version__)
 sphinx_files.make_bat()
 sphinx_files.make_file()
@@ -338,7 +338,7 @@ ofh = open("meica_report.txt","w")
 ofh.write(" ".join(sys.argv))
 ofh.close()
 
-run sphinx build
+# run sphinx build
 subprocess.call('make html', shell = True)
 subprocess.call('make latex', shell = True)
 
