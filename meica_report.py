@@ -138,12 +138,12 @@ def dep_check():
 		fails += 1
 	if sphinx_installed:
 		print " + Sphinx version: %s" % (sphinx.__version__)
-		if float('.'.join(sphinx.__version__.split('.')[0:2]))<1.2:
+		if float((sphinx.__version__)[0:3])<1.2:
 			fails += 1
 			print "*+ Sphinx version is too old! Please upgrade to Sphinx >=1.2.x!"
 	if numpy_installed:
 		print " + Numpy version: %s" % (numpy.__version__)
-		if float('.'.join(numpy.__version__.split('.')[0:2]))<1.5:
+		if float((numpy.__version__)[0:3])<1.5:
 			fails += 1
 			print "*+ Numpy version is too old! Please upgrade to Numpy >=1.5.x!"
 		import numpy.__config__ as nc
@@ -224,6 +224,7 @@ options.add_argument('-latex', dest = 'latex', help = 'If specified, will use pd
 options.add_argument('-min_v', dest = 'min_variance_explained', help = 'Minimum variance explained before warning raised in report, default = 85', type = int, default = 85)
 options.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum total component number before warning raised in report, default = 20', type = int, default = 20)
 options.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
+options.add_argument('-title', dest = 'title', help = 'Title of ME-ICA report.  Will be shown on browser tab name for easier identification between multiple reports.', default = 'Your ME-ICA Report!')
 args = parser.parse_args()
 
 if args.show:
@@ -233,6 +234,7 @@ if args.show:
 	print '++ To create report, do not specify -show_ROI'
 	sys.exit()
 
+dep_check()
 import meica_figures
 import sphinx_files
 import rst_files
@@ -280,6 +282,8 @@ if args.MNI:
 
 subprocess.call('mkdir %s/%s' % (startdir,label), shell = True)#make directories
 subprocess.call('mkdir %s/%s/axialized_nifti' % (startdir,label), shell = True)
+if corr:
+	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/betas_hik_OC.nii %s/betas_hik_OC.nii' % (startdir,label,TED), shell = True)
 
 maps = meica_figures.collect_data(startdir,label,TED,anat,mefl,feats)#collect nifti data
 accept, reject, middle, ignore = meica_figures.components(TED)
@@ -304,7 +308,7 @@ if anat != '':
 		meica_figures.coreg(startdir, setname, figures, anat, args.coreg_anat)#create corregistration figure
 	if args.MNI:
 		if len(accept) > 3:
-			meica_figures.correlation(TED, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
+			meica_figures.correlation(startdir, label, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
 			if args.ROI_reference + args.ROI_attention + args.ROI_default + len(args.User_ROI) != 0:
 				corr = True
 		else:
@@ -324,7 +328,7 @@ sphinx_files.make_file()
 #make .rst files for sphinx to use to generate the report
 print('++ occupying sphinx directory with .rst files')
 rst_files.diagnostics_rst(anat,args.coreg,figures)
-rst_files.index_rst(corr)
+rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
 	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal)

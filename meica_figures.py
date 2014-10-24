@@ -614,7 +614,7 @@ setname: name of directory containing the TED directory
 nsmprgae: path to the anatomical image
 threshold: z-score to threshold data at.  data symmetrically thresholded about zero with threshold
 """
-def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
+def correlation(startdir, label, figures, nsmprage, ROI_default, ROI_attention, ROI_refference, User_ROI, threshold):
 	cdict = {'red':  	  ((0.0, 0.0, 0.0),
 						   (0.6, 0.0, 0.0),
 						   (0.7, 0.6, 0.6),
@@ -635,8 +635,8 @@ def correlation(TED, figures, nsmprage, ROI_default, ROI_attention, ROI_refferen
 		        }
 
 	BGYR = LinearSegmentedColormap('BGYR', cdict)
-	beta = ni.load('%s/betas_hik_OC.nii' % TED).get_data()
-	beta_hdr = ni.load('%s/betas_hik_OC.nii' % TED).get_header()
+	beta = ni.load('%s/%s/axialized_nifti/betas_hik_OC.nii' % (startdir,label)).get_data()
+	beta_hdr = ni.load('%s/%s/axialized_nifti/betas_hik_OC.nii' % (startdir,label)).get_header()
 	anat = ni.load(nsmprage).get_data()
 	anat_hdr = ni.load(nsmprage).get_header()
 

@@ -57,98 +57,82 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('Accepted Components with anatomical')
 		sl.append('+++++++++++++++++++++++++++++++++++')	
 		sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
-		N = 0	
-
-		for i in accept[:,0]:
-			sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
-			sl.append('-----------------------------\n')
-			sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-			sl.append('	:scale: 75%')
-			sl.append('	:align: left\n\n')
-			sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-			sl.append('	:width: 49%\n')
-			sl.append('=============  =============  =============  =================')
-			sl.append('     kappa         rho         %s Variance     %s Variance(norm)' % ('%','%'))
-			sl.append('=============  =============  =============  =================')
-			sl.append('%s       %s         %s           %s       ' % 
-				(digit_length(accept[N,1],8), digit_length(accept[N,2],7), digit_length(accept[N,3],3), digit_length(accept[N,4],3)))
-			sl.append('=============  =============  =============  =================\n')
-			N += 1
 	else:
 		sl.append('\nAccepted Components\n' + '+++++++++++++++++++')
-		sl.append('The following images are the thresholded components from the accepted bin of meica.py.  The threshold was set to %s.' % threshold)
-		N = 0	
-		for i in accept[:,0]:
-			sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
-			sl.append('-----------------------------\n')
-			sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-			sl.append('	:scale: 75%')
-			sl.append('	:align: left\n\n')
-			sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-			sl.append('	:width: 49%\n')
-			sl.append('=============  =============  =============  =================')
-			sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
-			sl.append('=============  =============  =============  =================')
-			sl.append('%s       %s         %s           %s       ' % 
-				(digit_length(accept[N,1],8), digit_length(accept[N,2],7), digit_length(accept[N,3],3), digit_length(accept[N,4],3)))
-			sl.append('=============  =============  =============  =================\n')
-			N += 1
-
-	sl.append('\nRejected Components\n' + '+++++++++++++++++++')
-	sl.append('The following images are the grey scale components from the rejected bin of meica.py.')
-	N = 0
-	for i in reject[:,0]:
-		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(reject[N,3],2)))
+		sl.append('The following images are the accepted components from meica ouput')
+	
+	N = 0	
+	for i in accept[:,0]:
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(accept[N,3],2)))
+		sl.append('=============  =============  =============  =================')
+		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
+		sl.append('=============  =============  =============  =================')
+		sl.append('%s       %s         %s           %s       ' % 
+			(digit_length(accept[N,1],8), digit_length(accept[N,2],7), digit_length(accept[N,3],3), digit_length(accept[N,4],3)))
+		sl.append('=============  =============  =============  =================\n')
 		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
 		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
+		N += 1
+
+	sl.append('\nRejected Components\n' + '+++++++++++++++++++')
+	sl.append('The following images are the rejected components from meica ouput'
+	N = 0
+	for i in reject[:,0]:
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(reject[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(reject[N,1],8), digit_length(reject[N,2],7), digit_length(reject[N,3],3), digit_length(reject[N,4],3)))
 		sl.append('=============  =============  =============  =================\n')
-		N += 1
-
-	sl.append('\nMiddle Components\n' + '+++++++++++++++++++')
-	sl.append('The following images are the grey scale components from the middle kappa bin of meica.py.')
-	N = 0
-	for i in middle[:,0]:
-		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(middle[N,3],2)))
-		sl.append('-----------------------------\n')
 		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
 		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
+		N += 1
+
+	sl.append('\nMiddle Components\n' + '+++++++++++++++++++')
+	sl.append('The following images are the middle kappa components from meica ouput')
+	N = 0
+	for i in middle[:,0]:
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(middle[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(middle[N,1],8), digit_length(middle[N,2],7), digit_length(middle[N,3],4), digit_length(middle[N,4],4)))
 		sl.append('=============  =============  =============  =================\n')
-		N += 1
-
-	sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
-	sl.append('The following images are the grey scale components from the ignore bin of meica.py.')
-	N = 0
-	for i in ignore[:,0]: 
-		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(ignore[N,3],2)))
-		sl.append('-----------------------------\n')
-		sl.append('.. image:: ../%s/Component_' % figures  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('.. image:: ../%s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:scale: 75%')
 		sl.append('	:align: left\n\n')
 		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
+		N += 1
+
+	sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
+	sl.append('The following images are the ignored components from meica ouput.  These are kept with accepted for increased variance')
+	N = 0
+	for i in ignore[:,0]: 
+		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(ignore[N,3],2)))
+		sl.append('-----------------------------\n')
 		sl.append('=============  =============  =============  =================')
 		sl.append('     kappa         rho         %s Variance    %s Variance(norm)' % ('%','%'))
 		sl.append('=============  =============  =============  =================')
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(ignore[N,1],8), digit_length(ignore[N,2],7), digit_length(ignore[N,3],4), digit_length(ignore[N,4],4)))
 		sl.append('=============  =============  =============  =================\n\n')
+		sl.append('.. image:: ../%s/Component_' % figures  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 75%')
+		sl.append('	:align: left\n\n')
+		sl.append('.. image:: ../%s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%\n')
 		N += 1
 	sl.append('.. |warning| image:: ../%s/warning.png' % figures)
 	sl.append('    		 :align: middle')
@@ -167,7 +151,7 @@ def diagnostics_rst(nsmprage, coreg, figures):
 		'Meica.py denoises the BOLD time signal which should increase TSNR. This will be seen as the medn dataset having a greater ' + 
 		'TSNR than the tsoc dataset.\n')
 	sl.append('TSNR\n' + '+++++++')
-	sl.append('Absolute TSNR of the medn NIFTI1 dataset, Accepted and Ignroed components:\n')
+	sl.append('Absolute TSNR of the medn NIFTI1 dataset, Accepted and Ignored components:\n')
 	sl.append('.. image:: .. /%s/medn_tsnr.png' % figures)
 	sl.append('	:scale: 99%')
 	sl.append('	:align: left\n')
@@ -199,10 +183,10 @@ def diagnostics_rst(nsmprage, coreg, figures):
 """
 make index.rst file
 """
-def index_rst(cor):
+def index_rst(cor,title):
 	sl = []
-	sl.append('Welcome to your ME-ICA Report!')
-	sl.append('==============================')
+	sl.append(title)
+	sl.append('='* (len(title)+1))
 	sl.append('The program meica.py was created to form an algorithmic method for performing '
 		+ 'independent component analysis on multi-echo data and then algorithmically deciding '
 		+ 'which components represent BOLD-like phenomena.\n')
