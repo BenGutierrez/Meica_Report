@@ -47,16 +47,16 @@ def check_ROI(ROI, TED, description):
 	if ROI != []:
 		beta = ni.load('%s/betas_hik_OC.nii' % TED).get_data()
 		beta_hdr = ni.load('%s/betas_hik_OC.nii' % TED).get_header()
-		corners = np.zeros((3,1,2))
+		corners = np.zeros((3,2))
 		cord_matrix = beta_hdr.get_best_affine()[0:3,0:3]
-		corners[:,:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
-		corners[:,:,1] = np.dot(cord_matrix,np.array([[beta.shape[0]],[beta.shape[1]],[beta.shape[2]]])) + corners[:,:,0]
+		corners[:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
+		corners[:,1] = np.dot(cord_matrix,np.array([[beta.shape[0]],[beta.shape[1]],[beta.shape[2]]])) + corners[:,0]
 		for i in range(len(ROI)):
-			if ROI[i][0]<corners[0,0,0] or ROI[i][0]> corners[0,0,1]:
+			if ROI[i][0]<corners[0,0] or ROI[i][0]> corners[0,1]:
 				fails += 1
-			if ROI[i][1]<corners[1,0,0] or ROI[i][1]> corners[1,0,1]:
+			if ROI[i][1]<corners[1,0] or ROI[i][1]> corners[1,1]:
 				fails += 1
-			if ROI[i][2]<corners[2,0,0] or ROI[i][2]> corners[2,0,1]:
+			if ROI[i][2]<corners[2,0] or ROI[i][2]> corners[2,1]:
 				fails += 1
 	if fails != 0:
 		print '*+ EXITING.  MNI coordinates (%s,%s,%s) not within bounds of image' % (ROI[i][0],ROI[i][1],ROI[i][2])
@@ -228,33 +228,41 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/tsoc.nii.gz %s' % (startdir,label,tsoc), shell = True)
 	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/medn.nii.gz %s' % (startdir,label,medn), shell = True)
 	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/mefl.nii.gz %s' % (startdir,label,overlay), shell = True)
-	overlay = '%s/%s/axialized_nifti/mefl.nii.gz' % (startdir,label)
-	overlay = ni.load(overlay)
+	overlay_name = '%s/%s/axialized_nifti/mefl.nii.gz' % (startdir,label)
+	overlay = ni.load(overlay_name)
 	overlay_data = overlay.get_data()
 	overlay_hdr = overlay.get_header()
-	overlay_quat = overlay_hdr.get_qform_quaternion()
 
 	if anatomical != '':
 		anat_name = anatomical[len(os.path.dirname(anatomical))+1:]
 		subprocess.call('3daxialize -prefix %s/%s/axialized_nifti/%s %s' % (startdir,label,anat_name,anatomical), shell = True)
 		anatomical = ni.load('%s/%s/axialized_nifti/%s' % (startdir,label,anat_name))
-		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
-		anat_quat = anat_hdr.get_qform_quaternion()
-		anat_orient = np.zeros(shape = (3,2))
+		anat_data = anatomical.get_data()
 
-		overlay_corners = np.zeros((3,1,2))
-		anat_corners = np.zeros((3,1,2))
+		anat_corners_mod = np.zeros((3,2))
+		overlay_corners_mod = np.zeros((3,2))
 
-		overlay_R, overlay_q_fac = Rotation_matrix(overlay_hdr.get_qform_quaternion())
-		overlay_corners[:,:,0] = np.array([[overlay_hdr['qoffset_x']] ,[overlay_hdr['qoffset_y']], [overlay_hdr['qoffset_z']]])# calculate extremes of overlay
-		overlay_corners[:,:,1] = (np.dot(overlay_R,np.array([[overlay.shape[0]*overlay_hdr['pixdim'][1]], [overlay.shape[1]*overlay_hdr['pixdim'][2]],
-			[overlay_q_fac*overlay.shape[2]*overlay_hdr['pixdim'][3]]])) + overlay_corners[:,:,0])
+		overlay_corners = Corners(overlay_data,overlay_hdr)
+		anat_corners = Corners(anat_data,anat_hdr)
 
-		anat_R, anat_q_fac = Rotation_matrix(anat_hdr.get_qform_quaternion())
-		anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
-		anat_corners[:,:,1] = (np.dot(anat_R,np.array([[anatomical.shape[0]*anat_hdr['pixdim'][1]], [anatomical.shape[1]*anat_hdr['pixdim'][2]], 
-			[anat_q_fac*anatomical.shape[2]*anat_hdr['pixdim'][3]]])) + anat_corners[:,:,0])
+		for i in range(3):
+			for j in range(2):
+				top = max(abs(anat_corners[i,j]),abs(overlay_corners[i,j]))
+				while (abs(anat_corners[i,j]) + anat_hdr['pixdim'][i+1] * anat_corners_mod[i,j]) <= (top - anat_hdr['pixdim'][i+1]/2.0):
+					anat_corners_mod[i,j] += 1
+				while (abs(overlay_corners[i,j]) + overlay_hdr['pixdim'][i+1] * overlay_corners_mod[i,j]) <= (top - overlay_hdr['pixdim'][i+1]/2.0):
+					overlay_corners_mod[i,j] += 1
+		
+		subprocess.call('3dZeropad -overwrite -prefix %s/%s/axialized_nifti/mefl_zeropad.nii.gz -R %s -L %s -A %s -P %s -I %s -S %s %s' % 
+			(startdir,label,overlay_corners_mod[0,0],overlay_corners_mod[0,1],overlay_corners_mod[1,0],overlay_corners_mod[1,1],overlay_corners_mod[2,0],overlay_corners_mod[2,1],overlay_name), shell = True)
+		subprocess.call('3dZeropad -overwrite -prefix %s/%s/axialized_nifti/anat_zeropad.nii.gz -R %s -L %s -A %s -P %s -I %s -S %s %s/%s/axialized_nifti/%s' % 
+			(startdir,label,anat_corners_mod[0,0],anat_corners_mod[0,1],anat_corners_mod[1,0],anat_corners_mod[1,1],anat_corners_mod[2,0],anat_corners_mod[2,1],startdir,label,anat_name), shell = True)
+		
+		overlay_data = ni.load('%s/%s/axialized_nifti/mefl_zeropad.nii.gz' % (startdir,label)).get_data()
+		anat_data_ = ni.load('%s/%s/axialized_nifti/anat_zeropad.nii.gz' % (startdir,label)).get_data()
+		overlay_corners = Corners(overlay_data,ni.load('%s/%s/axialized_nifti/mefl_zeropad.nii.gz' % (startdir,label)).get_header())
+		anat_corners = Corners(anat_data_,ni.load('%s/%s/axialized_nifti/anat_zeropad.nii.gz' % (startdir,label)).get_header())
 	else:
 		anat_data = ''
 	 	anat_corners = ''
@@ -262,6 +270,9 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 	if threshold_map != '':
 		subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/betas.nii.gz %s' % (startdir,label,threshold_map), shell = True)
 		threshold_map = '%s/%s/axialized_nifti/betas.nii.gz' % (startdir,label)
+		subprocess.call('3dZeropad -overwrite -prefix %s/%s/axialized_nifti/betas_zeropad.nii.gz -R %s -L %s -A %s -P %s -I %s -S %s %s' % 
+			(startdir,label,overlay_corners_mod[0,0],overlay_corners_mod[0,1],overlay_corners_mod[1,0],overlay_corners_mod[1,1],overlay_corners_mod[2,0],overlay_corners_mod[2,1],threshold_map), shell = True)
+		threshold_map = '%s/%s/axialized_nifti/betas_zeropad.nii.gz' % (startdir,label)
 		threshold = ni.load(threshold_map)
 		threshold_data = threshold.get_data()
 	else:
@@ -271,14 +282,21 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 """
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
-def Rotation_matrix(quaternion):
+def Corners(data,hdr):
+	corners = np.zeros((3,2))
+	quaternion = hdr.get_qform_quaternion()
 	R = ni.quaternions.quat2mat(quaternion).astype('float64')
 	if np.linalg.det(R) == -1:
 		q_fac = -1
 	else:
 		q_fac = 1
 
-	return(R, q_fac)
+	corners[:,0] = np.array([[hdr['qoffset_x']] ,[hdr['qoffset_y']], [hdr['qoffset_z']]])[:,0]# calculate extremes of overlay
+	corners[:,1] = (np.dot(R,np.array([[data.shape[0]*hdr['pixdim'][1]], [data.shape[1]*hdr['pixdim'][2]],
+		[q_fac*data.shape[2]*hdr['pixdim'][3]]]))[:,0] + corners[:,0])
+	
+
+	return(corners)
 """
 Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
@@ -347,9 +365,9 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					gs01 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[0,0], hspace = 0.0, wspace = 0)
 					ax1 = fig.add_subplot(gs01[0,j])
 					plt.imshow(anat[:,:,(anat.shape[2]-1)*ax_montage_spacing[j]].T, cmap = 'Greys_r', 
-						interpolation = 'nearest', extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-					bar = plt.imshow(overlay_acc[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0,0], overlay_corners[0,0,1],
-						overlay_corners[1,0,0], overlay_corners[1,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
+						interpolation = 'nearest', extent = [anat_corners[0,0], anat_corners[0,1], anat_corners[1,0], anat_corners[1,1]])
+					bar = plt.imshow(overlay_acc[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0], overlay_corners[0,1],
+						overlay_corners[1,0], overlay_corners[1,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax1 = fig.add_subplot(gs01[1,j])
 					plt.imshow(overlay[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j],i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
@@ -358,9 +376,9 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					gs02 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 					ax2 = fig.add_subplot(gs02[0,j])
 					plt.imshow(anat[(anat.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = 'Greys_r', 
-						interpolation = 'nearest', extent = [anat_corners[1,0,0], anat_corners[1,0,1], anat_corners[2,0,0], anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[(overlay_acc.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = GYR, extent = [overlay_corners[1,0,0], overlay_corners[1,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
+						interpolation = 'nearest', extent = [anat_corners[1,0], anat_corners[1,1], anat_corners[2,0], anat_corners[2,1]])
+					bar = plt.imshow(overlay_acc[(overlay_acc.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = GYR, extent = [overlay_corners[1,0], overlay_corners[1,1],
+						overlay_corners[2,0], overlay_corners[2,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
 					plt.axis('off')
 					ax2 = fig.add_subplot(gs02[1,j])
 					plt.imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
@@ -369,9 +387,9 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					gs03 = gridspec.GridSpecFromSubplotSpec(2, 10, subplot_spec=gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
 					ax3 = fig.add_subplot(gs03[0,9-j])
 					plt.imshow(anat[:,(anat.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = 'Greys_r', 
-						interpolation = 'nearest', extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[2,0,0],anat_corners[2,0,1]])
-					bar = plt.imshow(overlay_acc[:,(overlay_acc.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = GYR, extent = [overlay_corners[0,0,0],overlay_corners[0,0,1],
-						overlay_corners[2,0,0], overlay_corners[2,0,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax =5)
+						interpolation = 'nearest', extent = [anat_corners[0,0],anat_corners[0,1],anat_corners[2,0],anat_corners[2,1]])
+					bar = plt.imshow(overlay_acc[:,(overlay_acc.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = GYR, extent = [overlay_corners[0,0],overlay_corners[0,1],
+						overlay_corners[2,0], overlay_corners[2,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax =5)
 					plt.axis('off')
 					ax3 = fig.add_subplot(gs03[1,9-j])
 					plt.imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
@@ -627,16 +645,16 @@ def correlation(startdir, label, figures, nsmprage, ROI_default, ROI_attention, 
 	anat = ni.load(nsmprage).get_data()
 	anat_hdr = ni.load(nsmprage).get_header()
 
-	beta_corners = np.zeros((3,1,2))
-	anat_corners = np.zeros((3,1,2))
+	beta_corners = np.zeros((3,2))
+	anat_corners = np.zeros((3,2))
 	cord_matrix = beta_hdr.get_best_affine()[0:3,0:3]
 	anat_cord_matrix = anat_hdr.get_best_affine()[0:3,0:3]
 
-	beta_corners[:,:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
-	beta_corners[:,:,1] = np.dot(cord_matrix,np.array([[beta.shape[0]], [beta.shape[1]], [beta.shape[2]]])) + beta_corners[:,:,0]
+	beta_corners[:,0] = np.array([[beta_hdr['qoffset_x']], [beta_hdr['qoffset_y']], [beta_hdr['qoffset_z']]])
+	beta_corners[:,1] = np.dot(cord_matrix,np.array([[beta.shape[0]], [beta.shape[1]], [beta.shape[2]]])) + beta_corners[:,0]
 
-	anat_corners[:,:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
-	anat_corners[:,:,1] = np.dot(anat_cord_matrix,np.array([[anat.shape[0]], [anat.shape[1]], [anat.shape[2]]])) + anat_corners[:,:,0]
+	anat_corners[:,0] = np.array([[anat_hdr['qoffset_x']], [anat_hdr['qoffset_y']], [anat_hdr['qoffset_z']]])
+	anat_corners[:,1] = np.dot(anat_cord_matrix,np.array([[anat.shape[0]], [anat.shape[1]], [anat.shape[2]]])) + anat_corners[:,0]
 
 	for k in range(4):
 		ROI = [ROI_default, ROI_attention, ROI_refference, User_ROI]
@@ -656,9 +674,9 @@ def correlation(startdir, label, figures, nsmprage, ROI_default, ROI_attention, 
 			fig = plt.figure(figsize = (2.5,2.5))
 			gs1 = gridspec.GridSpec(1,1)
 			plt.imshow(anat[:,:,int(anat.shape[2]*native[2,0]/beta.shape[2])].T, cmap = 'Greys_r', 
-					extent = [anat_corners[0,0,0], anat_corners[0,0,1], anat_corners[1,0,0], anat_corners[1,0,1]])
-			plt.imshow(seed_location[:,:,native[2,0]].T, cmap = 'autumn', extent = [beta_corners[0,0,0],beta_corners[0,0,1],
-					beta_corners[1,0,0], beta_corners[1,0,1]])
+					extent = [anat_corners[0,0], anat_corners[0,1], anat_corners[1,0], anat_corners[1,1]])
+			plt.imshow(seed_location[:,:,native[2,0]].T, cmap = 'autumn', extent = [beta_corners[0,0],beta_corners[0,1],
+					beta_corners[1,0], beta_corners[1,1]])
 			plt.axis('off')
 			if len(ROI[i]) > 3:
 				plt.savefig('%s_seed' % ROI[i][3])
@@ -702,11 +720,11 @@ def correlation(startdir, label, figures, nsmprage, ROI_default, ROI_attention, 
 				if j == 1:
 					j = (float(anat.shape[2]-1))/anat.shape[2]
 				plt.imshow(anat[:,:,int(anat.shape[2]*j)].T, cmap = 'Greys_r', 
-					extent = [anat_corners[0,0,0],anat_corners[0,0,1],anat_corners[1,0,0],anat_corners[1,0,1]])
+					extent = [anat_corners[0,0],anat_corners[0,1],anat_corners[1,0],anat_corners[1,1]])
 				if j == (float(anat.shape[2]-1))/anat.shape[2]:
 					j = float(z_scores.shape[2]-1)/z_scores.shape[2]
-				plot = plt.imshow(z_scores[:,:,int(z_scores.shape[2]*j)].T, alpha = 0.8, cmap = BGYR , extent = [beta_corners[0,0,0], beta_corners[0,0,1],
-					beta_corners[1,0,0],beta_corners[1,0,1]], interpolation = 'gaussian', vmin = minimum, vmax = maximum)
+				plot = plt.imshow(z_scores[:,:,int(z_scores.shape[2]*j)].T, alpha = 0.8, cmap = BGYR , extent = [beta_corners[0,0], beta_corners[0,1],
+					beta_corners[1,0],beta_corners[1,1]], interpolation = 'gaussian', vmin = minimum, vmax = maximum)
 				plt.axis('off')
 				N += 1
 			gs0.tight_layout(fig, w_pad = -2.7, rect = [0,0,0.95,1])

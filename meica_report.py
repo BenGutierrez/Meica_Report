@@ -59,7 +59,7 @@ def seed_split(ROI):
 		List = [List]
 	return List
 
-def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat):
+def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat, coreg):
 	fails = 0
 	if not os.path.isfile(anat) and anat != '': 
 		print '*+ Can\'t find the specified anantomical'
@@ -76,7 +76,7 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat):
 	if not os.path.isfile('%s/dn_ts_OC.nii' % TED):
 		print '*+ Can\'t find "%s/dn_ts_OC.nii" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('ocv_uni_vr.nii.gz'):
+	if not os.path.isfile('ocv_uni_vr.nii.gz') and coreg:
 		print '*+ Can\'t find "%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % setname
 		fails += 1
 	if not os.path.isfile('%s/meica_mix.1D' % TED):
@@ -241,7 +241,7 @@ setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, 
 reportdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 User_ROI = seed_split(args.User_ROI)
 os.chdir(setname)
-file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.coreg_anat)
+file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.coreg_anat, args.coreg)
 label = 'meica.' + args.label
 figures = 'Report_Figures'
 
