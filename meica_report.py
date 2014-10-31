@@ -59,7 +59,7 @@ def seed_split(ROI):
 		List = [List]
 	return List
 
-def file_check(anat, startdir, TED, setname, MNI, reportdir, figures, coreg_anat):
+def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat):
 	fails = 0
 	if not os.path.isfile(anat) and anat != '': 
 		print '*+ Can\'t find the specified anantomical'
@@ -107,7 +107,6 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir, figures, coreg_anat
 	if fails != 0:
 		print "*+ EXITING. Please see error messages."
 		sys.exit()
-	return figures
 #Run dependency check
 def dep_check():
 	print '++ Checking system for dependencies...'
@@ -199,7 +198,6 @@ Required = parser.add_argument_group('Required arguments')
 Required.add_argument('-setname', dest = 'setname', help = 'Directory meica.py creates.  Will be of the form "meica.foo"')
 lab = parser.add_argument_group('File and directory labels')
 lab.add_argument('-label', dest = 'label', help = 'Label to tag directory for all output files, default is "Report"  ', default = 'Report')
-lab.add_argument('-f_label', dest = 'figures', help = 'Label to tag directory for all figures to be places, default is "Report_Figures"', default = 'Report_Figures')
 lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 lab.add_argument('-dir', dest = 'startdir', help = 'Directory to place report directory.  Default is current directory', default = '')
 lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
@@ -243,8 +241,9 @@ setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, 
 reportdir = os.path.abspath(os.path.dirname(sys.argv[0]))
 User_ROI = seed_split(args.User_ROI)
 os.chdir(setname)
-figures = file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.figures, args.coreg_anat)
+file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.coreg_anat)
 label = 'meica.' + args.label
+figures = 'Report_Figures'
 
 if os.path.isdir('%s/%s' % (startdir,label)) and args.overwrite:
 	print '*+ %s directory already exits and -overwrite not specified' % label

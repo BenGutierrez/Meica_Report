@@ -235,22 +235,9 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 	overlay_quat = overlay_hdr.get_qform_quaternion()
 
 	if anatomical != '':
-		if '.nii.gz' in anatomical[-7:]:
-			anat_name = anatomical[:-7]
-		if '.nii' in anatomical[-4:]:
-			anat_name = anatomical[:-4]
-		anat_name = anat_name[len(os.path.dirname(anat_name)):]
-		if '/' in anat_name[0]:
-			anat_name = anat_name[1:]
+		anat_name = anatomical[len(os.path.dirname(anatomical))+1:]
 		subprocess.call('3daxialize -prefix %s/%s/axialized_nifti/%s %s' % (startdir,label,anat_name,anatomical), shell = True)
-		if os.path.isfile('%s/%s/axialized_nifti/%s+tlrc.BRIK' % (startdir,label,anat_name)):
-			suffix = '+tlrc'
-		if os.path.isfile('%s/%s/axialized_nifti/%s+orig.BRIK' % (startdir,label,anat_name)):
-			suffix = '+orig'
-		if os.path.isfile('%s/%s/axialized_nifti/%s+acpc.BRIK' % (startdir,label,anat_name)):
-			suffix = '+acpc'
-		subprocess.call('3dcopy %s/%s/axialized_nifti/%s%s %s/%s/axialized_nifti/%s.nii' % (startdir,label,anat_name,suffix,startdir,label,anat_name), shell = True)
-		anatomical = ni.load('%s/%s/axialized_nifti/%s.nii' % (startdir,label,anat_name))
+		anatomical = ni.load('%s/%s/axialized_nifti/%s' % (startdir,label,anat_name))
 		anat_data = anatomical.get_data()
 		anat_hdr = anatomical.get_header()
 		anat_quat = anat_hdr.get_qform_quaternion()
