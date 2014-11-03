@@ -208,7 +208,7 @@ options.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to a
 options.add_argument('-cor', dest = 'Coronal', help = 'Add coronal images to activation montages', action = 'store_true')
 options.add_argument('-coreg', dest = 'coreg', help = 'If specified, redering corregistration.  Need anatomical', action = 'store_true')
 options.add_argument('-coreg_anat', dest = 'coreg_anat', help = 'Optional name of anatomical to corregister with.  MUST be in the -\'setname directory\'.  If none specified, will attempt to guess name', default = '')
-options.add_argument('-flood', dest = 'flood', help = 'Tells flood fill algorithm how many voxels above threshold need to be clustered together (in 3D) to be kept in activation map. Specify as "0" if you want no clustering', type = int, default = 10)
+options.add_argument('-flood', dest = 'flood', help = 'Tells clustering algoithim (flood fill) how many voxels above threshold need to be clustered together (in 26 possible directions) to be kept in activation map. Specify as "0" if you want no clustering', type = int, default = 10)
 options.add_argument('-contrast', dest = 'contrast', help = 'Give contrast to greyscale images in montage.  Ex: "5" will give values in the 5-95 percentile of values.  Default = "2"',type = int, default = 2)
 options.add_argument('-show_ROI', dest = 'show', help = 'Shows prespecified MNI coordinates for Default mode, attention network, and reference network for seed based correlation.  Will NOT make report if specified.', action = 'store_true')
 options.add_argument('-ROI' , dest = 'User_ROI', help = 'ex: "--ROI \'(0,0,0),(0,-53,26)\'"   MNI coordinates for seed voxel correlation computation', default = '[]')

@@ -134,9 +134,10 @@ def components(TED):
 
 	return (accept,reject,middle,ignore)
 """
-Removes two dimensional slices from 3d matrix image that contain all zero elements
+Removes two dimensional slices from 3d matrix image that contain are a mask for the x or y or z direction
+useful for ensuring that the only images that get displayed have nonzero pixels.
 image: three dim array
-axis: axial that the two dimensional plane fixes, i.e. (0,1) fixes z
+axis: axis that the two dimensional plane fixes, i.e. (0,1) fixes z, (1,2) fixes x, etc.
 """
 def mask(image, axis):
 	im_mask = np.zeros(image.shape)
@@ -225,7 +226,7 @@ threshold_map: path to feats_OC2.nii
 def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 	tsoc = '%s/ts_OC.nii' % TED
 	medn = '%s/dn_ts_OC.nii' % TED
-	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/tsoc.nii.gz %s' % (startdir,label,tsoc), shell = True)
+	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/tsoc.nii.gz %s' % (startdir,label,tsoc), shell = True)#makes easier for python indexing
 	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/medn.nii.gz %s' % (startdir,label,medn), shell = True)
 	subprocess.call('3daxialize -overwrite -prefix %s/%s/axialized_nifti/mefl.nii.gz %s' % (startdir,label,overlay), shell = True)
 	overlay_name = '%s/%s/axialized_nifti/mefl.nii.gz' % (startdir,label)
@@ -241,12 +242,12 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 		anat_data = anatomical.get_data()
 
 		anat_corners_mod = np.zeros((3,2))
-		overlay_corners_mod = np.zeros((3,2))
+		overlay_corners_mod = np.zeros((3,2))#find scanner coordinate max and min in all 3 dimensions for overlay
 
-		overlay_corners = Corners(overlay_data,overlay_hdr)
+		overlay_corners = Corners(overlay_data,overlay_hdr)#find scanner coordinate max and min in all 3 dimensions for anat
 		anat_corners = Corners(anat_data,anat_hdr)
 
-		for i in range(3):
+		for i in range(3):#find discrepancy between anat_corners and scanner coordinates.  Zeropad both to ensure both are similar size in scanner coordinates
 			for j in range(2):
 				top = max(abs(anat_corners[i,j]),abs(overlay_corners[i,j]))
 				while (abs(anat_corners[i,j]) + anat_hdr['pixdim'][i+1] * anat_corners_mod[i,j]) <= (top - anat_hdr['pixdim'][i+1]/2.0):
@@ -254,6 +255,7 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 				while (abs(overlay_corners[i,j]) + overlay_hdr['pixdim'][i+1] * overlay_corners_mod[i,j]) <= (top - overlay_hdr['pixdim'][i+1]/2.0):
 					overlay_corners_mod[i,j] += 1
 		
+		#3dZeropad is necessary for overlay because 
 		subprocess.call('3dZeropad -overwrite -prefix %s/%s/axialized_nifti/mefl_zeropad.nii.gz -R %s -L %s -A %s -P %s -I %s -S %s %s' % 
 			(startdir,label,overlay_corners_mod[0,0],overlay_corners_mod[0,1],overlay_corners_mod[1,0],overlay_corners_mod[1,1],overlay_corners_mod[2,0],overlay_corners_mod[2,1],overlay_name), shell = True)
 		subprocess.call('3dZeropad -overwrite -prefix %s/%s/axialized_nifti/anat_zeropad.nii.gz -R %s -L %s -A %s -P %s -I %s -S %s %s/%s/axialized_nifti/%s' % 
@@ -354,7 +356,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			contrast_ = overlay[overlay[:,:,:,i] != 0,i]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 			maximum = np.percentile(contrast_,100 - contrast)
 			minimum = np.percentile(contrast_,contrast)
-			tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))
+			tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))#find range of indicies for each axis that contain non-zero values for displaying to the user.
 			ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
 			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
 			sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
@@ -407,7 +409,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			plt.ylabel('Absoulte z-score', fontsize = 12, rotation = 270, labelpad=20)
 			plt.savefig('Component_' + N)
 			plt.close()
-			l += 1# index of feats_OC2.nii differs from mefl.nii.gz this accounts for this
+			l += 1# indecies of feats_OC2.nii differs from mefl.nii.gz this accounts for this
 		else:
 			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast)
 		FFT(TED, series, i, N)
@@ -586,7 +588,7 @@ def tsnr(tsoc,medn):
 	tsoc_mask = tsoc_tsnr[np.isnan(tsoc_tsnr) == False]
 	frac_mask = frac_tsnr[np.isnan(frac_tsnr) == False]
 	fig = plt.figure()
-	plt.hist(medn_mask, bins = 100, range = [np.percentile(medn_mask,0.01),np.percentile(medn_mask,99.99)])
+	plt.hist(medn_mask, bins = 100, range = [np.percentile(medn_mask,5),np.percentile(medn_mask,95)])
 	plt.title('TSNR medn', fontsize = 15)
 	plt.xlabel('TSNR', fontsize = 15)
 	plt.ylabel('Frequency', fontsize = 15)
@@ -594,7 +596,7 @@ def tsnr(tsoc,medn):
 	plt.close()
 
 	fig = plt.figure()
-	plt.hist(tsoc_mask, bins = 100, range = [np.percentile(tsoc_mask,0.01),np.percentile(tsoc_mask,99.99)])
+	plt.hist(tsoc_mask, bins = 100, range = [np.percentile(tsoc_mask,5),np.percentile(tsoc_mask,95)])
 	plt.title('TSNR tsoc', fontsize = 15)
 	plt.xlabel('TSNR', fontsize = 15)
 	plt.ylabel('Frequency', fontsize = 15)
@@ -603,7 +605,7 @@ def tsnr(tsoc,medn):
 
 	#plot histogram of the TSNR ratio of medn/tsnr
 	fig = plt.figure()
-	plt.hist(frac_mask, bins = 100, range = [np.percentile(frac_mask,0.01),np.percentile(frac_mask,99.99)])
+	plt.hist(frac_mask, bins = 100, range = [np.percentile(frac_mask,5),np.percentile(frac_mask,95)])
 	plt.title('TSNR medn / TSNR tsoc', fontsize = 15)
 	plt.xlabel('TSNR ratio', fontsize = 15)
 	plt.ylabel('Frequency', fontsize = 15)
