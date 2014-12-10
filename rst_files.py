@@ -117,7 +117,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		N += 1
 
 	sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
-	sl.append('The following images are the ignored components from meica ouput.  These are kept with accepted for increased variance')
+	sl.append('The following images are the ignored components from meica ouput.  These are kept with in the denoised timeseries for increased variance')
 	N = 0
 	for i in ignore[:,0]: 
 		sl.append('\nComponent %s: Var %s' % (int(i),digit_length(ignore[N,3],2)))
