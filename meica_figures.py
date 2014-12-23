@@ -360,7 +360,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
 			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
 			sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
-			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
+			tmp,lower,upper = mask(overlay[:,:,:,i],(0,2))
 			cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 			for j in range(10):#plot montage of accept component onto anatomical
 				if Axial:#plot axial
@@ -432,10 +432,16 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 	gs0 = gridspec.GridSpec((Axial + Sagittal + Coronal)+1,1)
 	gs0.update(left = .05, right = .95)
 	if Axial + Sagittal + Coronal != 0:
-		overlay_z,lower,upper = mask(overlay[:,:,:,i],(0,1))#remove z slices with all zero terms
-		overlay_x,lower,upper = mask(overlay[:,:,:,i],(1,2))
-		overlay_y,lower,upper = mask(overlay[:,:,:,i],(0,2))
-		contrast_ = overlay_z[overlay_z != 0]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+		contrast_ = overlay[overlay[:,:,:,i] != 0,i]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
+		maximum = np.percentile(contrast_,100 - contrast)
+		minimum = np.percentile(contrast_,contrast)
+		tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))#find range of indicies for each axis that contain non-zero values for displaying to the user.
+		ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
+		tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
+		sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
+		tmp,lower,upper = mask(overlay[:,:,:,i],(0,2))
+		cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
+		contrast_ = overlay[overlay[:,:,:,i] != 0,i]
 		maximum = np.percentile(contrast_, 100 - contrast)
 		minimum = np.percentile(contrast_, contrast)
 
@@ -443,17 +449,17 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		if Axial:#plot axial
 			gs01 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[0,0], hspace = 0.0, wspace = 0)
 			ax1 = fig.add_subplot(gs01[0,j])
-			plt.imshow(overlay_z[:,:,overlay_z.shape[2]*j*.1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			plt.imshow(overlay[:,:,(overlay.shape[2]-1)*ax_montage_spacing[j],i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Sagittal:#plot sagittal
 			gs02 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[Axial,0], hspace = 0.0, wspace = 0.0)
 			ax2 = fig.add_subplot(gs02[0,j])
-			plt.imshow(overlay_y[overlay_y.shape[0]*j*.1,:,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			plt.imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 		if Coronal:#plot coronal
 			gs03 = gridspec.GridSpecFromSubplotSpec(1, 10, subplot_spec = gs0[Axial + Sagittal,0], hspace = 0.0, wspace = 0)
-			ax3 = fig.add_subplot(gs03[0,9-j])
-			plt.imshow(overlay_x[:,overlay_x.shape[1]*j*.1,::-1].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			ax3 = fig.add_subplot(gs03[0,9-j])#this is 9-j to make the image go from left to right
+			plt.imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			plt.axis('off')
 	gs04 = gridspec.GridSpecFromSubplotSpec(1, 1, subplot_spec = gs0[Axial + Sagittal + Coronal,0])
 	ax4 = fig.add_subplot(gs04[0,0])#formatting
@@ -469,7 +475,7 @@ Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
 anat: path of the anatomcial image
 """
-def coreg(startdir, setname, figures, anat, coreg_anat):
+def coreg(startdir, setname, label, figures, anat, coreg_anat):
 	fig = plt.figure(figsize = (3.2*5,4))
 	gs0 = gridspec.GridSpec(1,3)
 	os.chdir(setname)
@@ -529,7 +535,7 @@ def coreg(startdir, setname, figures, anat, coreg_anat):
 			plt.axis('off')
 		gs0.tight_layout(fig, w_pad = -2)
 		fig.subplots_adjust(right = 0.9)
-		os.chdir('%s/%s' % (startdir,figures))
+		os.chdir('%s/%s/%s' % (startdir,label,figures))
 		plt.savefig('coregistration')
 		plt.close()
 		print '++ finished corregistration figure'
@@ -750,16 +756,16 @@ ignore: array of all ignore components
 def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
 	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
-	trial_1 = plt.scatter(1,1, c = 'g', marker = 'o')
+	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
 	trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
-	trial_3 = plt.scatter(1,1, c = 'b', marker = 'v')
+	trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
 	trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
 	plt.close(2)
 	fig = plt.figure()
 	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
-	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'g', marker = 'o', s = 50 * accept[:,4]) 
+	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
 	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
-	MID = plt.scatter(middle[:,1], middle[:,2], c = 'b', marker = 'v', s = 50 * middle[:,4])
+	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
 	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
 	plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
 		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
@@ -788,7 +794,7 @@ def kr_vs_component(comp_table_title):
 	plt.close()	
 	print '++ finished kappa and rho vs component number figure'
 
-def motion(startdir,figures,setname):
+def motion(startdir,label,figures,setname):
 	os.chdir(setname)
 	motion = np.loadtxt('motion.1D')
 	if os.path.isfile('e.norm.1D'):
@@ -796,7 +802,7 @@ def motion(startdir,figures,setname):
 	subprocess.call('1d_tool.py -infile motion.1D -set_nruns 1 -derivative -collapse_cols euclidean_norm -write e.norm.1D', shell = True)
 	deriv = np.loadtxt('e.norm.1D')
 
-	os.chdir('%s/%s' % (startdir,figures))
+	os.chdir('%s/%s/%s' % (startdir,label,figures))
 	plt.figure()
 	fig, ax = plt.subplots(nrows=6, ncols=1, sharex=True, sharey = True)
 	ax[0].set_title('Subject Motion', fontsize = 14)

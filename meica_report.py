@@ -287,24 +287,22 @@ if corr:
 maps = meica_figures.collect_data(startdir,label,TED,anat,mefl,feats)#collect nifti data
 accept, reject, middle, ignore = meica_figures.components(TED)
 
-if os.path.isdir('%s/%s' % (startdir,figures)):
-	print ' %s/%s exits already.  Older image files will be overwritten.' % (startdir,figures)
-else:
-	subprocess.call('mkdir %s/%s' % (startdir,figures), shell = True)
-subprocess.call('cp %s/warning.png %s/%s' % (reportdir,startdir,figures), shell = True)
-os.chdir('%s/%s' % (startdir,figures))
+
+subprocess.call('mkdir %s/%s/%s' % (startdir,label,figures), shell = True)
+subprocess.call('cp %s/warning.png %s/%s/%s' % (reportdir,startdir,label,figures), shell = True)
+os.chdir('%s/%s/%s' % (startdir,label,figures))
 
 #make figures
 print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
 meica_figures.tsnr(tsoc,medn)#create tsnr figures
-meica_figures.motion(startdir,figures,setname)
+meica_figures.motion(startdir,label,figures,setname)
 print('++ this set of figures may take awhile')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
 	if args.coreg:
-		meica_figures.coreg(startdir, setname, figures, anat, args.coreg_anat)#create corregistration figure
+		meica_figures.coreg(startdir, setname, label, figures, anat, args.coreg_anat)#create corregistration figure
 	if args.MNI:
 		if len(accept) > 3:
 			meica_figures.correlation(startdir, label, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
@@ -351,4 +349,3 @@ subprocess.call('mv %s/%s/*.rst %s/%s/sphinx_files/' % (startdir,label,startdir,
 subprocess.call('mv %s/%s/Makefile %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s/make.bat %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
 subprocess.call('mv %s/%s/conf.py %s/%s/sphinx_files' % (startdir,label,startdir,label), shell = True)
-subprocess.call('mv %s/%s %s/%s' % (startdir,figures,startdir,label), shell = True)
