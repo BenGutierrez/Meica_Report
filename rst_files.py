@@ -8,7 +8,7 @@ import os
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, num, setname):
+def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, num, setname,motion_file):
 	sl = []
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
@@ -43,7 +43,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('.. image:: %s/kappa_rho_vs_components.png' % figures)
 	sl.append('	:width: 49%\n')
 	sl.append('The size of the scatter plot points is linearly related to the percent variance of that particular component.\n')
-	if os.path.isfile('%s/motion.1D' % setname):
+	if os.path.isfile('%s/%s' % (setname,motion_file)):
 		sl.append('\n The below figures show subject motion.  The plot on the right is the derivative of the 6 plots on the left with the euclidean norm applied in order to combine the data:\n')
 		sl.append('.. image:: %s/motion_plot.png' % figures)
 		sl.append('	:width: 49%')

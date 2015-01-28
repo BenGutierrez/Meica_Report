@@ -799,12 +799,12 @@ def kr_vs_component(comp_table_title):
 	plt.close()	
 	print '++ finished kappa and rho vs component number figure'
 
-def motion(startdir,label,figures,setname):
+def motion(startdir,label,figures,setname,motion_file):
 	os.chdir(setname)
-	motion = np.loadtxt('motion.1D')
+	motion = np.loadtxt('%s' %s motion_file)
 	if os.path.isfile('e.norm.1D'):
 		subprocess.call('rm -f e.norm.1D', shell = True)
-	subprocess.call('1d_tool.py -infile motion.1D -set_nruns 1 -derivative -collapse_cols euclidean_norm -write e.norm.1D', shell = True)
+	subprocess.call('1d_tool.py -infile %s -set_nruns 1 -derivative -collapse_cols euclidean_norm -write e.norm.1D' % motion_file, shell = True)
 	deriv = np.loadtxt('e.norm.1D')
 
 	os.chdir('%s/%s/%s' % (startdir,label,figures))

@@ -201,6 +201,7 @@ lab.add_argument('-label', dest = 'label', help = 'Label to tag directory for al
 lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 lab.add_argument('-dir', dest = 'startdir', help = 'Directory to place report directory.  Default is current directory', default = '')
 lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
+lab.add_argument('-motion', dest = 'motion_file',help='file containing motion (do not include path). file must be in -setname.  default is motion.1D in -setname.',default='motion.1D')
 lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -overwrite specified and -label directory already exists, will overwrite', action = 'store_false')
 options = parser.add_argument_group('Report options')
 options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages', action = 'store_true')
@@ -297,9 +298,10 @@ print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore))#make kappa vs rho figure
 meica_txt.append(meica_figures.tsnr(tsoc,medn))#create tsnr figures
-if os.path.isfile('%s/motion.1D' % setname):
+if os.path.isfile('%s/%s' % (setname,args.motion_file)):
 	meica_txt.append(meica_figures.motion(startdir,label,figures,setname))
-else:meica_txt.append("Max head displacement in any one dirrection:   %s\nTR of Max Head displacement:   %s\nMax rate of head motion:   %s\nTR of max head motion rate:   %s" % (' ',' ',' ',' '))
+else:
+	meica_txt.append("Max head displacement in any one dirrection:   %s\nTR of Max Head displacement:   %s\nMax rate of head motion:   %s\nTR of max head motion rate:   %s" % (' ',' ',' ',' '))
 print('++ this set of figures may take awhile')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
@@ -330,7 +332,7 @@ rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname)
+	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname,motion_file)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 ofh = open("meica_report.txt","w")
