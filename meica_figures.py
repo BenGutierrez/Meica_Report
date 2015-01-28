@@ -618,6 +618,7 @@ def tsnr(tsoc,medn):
 	plt.savefig('tsnr_ratio_hist')
 	plt.close()
 	print '++ finished tsnr figures'
+	return("Median meica denoised TSNR:  %s\nMedian optimally combined TSNR:   %s\nMedian denoised over optimally combined TSNR ratio:   %s" % (np.percentile(medn_mask,50),np.percentile(tsoc_mask,50),np.percentile(frac_mask,50)))
 """
 calculates the statistical correlation between a voxel and the rest of the brain
 and makes a montage image of it.  MNI option must have been stippulated
@@ -777,6 +778,10 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.savefig('kappa_vs_rho')
 	plt.close()
 	print '++ finished kappa vs rho figure'
+	return("Number of accepted components:   %s\nNumber of rejected components:   %s\nNumber of middle kappa components:   %s\nNumber of ignored components:   %s\nAccepted variance:   %s" % 
+		(len(accept[:,0]),len(reject[:,0]),len(middle[:,0]),len(ignore[:,0]),sum(accept[:,4])) + 
+		"\nRejected variance:   %s\nMiddle Kappa variance:   %s\nIgnored variance:   %s\nLargest variance accepted component:   %s\nHighest kappa rejected component:   %s\nHighest kappa middle kappa component:   %s"
+		 % (sum(reject[:,4]),sum(middle[:,4]),sum(ignore[:,4]),accept[np.argmax(accept[:,4]),0],reject[0,0],middle[0,0]))
 """
 plot kappa and rho vs their component number.
 comptable title: path to the ctab file
@@ -826,3 +831,8 @@ def motion(startdir,label,figures,setname):
 	plt.title('rate of motion')
 	plt.savefig('motion_rate')
 	plt.close()
+	itemindex = np.where(np.absolute(motion)==np.max(np.absolute(motion)))
+	print itemindex
+	print itemindex[0][0]
+	return("Max head displacement in any one dirrection:   %s\nTime of max head displacement (TR):   %s\nMax rate of head motion:   %s\ntime of max head motion rate (TR):   %s" % (np.max(np.absolute(motion)),itemindex[0][0],
+		np.max(np.absolute(deriv)),np.argmax(np.absolute(deriv))))

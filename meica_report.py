@@ -76,7 +76,7 @@ def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat, coreg):
 	if not os.path.isfile('%s/dn_ts_OC.nii' % TED):
 		print '*+ Can\'t find "%s/dn_ts_OC.nii" check directory and file\'s existance.' % TED
 		fails += 1
-	if not os.path.isfile('ocv_uni_vr.nii.gz') and coreg:
+	if not os.path.isfile('ocv_uni_vr.nii.gz') and (coreg and not os.path.isfile('%s/%s' % (setname,coreg_anat))):
 		print '*+ Can\'t find "%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % setname
 		fails += 1
 	if not os.path.isfile('%s/meica_mix.1D' % TED):
@@ -224,7 +224,6 @@ options.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum to
 options.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
 options.add_argument('-title', dest = 'title', help = 'Title of ME-ICA report.  Will be shown on browser tab for easier identification between multiple reports.', default = 'Your ME-ICA Report!')
 args = parser.parse_args()
-
 if args.show:
 	print 'Default mode netowrk seed MNI coordinates:\n' + str(ROI_default).replace('],','],\n')
 	print '\nAttention network seed MNI cooridnates:\n' + str(ROI_attention).replace('],','],\n')
@@ -236,6 +235,7 @@ dep_check()
 import meica_figures
 import sphinx_files
 import rst_files
+meica_txt=[]
 
 setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, args.anat)
 reportdir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -295,9 +295,11 @@ os.chdir('%s/%s/%s' % (startdir,label,figures))
 #make figures
 print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
-meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore)#make kappa vs rho figure
-meica_figures.tsnr(tsoc,medn)#create tsnr figures
-meica_figures.motion(startdir,label,figures,setname)
+meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore))#make kappa vs rho figure
+meica_txt.append(meica_figures.tsnr(tsoc,medn))#create tsnr figures
+if os.path.isfile('%s/motion.1D' % setname):
+	meica_txt.append(meica_figures.motion(startdir,label,figures,setname))
+else:meica_txt.append("Max head displacement in any one dirrection:   %s\nTR of Max Head displacement:   %s\nMax rate of head motion:   %s\nTR of max head motion rate:   %s" % (' ',' ',' ',' '))
 print('++ this set of figures may take awhile')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
@@ -328,11 +330,11 @@ rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal)
+	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 ofh = open("meica_report.txt","w")
-ofh.write(" ".join(sys.argv))
+ofh.write("\n".join(meica_txt) + "\n")
 ofh.close()
 
 # run sphinx build
