@@ -296,10 +296,10 @@ os.chdir('%s/%s/%s' % (startdir,label,figures))
 #make figures
 print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
-meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore))#make kappa vs rho figure
+meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore,ctab))#make kappa vs rho figure
 meica_txt.append(meica_figures.tsnr(tsoc,medn))#create tsnr figures
 if os.path.isfile('%s/%s' % (setname,args.motion_file)):
-	meica_txt.append(meica_figures.motion(startdir,label,figures,setname))
+	meica_txt.append(meica_figures.motion(startdir,label,figures,setname,args.motion_file))
 else:
 	meica_txt.append("Max head displacement in any one dirrection:   %s\nTR of Max Head displacement:   %s\nMax rate of head motion:   %s\nTR of max head motion rate:   %s" % (' ',' ',' ',' '))
 print('++ this set of figures may take awhile')
@@ -332,7 +332,7 @@ rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname,motion_file)
+	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname,args.motion_file)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 ofh = open("meica_report.txt","w")
@@ -347,6 +347,7 @@ if args.latex:
 	subprocess.call('make latexpdf', shell = True)
 
 subprocess.call('mv %s/%s/_build/* %s/%s' % (startdir,label,startdir,label), shell = True)
+subprocess.call('mv %s/%s/_static/* %s/%s' % (startdir,label,startdir,label), shell = True)
 subprocess.call('rm -rf _*', shell = True)
 subprocess.call('mkdir %s/%s/sphinx_files' % (startdir,label), shell = True)
 subprocess.call('mv %s/%s/*.rst %s/%s/sphinx_files/' % (startdir,label,startdir,label), shell = True)

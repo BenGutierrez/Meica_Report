@@ -754,7 +754,7 @@ reject: array of all rejected components
 middle: array of all middle kappa components
 ignore: array of all ignore components
 """
-def kappa_vs_rho_plot(accept,reject,middle,ignore):
+def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab):
 	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
 	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
 	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
@@ -777,11 +777,17 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore):
 	plt.ylabel(r'$\rho$', fontsize = 15)
 	plt.savefig('kappa_vs_rho')
 	plt.close()
+	txt_file = open(str(ctab))
+	lines = txt_file.readlines()
+	for i in range(len(lines)):
+		if '#Dataset variance explained by ICA' in lines[i]:
+			index = i
+
 	print '++ finished kappa vs rho figure'
 	return("Number of accepted components:   %s\nNumber of rejected components:   %s\nNumber of middle kappa components:   %s\nNumber of ignored components:   %s\nAccepted variance:   %s" % 
 		(len(accept[:,0]),len(reject[:,0]),len(middle[:,0]),len(ignore[:,0]),sum(accept[:,4])) + 
-		"\nRejected variance:   %s\nMiddle Kappa variance:   %s\nIgnored variance:   %s\nLargest variance accepted component:   %s\nHighest kappa rejected component:   %s\nHighest kappa middle kappa component:   %s"
-		 % (sum(reject[:,4]),sum(middle[:,4]),sum(ignore[:,4]),accept[np.argmax(accept[:,4]),0],reject[0,0],middle[0,0]))
+		"\nRejected variance:   %s\nMiddle Kappa variance:   %s\nIgnored variance:   %s\nVariance explained by ICA:   %s\nLargest variance accepted component:   %s\nHighest kappa rejected component:   %s\nHighest kappa middle kappa component:   %s"
+		 % (sum(reject[:,4]),sum(middle[:,4]),sum(ignore[:,4]),lines[index][41:-1],accept[np.argmax(accept[:,4]),0],reject[0,0],middle[0,0]))
 """
 plot kappa and rho vs their component number.
 comptable title: path to the ctab file
@@ -801,7 +807,7 @@ def kr_vs_component(comp_table_title):
 
 def motion(startdir,label,figures,setname,motion_file):
 	os.chdir(setname)
-	motion = np.loadtxt('%s' %s motion_file)
+	motion = np.loadtxt('%s' % motion_file)
 	if os.path.isfile('e.norm.1D'):
 		subprocess.call('rm -f e.norm.1D', shell = True)
 	subprocess.call('1d_tool.py -infile %s -set_nruns 1 -derivative -collapse_cols euclidean_norm -write e.norm.1D' % motion_file, shell = True)
