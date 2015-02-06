@@ -207,8 +207,8 @@ options = parser.add_argument_group('Report options')
 options.add_argument('-ax' , dest = 'Axial', help = 'Add axial images to activation montages', action = 'store_true')
 options.add_argument('-sag', dest = 'Sagittal', help = 'Add sagittal images to activation montages', action = 'store_true')
 options.add_argument('-cor', dest = 'Coronal', help = 'Add coronal images to activation montages', action = 'store_true')
-options.add_argument('-coreg', dest = 'coreg', help = 'If specified, redering corregistration.  Need anatomical', action = 'store_true')
-options.add_argument('-coreg_anat', dest = 'coreg_anat', help = 'Optional name of anatomical to corregister with.  MUST be in the -\'setname directory\'.  If none specified, will attempt to guess name', default = '')
+options.add_argument('-coreg', dest = 'coreg', help = argparse.SUPPRESS, action = 'store_true')#'If specified, redering corregistration.  Need anatomical'
+options.add_argument('-coreg_anat', dest = 'coreg_anat', help = argparse.SUPPRESS, default = '')#'Optional name of anatomical to corregister with.  MUST be in the -\'setname directory\'.  If none specified, will attempt to guess name'
 options.add_argument('-flood', dest = 'flood', help = 'Tells clustering algoithim (flood fill) how many voxels above threshold need to be clustered together (in 26 possible directions) to be kept in activation map. Specify as "0" if you want no clustering', type = int, default = 10)
 options.add_argument('-contrast', dest = 'contrast', help = 'Give contrast to greyscale images in montage.  Ex: "5" will give values in the 5-95 percentile of values.  Default = "2"',type = int, default = 2)
 options.add_argument('-show_ROI', dest = 'show', help = 'Shows prespecified MNI coordinates for Default mode, attention network, and reference network for seed based correlation.  Will NOT make report if specified.', action = 'store_true')
@@ -297,7 +297,7 @@ os.chdir('%s/%s/%s' % (startdir,label,figures))
 print('++ making figures')
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
 meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore,ctab))#make kappa vs rho figure
-meica_txt.append(meica_figures.tsnr(tsoc,medn))#create tsnr figures
+meica_txt.append(meica_figures.tsnr(tsoc,medn,startdir,label))#create tsnr figures
 if os.path.isfile('%s/%s' % (setname,args.motion_file)):
 	meica_txt.append(meica_figures.motion(startdir,label,figures,setname,args.motion_file))
 else:
@@ -332,7 +332,7 @@ rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()
 rst_files.analysis_rst(accept, reject, middle, ignore, anat, args.montage_threshold, ctab,
-	args.min_component_number, args.min_variance_explained, figures, args.Axial + args.Sagittal + args.Coronal,setname,args.motion_file)
+	args.min_component_number, args.min_variance_explained, figures, setname, args.motion_file, args.Axial, args.Sagittal, args.Coronal)
 if anat != '' and args.MNI and (len(ROI_default)> 0 or len(ROI_attention)> 0 or len(ROI_reference)> 0 or len(User_ROI)>0):
 	rst_files.correlation_rst(ROI_default,ROI_attention,ROI_reference,User_ROI,figures)
 ofh = open("meica_report.txt","w")

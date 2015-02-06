@@ -8,8 +8,9 @@ import os
 """
 make analysis.rst file
 """
-def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, num, setname,motion_file):
+def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_component_number, min_variance_explained, figures, setname, motion_file, Axial, Sagittal, Coronal):
 	sl = []
+	num = Axial, Sagittal, Coronal
 	size = len(str(accept.shape[0] + reject.shape[0] + middle.shape[0] + ignore.shape[0]))
 	sl.append('Component Visualization')
 	sl.append('=======================')
@@ -73,9 +74,14 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(accept[N,1],8), digit_length(accept[N,2],7), digit_length(accept[N,3],3), digit_length(accept[N,4],3)))
 		sl.append('=============  =============  =============  =================\n')
-		sl.append('.. image:: %s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n\n')
+		sl.append('.. image:: %s/Axial_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Sagittal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Coronal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%\n')
+		sl.append('.. image:: %s/TimeSeries_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%')
 		sl.append('.. image:: %s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		N += 1
@@ -92,9 +98,14 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(reject[N,1],8), digit_length(reject[N,2],7), digit_length(reject[N,3],3), digit_length(reject[N,4],3)))
 		sl.append('=============  =============  =============  =================\n')
-		sl.append('.. image:: %s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n\n')
+		sl.append('.. image:: %s/Axial_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Sagittal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Coronal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%\n')
+		sl.append('.. image:: %s/TimeSeries_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%')
 		sl.append('.. image:: %s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		N += 1
@@ -111,9 +122,14 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(middle[N,1],8), digit_length(middle[N,2],7), digit_length(middle[N,3],4), digit_length(middle[N,4],4)))
 		sl.append('=============  =============  =============  =================\n')
-		sl.append('.. image:: %s/Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n\n')
+		sl.append('.. image:: %s/Axial_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Sagittal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Coronal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/TimeSeries_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%')
 		sl.append('.. image:: %s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		N += 1
@@ -130,9 +146,14 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		sl.append('%s       %s         %s           %s       ' % 
 			(digit_length(ignore[N,1],8), digit_length(ignore[N,2],7), digit_length(ignore[N,3],4), digit_length(ignore[N,4],4)))
 		sl.append('=============  =============  =============  =================\n\n')
-		sl.append('.. image:: %s/Component_' % figures  + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
-		sl.append('	:scale: 75%')
-		sl.append('	:align: left\n\n')
+		sl.append('.. image:: %s/Axial_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Sagittal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/Coronal_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:scale: 99%')
+		sl.append('.. image:: %s/TimeSeries_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
+		sl.append('	:width: 49%')
 		sl.append('.. image:: %s/FFT_Component_' % figures + (size - len(str(int(i))))*'0' + '%s.png' % int(i))
 		sl.append('	:width: 49%\n')
 		N += 1
