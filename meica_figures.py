@@ -122,16 +122,16 @@ def components(TED):
 	a = b = c = d = 0
 	for i in ctab[:,0]:
 		if i in accept_:
-			accept[a,:] = ctab[i,:]
+			accept[a,:] = ctab[int(i),:]
 			a = a + 1
 		elif i in reject_:
-			reject[b,:] = ctab[i,:]
+			reject[b,:] = ctab[int(i),:]
 			b = b + 1
 		elif i in middle_:
-			middle[c,:] = ctab[i,:]
+			middle[c,:] = ctab[int(i),:]
 			c = c + 1
 		elif i in ignore_:
-			ignore[d,:] = ctab[i,:]
+			ignore[d,:] = ctab[int(i),:]
 			d = d + 1
 
 	return (accept,reject,middle,ignore)
@@ -349,14 +349,14 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 			
 			if Axial:#plot axial
-				fig = plt.figure(figsize = (8,2))
+				fig = plt.figure(figsize = (12,4))
 				grid1 = ImageGrid(fig, 111 , nrows_ncols=(2,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
 				for j in range(10):#plot montage of accept component onto anatomical
-					grid1[j].imshow(anat[:,:,(anat.shape[2]-1)*ax_montage_spacing[j]].T, cmap = 'Greys_r', 
+					grid1[j].imshow(anat[:,:,int((anat.shape[2]-1)*ax_montage_spacing[j])].T, cmap = 'Greys_r', 
 						interpolation = 'nearest', extent = [anat_corners[0,0], anat_corners[0,1], anat_corners[1,0], anat_corners[1,1]])
-					bar = grid1[j].imshow(overlay_acc[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j]].T, cmap = GYR, extent = [overlay_corners[0,0], overlay_corners[0,1],
+					bar = grid1[j].imshow(overlay_acc[:,:,int((overlay_acc.shape[2]-1)*ax_montage_spacing[j])].T, cmap = GYR, extent = [overlay_corners[0,0], overlay_corners[0,1],
 						overlay_corners[1,0], overlay_corners[1,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
-					grid1[10+j].imshow(overlay[:,:,(overlay_acc.shape[2]-1)*ax_montage_spacing[j],i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[0,0],
+					grid1[10+j].imshow(overlay[:,:,int((overlay_acc.shape[2]-1)*ax_montage_spacing[j]),i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[0,0],
 					 overlay_corners[0,1],overlay_corners[1,0], overlay_corners[1,1]])
 					grid1[j].axes.get_xaxis().set_ticks([])
 					grid1[j].axes.get_yaxis().set_ticks([])
@@ -369,14 +369,14 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 				plt.savefig('Axial_Component_' + N, bbox_inches='tight', dpi=150)
 				plt.close()
 			if Sagittal:#plot sagittal
-				fig = plt.figure(figsize = (8,2))
+				fig = plt.figure(figsize = (12,4))
 				grid2 = ImageGrid(fig, 111 , nrows_ncols=(2,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
 				for j in range(10):#plot montage of accept component onto anatomical
-					grid2[j].imshow(anat[(anat.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = 'Greys_r', 
+					grid2[j].imshow(anat[int((anat.shape[0]-1)*sag_montage_spacing[j]),:,::-1].T, cmap = 'Greys_r', 
 						interpolation = 'nearest', extent = [anat_corners[1,0], anat_corners[1,1], anat_corners[2,0], anat_corners[2,1]])
-					bar = grid2[j].imshow(overlay_acc[(overlay_acc.shape[0]-1)*sag_montage_spacing[j],:,::-1].T, cmap = GYR, extent = [overlay_corners[1,0], overlay_corners[1,1],
+					bar = grid2[j].imshow(overlay_acc[int((overlay_acc.shape[0]-1)*sag_montage_spacing[j]),:,::-1].T, cmap = GYR, extent = [overlay_corners[1,0], overlay_corners[1,1],
 						overlay_corners[2,0], overlay_corners[2,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax = 5)
-					grid2[j+10].imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[1,0],
+					grid2[j+10].imshow(overlay[int((overlay.shape[0]-1)*sag_montage_spacing[j]),:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[1,0],
 					 overlay_corners[1,1],overlay_corners[2,0], overlay_corners[2,1]])
 					grid2[j].axes.get_xaxis().set_ticks([])
 					grid2[j].axes.get_yaxis().set_ticks([])
@@ -389,14 +389,14 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 				plt.savefig('Sagittal_Component_' + N, bbox_inches='tight', dpi=150)
 				plt.close()
 			if Coronal:#plot coronal
-				fig = plt.figure(figsize = (8,2))
+				fig = plt.figure(figsize = (12,4))
 				grid3 = ImageGrid(fig, 111 , nrows_ncols=(2,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
 				for j in range(10):#plot montage of accept component onto anatomical
-					grid3[j].imshow(anat[:,(anat.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = 'Greys_r', 
+					grid3[j].imshow(anat[:,int((anat.shape[1]-1)*cor_montage_spacing[j]),::-1].T, cmap = 'Greys_r', 
 						interpolation = 'nearest', extent = [anat_corners[0,0],anat_corners[0,1],anat_corners[2,0],anat_corners[2,1]])
-					bar = grid3[j].imshow(overlay_acc[:,(overlay_acc.shape[1]-1)*cor_montage_spacing[j],::-1].T, cmap = GYR, extent = [overlay_corners[0,0],overlay_corners[0,1],
+					bar = grid3[j].imshow(overlay_acc[:,int((overlay_acc.shape[1]-1)*cor_montage_spacing[j]),::-1].T, cmap = GYR, extent = [overlay_corners[0,0],overlay_corners[0,1],
 						overlay_corners[2,0], overlay_corners[2,1]], alpha = alpha, interpolation = 'gaussian', vmin = threshold, vmax =5)
-					grid3[j+10].imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[0,0],
+					grid3[j+10].imshow(overlay[:,int((overlay.shape[1]-1)*cor_montage_spacing[j]),::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum, extent = [overlay_corners[0,0],
 						overlay_corners[0,1],overlay_corners[2,0], overlay_corners[2,1]])
 					grid3[j].axes.get_xaxis().set_ticks([])
 					grid3[j].axes.get_yaxis().set_ticks([])
@@ -458,7 +458,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		fig = plt.figure(figsize = (12,4))
 		grid1 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
 		for j in range(10):
-			grid1[j].imshow(overlay[:,:,(overlay.shape[2]-1)*ax_montage_spacing[j],i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			grid1[j].imshow(overlay[:,:,int((overlay.shape[2]-1)*ax_montage_spacing[j]),i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			grid1[j].axes.get_xaxis().set_ticks([])
 			grid1[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Axial_Component_' + N, bbox_inches='tight', dpi=150)
@@ -467,7 +467,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		fig = plt.figure(figsize = (12,4))
 		grid2 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
 		for j in range(10):
-			grid2[j].imshow(overlay[(overlay.shape[0]-1)*sag_montage_spacing[j],:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			grid2[j].imshow(overlay[int((overlay.shape[0]-1)*sag_montage_spacing[j]),:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			grid2[j].axes.get_xaxis().set_ticks([])
 			grid2[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Sagittal_Component_' + N, bbox_inches='tight', dpi=150)
@@ -476,7 +476,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		fig = plt.figure(figsize = (12,4))
 		grid3 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
 		for j in range(10):
-			grid3[j].imshow(overlay[:,(overlay.shape[1]-1)*cor_montage_spacing[j],::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+			grid3[j].imshow(overlay[:,int((overlay.shape[1]-1)*cor_montage_spacing[j]),::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
 			grid3[j].axes.get_xaxis().set_ticks([])
 			grid3[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Coronal_Component_' + N, bbox_inches='tight', dpi=150)
@@ -592,8 +592,8 @@ def tsnr(tsoc,medn,startdir,label):
 	SaveTSNR=np.zeros((medn_tsnr.shape[1],medn_tsnr.shape[0],10))
 	for i in range(10):
 		grid[i].imshow(background, cmap = 'Greys_r')
-		plot = grid[i].imshow(medn_tsnr[:,:,i*.1*medn_tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
-		SaveTSNR[:,:,i]= medn_tsnr[:,:,i*.1*medn_tsnr.shape[2]].T
+		plot = grid[i].imshow(medn_tsnr[:,:,int(i*.1*medn_tsnr.shape[2])].T, vmin = minimum, vmax = maximum, cmap = GYR)
+		SaveTSNR[:,:,i]= medn_tsnr[:,:,int(i*.1*medn_tsnr.shape[2])].T
 		grid[i].axes.get_xaxis().set_ticks([])
 		grid[i].axes.get_yaxis().set_ticks([])
 	cb1 = grid.cbar_axes[0].colorbar(plot)
@@ -610,8 +610,8 @@ def tsnr(tsoc,medn,startdir,label):
 	SaveTSNR=np.zeros((tsoc_tsnr.shape[1],tsoc_tsnr.shape[0],10))
 	for i in range(10):
 		grid[i].imshow(background, cmap = 'Greys_r')
-		grid[i].imshow(tsoc_tsnr[:,:,i*.1*tsoc_tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
-		SaveTSNR[:,:,i]= medn_tsnr[:,:,i*.1*medn_tsnr.shape[2]].T
+		grid[i].imshow(tsoc_tsnr[:,:,int(i*.1*tsoc_tsnr.shape[2])].T, vmin = minimum, vmax = maximum, cmap = GYR)
+		SaveTSNR[:,:,i]= tsoc_tsnr[:,:,int(i*.1*tsoc_tsnr.shape[2])].T
 		grid[i].axes.get_xaxis().set_ticks([])
 		grid[i].axes.get_yaxis().set_ticks([])
 	cb2 = grid.cbar_axes[0].colorbar(plot)
@@ -630,8 +630,8 @@ def tsnr(tsoc,medn,startdir,label):
 	SaveTSNR=np.zeros((frac_tsnr.shape[1],frac_tsnr.shape[0],10))
 	for i in range(10):
 		grid[i].imshow(background, cmap = 'Greys_r')
-		plot = grid[i].imshow(frac_tsnr[:,:,i*.1*frac_tsnr.shape[2]].T, vmin = minimum, vmax = maximum, cmap = GYR)
-		SaveTSNR[:,:,i]= medn_tsnr[:,:,i*.1*medn_tsnr.shape[2]].T
+		plot = grid[i].imshow(frac_tsnr[:,:,int(i*.1*frac_tsnr.shape[2])].T, vmin = minimum, vmax = maximum, cmap = GYR)
+		SaveTSNR[:,:,i]= frac_tsnr[:,:,int(i*.1*frac_tsnr.shape[2])].T
 		grid[i].axes.get_xaxis().set_ticks([])
 		grid[i].axes.get_yaxis().set_ticks([])
 	cb3 = grid.cbar_axes[0].colorbar(plot)
@@ -808,29 +808,65 @@ reject: array of all rejected components
 middle: array of all middle kappa components
 ignore: array of all ignore components
 """
-def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab):
-	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
-	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
-	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
-	trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
-	trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
-	trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
-	plt.close(2)
-	fig = plt.figure()
-	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
-	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
-	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
-	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
-	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
-	plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
-		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
-	plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
-	plt.tick_params(axis = 'x', which = 'both', top = 'off')
-	plt.tick_params(axis = 'y', which = 'both', right = 'off')
-	plt.xlabel(r'$\kappa$', fontsize = 15)
-	plt.ylabel(r'$\rho$', fontsize = 15)
-	plt.savefig('kappa_vs_rho')
-	plt.close()
+def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
+	try:
+		import mpld3
+		from matplotlib.patches import Rectangle
+		fig = plt.figure()
+		plt.title('ME-ICA Analysis kappa vs rho', fontsize = 14)
+		ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 150 * accept[:,4]) 
+		REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 150 * reject[:,4])
+		MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 150 * middle[:,4])
+		IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 150 * ignore[:,4])
+		plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
+		plt.tick_params(axis = 'x', which = 'both', top = 'off')
+		plt.tick_params(axis = 'y', which = 'both', right = 'off')
+		plt.xlabel('kappa', fontsize = 15)
+		plt.ylabel('rho', fontsize = 15)
+
+		labels_acc = ['Component {0}'.format(int(i)) for i in accept[:,0]]
+		labels_rej = ['Component {0}'.format(int(i)) for i in reject[:,0]]
+		labels_mid = ['Component {0}'.format(int(i)) for i in middle[:,0]]
+		labels_ign = ['Component {0}'.format(int(i)) for i in ignore[:,0]]
+
+		tooltip_acc = mpld3.plugins.PointLabelTooltip(ACC, labels=labels_acc)
+		tooltip_rej = mpld3.plugins.PointLabelTooltip(REJ, labels=labels_rej)
+		tooltip_mid = mpld3.plugins.PointLabelTooltip(MID, labels=labels_mid)
+		tooltip_ign = mpld3.plugins.PointLabelTooltip(IGN, labels=labels_ign)
+
+		leg1 = Rectangle((0, 0), 0, 0, alpha=0.0)
+		plt.legend([leg1,leg1,leg1,leg1], ['Accepted - Blue','Rejected - Red','Middle kappa - Green','Ignored - Cyan'], handlelength=0)
+		mpld3.plugins.connect(fig, tooltip_acc,)
+		mpld3.plugins.connect(fig, tooltip_rej)
+		mpld3.plugins.connect(fig, tooltip_mid)
+		mpld3.plugins.connect(fig, tooltip_ign)
+		mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14))
+
+		mpld3.save_html(fig,'%s/%s/%s/kappa_vs_rho.html' % (startdir,label,figures))
+		plt.close()
+	except:	
+		plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
+		#plt.legend has issue where marker size in legend is propoertional to marker size in plot
+		trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
+		trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
+		trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
+		trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
+		plt.close(2)
+		fig = plt.figure()
+		plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
+		ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
+		REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
+		MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
+		IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
+		plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
+			'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
+		plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
+		plt.tick_params(axis = 'x', which = 'both', top = 'off')
+		plt.tick_params(axis = 'y', which = 'both', right = 'off')
+		plt.xlabel(r'$\kappa$', fontsize = 15)
+		plt.ylabel(r'$\rho$', fontsize = 15)
+		plt.savefig('kappa_vs_rho')
+		plt.close()
 	txt_file = open(str(ctab))
 	lines = txt_file.readlines()
 	for i in range(len(lines)):
@@ -892,7 +928,5 @@ def motion(startdir,label,figures,setname,motion_file):
 	plt.savefig('motion_rate')
 	plt.close()
 	itemindex = np.where(np.absolute(motion)==np.max(np.absolute(motion)))
-	print itemindex
-	print itemindex[0][0]
 	return("Max head displacement in any one dirrection:   %s\nTime of max head displacement (TR):   %s\nMax rate of head motion:   %s\ntime of max head motion rate (TR):   %s" % (np.max(np.absolute(motion)),itemindex[0][0],
 		np.max(np.absolute(deriv)),np.argmax(np.absolute(deriv))))
