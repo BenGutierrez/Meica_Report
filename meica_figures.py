@@ -844,29 +844,30 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 
 		mpld3.save_html(fig,'%s/%s/%s/kappa_vs_rho.html' % (startdir,label,figures))
 		plt.close()
-	except:	
-		plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
-		#plt.legend has issue where marker size in legend is propoertional to marker size in plot
-		trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
-		trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
-		trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
-		trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
-		plt.close(2)
-		fig = plt.figure()
-		plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
-		ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
-		REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
-		MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
-		IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
-		plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
-			'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
-		plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
-		plt.tick_params(axis = 'x', which = 'both', top = 'off')
-		plt.tick_params(axis = 'y', which = 'both', right = 'off')
-		plt.xlabel(r'$\kappa$', fontsize = 15)
-		plt.ylabel(r'$\rho$', fontsize = 15)
-		plt.savefig('kappa_vs_rho')
-		plt.close()
+	except:
+		print '++ could not import mpld3'
+	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
+	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
+	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
+	trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
+	trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
+	trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
+	plt.close(2)
+	fig = plt.figure()
+	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
+	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
+	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
+	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
+	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
+	plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
+		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
+	plt.gca().xaxis.set_major_locator(MaxNLocator(nbins = 5))
+	plt.tick_params(axis = 'x', which = 'both', top = 'off')
+	plt.tick_params(axis = 'y', which = 'both', right = 'off')
+	plt.xlabel(r'$\kappa$', fontsize = 15)
+	plt.ylabel(r'$\rho$', fontsize = 15)
+	plt.savefig('%s/%s/%s/kappa_vs_rho'  % (startdir,label,figures))
+	plt.close()
 	txt_file = open(str(ctab))
 	lines = txt_file.readlines()
 	for i in range(len(lines)):
