@@ -235,7 +235,8 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 	overlay = ni.load(overlay_name)
 	overlay_data = overlay.get_data()
 	overlay_hdr = overlay.get_header()
-
+	overlay_corners_mod = np.zeros((3,2))
+	
 	if anatomical != '':
 		anat_name = anatomical[len(os.path.dirname(anatomical))+1:]
 		subprocess.call('3daxialize -prefix %s/%s/axialized_nifti/%s %s' % (startdir,label,anat_name,anatomical), shell = True)
@@ -244,7 +245,7 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 		anat_data = anatomical.get_data()
 
 		anat_corners_mod = np.zeros((3,2))
-		overlay_corners_mod = np.zeros((3,2))#find scanner coordinate max and min in all 3 dimensions for overlay
+		#find scanner coordinate max and min in all 3 dimensions for overlay
 
 		overlay_corners = Corners(overlay_data,overlay_hdr)#find scanner coordinate max and min in all 3 dimensions for anat
 		anat_corners = Corners(anat_data,anat_hdr)
