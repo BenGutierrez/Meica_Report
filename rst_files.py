@@ -24,7 +24,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 			sl.append('%s !!!! |warning| !!!! variance explained below %s\n'  % (line[i][1:-1], min_variance_explained))
 		else:
 			sl.append('%s' % line[i][1:])
-	sl.append('\n Please remember that the denoised time series is the accepted AND ignored bin and components in neither the rejected nor the middle kappa are considered BOLD-like')
+	sl.append('\nPlease remember that the denoised time series is accepted AND ignored bin and components in neither rejected nor middle kappa are considered BOLD-like')
 	sl.append('\n+----------------+------------------+-------------------------+\n' +
 				'|                | %  Total Variance| %  Total Variance(norm) |\n' + 
 				'+================+==================+=========================+')
@@ -168,15 +168,15 @@ def diagnostics_rst(nsmprage, coreg, figures):
 	sl.append('TSNR\n' + '+++++++')
 	sl.append('Absolute TSNR of the medn NIFTI1 dataset, Accepted and Ignored components:\n')
 	sl.append('.. image::  %s/medn_tsnr.png' % figures)
-	sl.append('	:scale: 99%')
+	sl.append('	:width: 95%')
 	sl.append('	:align: left\n')
 	sl.append('Absolute TSNR of the tsoc NIFTI1 dataset, all components:\n')
 	sl.append('.. image:: %s/tsoc_tsnr.png' % figures)
-	sl.append('	:scale: 99%')
+	sl.append('	:width: 95%')
 	sl.append('	:align: left\n')
 	sl.append('Ratio of the TSNR of the medn NIFTI1 dataset to the TSNR of the tsoc NIFTI1 dataset:\n')
 	sl.append('.. image:: %s/tsnr_ratio.png' % figures)
-	sl.append('	:scale: 99%')
+	sl.append('	:width: 95%')
 	sl.append('	:align: left\n')
 	sl.append('Histograms of the TSNR of the medn NIFTI1 dataset and the TSNR of the tsoc NIFTI1 dataset:\n')
 	sl.append('.. image:: %s/medn_tsnr_hist.png' % figures)
