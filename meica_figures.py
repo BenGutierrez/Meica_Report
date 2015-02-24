@@ -875,11 +875,11 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 			index = i
 	if len(reject[:,0]) == 0:
 		reject_high_k = ''
-	else
+	else:
 		reject_high_k = reject[0,0]
 	if len(middle[:,0]) == 0:
 		middle_high_k = ''
-	else
+	else:
 		middle_high_k = middle[0,0]
 	print '++ finished kappa vs rho figure'
 	return("Number of accepted components:   %s\nNumber of rejected components:   %s\nNumber of middle kappa components:   %s\nNumber of ignored components:   %s\nAccepted variance:   %s" % 
