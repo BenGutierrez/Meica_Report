@@ -34,18 +34,76 @@ ROI_reference = [[-36,-25,57,'Mot_L'],#reference network MNI coordinates
 				[-30,-88,0,'Vis_L'],
 				[30,-88,0,'Vis_R']]
 
+def dep_check():
+	print '++ INFO: Checking system for dependencies...'
+	fails = 0
+	numpy_installed = 0
+	sphinx_installed = 0
+
+	try:
+		import numpy
+		numpy_installed = 1
+	except:
+		print "++ Error: Can't import Numpy! Please check Numpy installation for this Python version."
+		fails += 1
+	try:
+		import matplotlib
+	except:
+		print "++ Error: Can't import Matplotlib! Please check Matplotlib installation."
+		fails += 1
+	try:
+		import nibabel
+	except:
+		print "++ Error: Can't import Nibabel! Please check Nibabel installation."
+		fails += 1
+	try:
+		import sphinx
+		sphinx_installed = 1
+	except:	
+		print "++ Error: Can't import Sphinx! Please check Sphinx installation."
+		fails += 1
+	if sphinx_installed:
+		print "++ INFO: Sphinx version: %s" % (sphinx.__version__)
+		if float((sphinx.__version__)[0:3])<1.2:
+			fails += 1
+			print "++ Error: Sphinx version is too old! Please upgrade to Sphinx >=1.2.x!"
+	if numpy_installed:
+		print "++ INFO: Numpy version: %s" % (numpy.__version__)
+		if float((numpy.__version__)[0:3])<1.5:
+			fails += 1
+			print "++ Error: Numpy version is too old! Please upgrade to Numpy >=1.5.x!"
+		import numpy.__config__ as nc
+		if nc.blas_opt_info == {}:
+			fails += 1
+			print "++ Error: Numpy is not linked to BLAS! Please check Numpy installation."
+
+	afnicheck = commands.getstatusoutput("3dinfo")
+	if afnicheck[0]!=0:
+		print "++ Error: Can't run AFNI binaries. Make sure AFNI is on the path!"
+		fails += 1
+	elif not afnicheck[1].__contains__('Alternate Alternative Usage'):
+		print "++ Error: This seems like an old version of AFNI. Please upgrade to latest version of AFNI."
+		fails += 1
+	if fails == 0:
+		print "++ INFO: Dependencies OK."
+	else:
+		print "++ INFO: EXITING. Please see above error messages."
+		sys.exit()
+
 def MNI_check(MNI, User_ROI, ROI_def, ROI_att, ROI_ref):
 	if not MNI:
 		if User_ROI or ROI_att or ROI_def or ROI_ref:
-			print '*+ MNI needs to be specified if options User_ROI, ROI_att, ROI_def, or ROI_ref are specified'
+			print '++ Error: MNI needs to be specified if options User_ROI, ROI_att, ROI_def, or ROI_ref are specified'
 			sys.exit()
 		corr = False
+
 	else:
 		if not (User_ROI or ROI_att or ROI_def or ROI_ref):
-			print '++ !!MNI specified but not User_ROI, ROI_att, ROI_def, or ROI_ref.  No seed based correlation will be computed!!'
+			print '++ Error: !!MNI specified but not User_ROI, ROI_att, ROI_def, or ROI_ref.  No seed based correlation will be computed!!'
 			corr = False
 		else:
 			corr = True
+
 	return corr
 
 def seed_split(ROI):
@@ -61,136 +119,87 @@ def seed_split(ROI):
 
 def file_check(anat, startdir, TED, setname, MNI, reportdir, coreg_anat, coreg):
 	fails = 0
-	if not os.path.isfile(anat) and anat != '': 
-		print '*+ Can\'t find the specified anantomical'
-		fails += 1
-	if not os.path.isfile('%s/comp_table.txt' % TED):
-		print '*+ Can\'t find "%s/comp_table.txt" check directory and file\'s existance.' % TED
-		fails += 1
-	if not os.path.isfile('%s/betas_OC.nii' % TED):
-		print '*+ Can\'t find "%s/betas_OC.nii" check directory and file\'s existance.' % TED
-		fails += 1
-	if not os.path.isfile('%s/ts_OC.nii' % TED):
-		print '*+ Can\'t find "%s/ts_OC.nii" check directory and file\'s existance.' % TED
-		fails += 1
-	if not os.path.isfile('%s/dn_ts_OC.nii' % TED):
-		print '*+ Can\'t find "%s/dn_ts_OC.nii" check directory and file\'s existance.' % TED
-		fails += 1
-	if not os.path.isfile('ocv_uni_vr.nii.gz') and (coreg and not os.path.isfile('%s/%s' % (setname,coreg_anat))):
-		print '*+ Can\'t find "%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % setname
-		fails += 1
-	if not os.path.isfile('%s/meica_mix.1D' % TED):
-		print '*+ Can\'t find "%s/meica_mix.1D" check directory and file\'s existance.' % TED
-		fails += 1
-	if MNI == True:
-		if not os.path.isfile('eBvrmask.nii.gz'):
-			print '*+ Can\'t find "%s/eBvrmask.nii.gz check directory and file\'s existance.' % setname
-			fails += 1
-		if not os.path.isfile('%s/feats_OC2.nii' % TED):
-			print '*+ Can\'t find "%s/feats_OC2.nii" check directory and file\'s existance.' % TED
-			fails += 1
+
 	if not os.path.isfile('%s/meica_figures.py' % reportdir):
-		print '*+ Can\'t find meica_figures.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
+		print '++ Error: Can\'t find meica_figures.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
 		fails += 1
+
 	if not os.path.isfile('%s/rst_files.py' % reportdir):
-		print '*+ Can\'t find rst_files.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
+		print '++ Error: Can\'t find rst_files.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
 		fails += 1
+
 	if not os.path.isfile('%s/sphinx_files.py' % reportdir):
-		print '*+ Can\'t find sphinx_files.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
+		print '++ Error: Can\'t find sphinx_files.py in %s.  The files from the meica_report directory cannot be seperated into different directories' % reportdir
 		fails += 1
+
 	if not os.path.isfile('%s/warning.png' % reportdir):
-		print '*+ Can\'t find warning.png in %s.  This means that picture warning flags for too few components or low variance will not appear. This is not a fatal error' % reportdir
+		print '++ Error: Can\'t find warning.png in %s.  This means that picture warning flags for too few components or low variance will not appear.' % reportdir
+
+	if not os.path.isfile(anat) and anat != '': 
+		print '++ Error: Can\'t find the specified anantomical'
+		fails += 1
+
+	if not os.path.isfile('%s/comp_table.txt' % TED):
+		print '++ Error: Can\'t find "%s/comp_table.txt" check directory and file\'s existance.' % TED
+		fails += 1
+
+	if not os.path.isfile('%s/betas_OC.nii' % TED):
+		print '++ Error: Can\'t find "%s/betas_OC.nii" check directory and file\'s existance.' % TED
+		fails += 1
+
+	if not os.path.isfile('%s/ts_OC.nii' % TED):
+		print '++ Error: Can\'t find "%s/ts_OC.nii" check directory and file\'s existance.' % TED
+		fails += 1
+
+	if not os.path.isfile('%s/dn_ts_OC.nii' % TED):
+		print '++ Error: Can\'t find "%s/dn_ts_OC.nii" check directory and file\'s existance.' % TED
+		fails += 1
+
+	if not os.path.isfile('ocv_uni_vr.nii.gz') and (coreg and not os.path.isfile('%s/%s' % (setname,coreg_anat))):
+		print '++ Error: Can\'t find "%s/ocv_uni_vr.nii.gz check directory and file\'s existance.' % setname
+		fails += 1
+
+	if not os.path.isfile('%s/meica_mix.1D' % TED):
+		print '++ Error: Can\'t find "%s/meica_mix.1D" check directory and file\'s existance.' % TED
+		fails += 1
+
 	if coreg_anat != '':	
 		if not os.path.isfile('%s/%s' % (setname,coreg_anat)):
-			print '*+ Can\'t find %s in %s. Please check that specified file exists' % (coreg_anat,setname)
+			print '++ Error: Can\'t find %s in %s. Please check that specified file exists' % (coreg_anat,setname)
 			fails += 1
+
+	if MNI == True:
+		if not os.path.isfile('eBvrmask.nii.gz'):
+			print '++ Error: Can\'t find "%s/eBvrmask.nii.gz check directory and file\'s existance.' % setname
+			fails += 1
+
+		if not os.path.isfile('%s/feats_OC2.nii' % TED):
+			print '++ Error: Can\'t find "%s/feats_OC2.nii" check directory and file\'s existance.' % TED
+			fails += 1
+
 	if fails != 0:
-		print "*+ EXITING. Please see error messages."
+		print "++ INFO: EXITING. Please see error messages."
 		sys.exit()
 #Run dependency check
-def dep_check():
-	print '++ Checking system for dependencies...'
-	fails = 0
-	numpy_installed = 0
-	sphinx_installed = 0
-	try:
-		import numpy
-		numpy_installed = 1
-	except:
-		print "*+ Can't import Numpy! Please check Numpy installation for this Python version."
-		fails += 1
-	try:
-		import matplotlib
-	except:
-		print "*+ Can't import Matplotlib! Please check Matplotlib installation."
-		fails += 1
-	try:
-		import nibabel
-	except:
-		print "*+ Can't import Nibabel! Please check Nibabel installation."
-		fails += 1
-	try:
-		import sphinx
-		sphinx_installed = 1
-	except:	
-		print "*+ Can't import Sphinx! Please check Sphinx installation."
-		fails += 1
-	if sphinx_installed:
-		print " + Sphinx version: %s" % (sphinx.__version__)
-		if float((sphinx.__version__)[0:3])<1.2:
-			fails += 1
-			print "*+ Sphinx version is too old! Please upgrade to Sphinx >=1.2.x!"
-	if numpy_installed:
-		print " + Numpy version: %s" % (numpy.__version__)
-		if float((numpy.__version__)[0:3])<1.5:
-			fails += 1
-			print "*+ Numpy version is too old! Please upgrade to Numpy >=1.5.x!"
-		import numpy.__config__ as nc
-		if nc.blas_opt_info == {}:
-			fails += 1
-			print "*+ Numpy is not linked to BLAS! Please check Numpy installation."
 
-	afnicheck = commands.getstatusoutput("3dinfo")
-	if afnicheck[0]!=0:
-		print "*+ Can't run AFNI binaries. Make sure AFNI is on the path!"
-		fails += 1
-	elif not afnicheck[1].__contains__('Alternate Alternative Usage'):
-		print "*+ This seems like an old version of AFNI. Please upgrade to latest version of AFNI."
-		fails += 1
-	if fails == 0:
-		print " + Dependencies OK."
-	else:
-		print "*+ EXITING. Please see error messages."
-		sys.exit()
-
-
-def path_name(setname, startdir, TED, anat):
+def path_names(setname, startdir, TED, anat):
 	if setname == '' or setname == None:
-		print '*+ Need to specify the option -setname to run meica_report.py'
+		print '++ Error: Need to specify the option -setname to run meica_report.py'
 		sys.exit()
-	if not os.path.isdir(setname):
-		print '*+ -setname argument "%s" not found' % setname
-		sys.exit()
-	if startdir == '':#make sure paths are in correct form and remove like "~/"
-		p = subprocess.Popen('pwd', stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-		startdir, err = p.communicate()
-		startdir = startdir[:-1]
-	else:
-		startdir = os.path.expanduser(startdir)
 
-	setname = os.path.abspath(os.path.expanduser(setname))
-	TED_ = os.path.abspath(os.path.expanduser(TED))
-	if not os.path.isdir(TED_):
-		TED_ = setname + '/' + TED
-	TED = TED_
+	if not os.path.isdir(setname):
+		print '++ Error: -setname argument "%s" not found' % setname
+		sys.exit()
+
+	if startdir == '':#make sure paths are in correct form and remove wildcards and shortcuts
+		startdir = os.getcwd()
+
+	startdir = os.path.abspath(os.path.expanduser(startdir))
+	setname  = os.path.abspath(os.path.expanduser(setname))
+	TED      = os.path.abspath(os.path.expanduser(TED))
 
 	if anat != '':
 		anat = os.path.abspath(os.path.expanduser(anat))
-	if '/' in startdir[-1:]:#remove "/" at the end of the paths
-		startdir = startdir[:-1]
-	if './' in startdir or './' in setname or './' in TED or './' in anat:
-		print 'please remove elipses short cuts, i.e: "../foo", from the path names.' 
-		sys.exit()
 
 	return(setname, startdir, TED, anat)
 
@@ -226,29 +235,33 @@ options.add_argument('-min_c', dest = 'min_component_number', help = 'Minimum to
 options.add_argument('-alpha' , dest = 'alpha', help = 'Transparency value for montage overlay', type = float, default = 0.8)
 options.add_argument('-title', dest = 'title', help = 'Title of ME-ICA report.  Will be shown on browser tab for easier identification between multiple reports.', default = 'Your ME-ICA Report!')
 args = parser.parse_args()
+
 if args.show:
-	print 'Default mode netowrk seed MNI coordinates:\n' + str(ROI_default).replace('],','],\n')
-	print '\nAttention network seed MNI cooridnates:\n' + str(ROI_attention).replace('],','],\n')
-	print '\nReference network seed MNI coordinates:\n' + str(ROI_reference).replace('],','],\n')
-	print '++ To create report, do not specify -show_ROI'
+	print '++ INFO: Default mode netowrk seed MNI coordinates:\n' + str(ROI_default).replace('],','],\n')
+	print '\n++ INFO: Attention network seed MNI cooridnates:\n' + str(ROI_attention).replace('],','],\n')
+	print '\n++ INFO: Reference network seed MNI coordinates:\n' + str(ROI_reference).replace('],','],\n')
+	print '++ INFO: To create report, do not specify -show_ROI'
 	sys.exit()
 
 dep_check()
 import meica_figures
 import sphinx_files
 import rst_files
-meica_txt=[]
 
-setname, startdir, TED, anat = path_name(args.setname, args.startdir, args.TED, args.anat)
+meica_txt=[]
 reportdir = os.path.abspath(os.path.dirname(sys.argv[0]))
-User_ROI = seed_split(args.User_ROI)
-os.chdir(setname)
-file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.coreg_anat, args.coreg)
 label = 'meica.' + args.label
 figures = 'Report_Figures'
 
+setname, startdir, TED, anat = path_names(args.setname, args.startdir, args.TED, args.anat)
+User_ROI = seed_split(args.User_ROI)
+os.chdir(setname)
+
+file_check(anat, startdir, TED, setname, args.MNI, reportdir, args.coreg_anat, args.coreg)
+
+
 if os.path.isdir('%s/%s' % (startdir,label)) and args.overwrite:
-	print '*+ %s directory already exits and -overwrite not specified' % label
+	print '++ Error: %s directory already exits and -overwrite not specified' % label
 	sys.exit()
 if os.path.isdir('%s/%s' % (startdir,label)):
 	subprocess.call('rm -rf %s/%s' % (startdir,label), shell = True)
@@ -295,30 +308,35 @@ subprocess.call('cp %s/warning.png %s/%s/%s' % (reportdir,startdir,label,figures
 os.chdir('%s/%s/%s' % (startdir,label,figures))
 
 #make figures
-print('++ making figures')
+print '++ INFO: Making figures'
+print '\t Making Kappa vs component number plot'
 meica_figures.kr_vs_component(ctab)#make kappa and rho vs component figure
+print '\t Making Kappa vs Rho plot'
 meica_txt.append(meica_figures.kappa_vs_rho_plot(accept, reject, middle, ignore,ctab,startdir,label,figures))#make kappa vs rho figure
+print '\t Making TSNR plots'
 meica_txt.append(meica_figures.tsnr(tsoc,medn,startdir,label))#create tsnr figures
+print '\t Making motion plots'
 if os.path.isfile('%s/%s' % (setname,args.motion_file)):
 	meica_txt.append(meica_figures.motion(startdir,label,figures,setname,args.motion_file))
 else:
 	meica_txt.append("Max head displacement in any one dirrection:   %s\nTR of Max Head displacement:   %s\nMax rate of head motion:   %s\nTR of max head motion rate:   %s" % (' ',' ',' ',' '))
-print('++ this set of figures may take awhile')
+
+print('\t Making component images.  This set of figures may take awhile...')
 meica_figures.montage(maps, accept, args.montage_threshold, args.alpha, TED, args.Axial, args.Sagittal, args.Coronal, args.flood, args.contrast)#create activation montage
 if anat != '':
 	if args.coreg:
 		meica_figures.coreg(startdir, setname, label, figures, anat, args.coreg_anat)#create corregistration figure
-	if args.MNI:
+	if args.MNI and corr:
 		if len(accept) > 3:
 			meica_figures.correlation(startdir, label, figures, anat, ROI_default, ROI_attention, ROI_reference, User_ROI, args.corr_threshold)#create correlation for ROIs
 			if args.ROI_reference + args.ROI_attention + args.ROI_default + len(args.User_ROI) != 0:
 				corr = True
 		else:
-			print '++ not enough degrees of freedom to compute standard error'
+			print '++ Error: Not enough degrees of freedom to compute standard error for correlation'
 	else:
-		print'++ cannot compute correlation, MNI coordinates not specified'
+		print'++ Error: Cannot compute correlation, MNI coordinates not specified'
 else:
-	print '++ no anatomical specified, cannot create coregistration or correlation maps'
+	print '++ Error: No anatomical specified, cannot create coregistration or correlation maps'
 
 os.chdir('%s/%s' % (startdir,label))
 
@@ -328,7 +346,7 @@ sphinx_files.make_bat()
 sphinx_files.make_file()
 
 #make .rst files for sphinx to use to generate the report
-print('++ occupying sphinx directory with .rst files')
+print('++ INFO: Occupying sphinx directory with .rst files')
 rst_files.diagnostics_rst(anat,args.coreg,figures)
 rst_files.index_rst(corr, args.title)
 rst_files.intro_rst()

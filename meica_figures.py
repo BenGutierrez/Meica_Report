@@ -61,10 +61,11 @@ def check_ROI(ROI, TED, description):
 			if ROI[i][2]<corners[2,0] or ROI[i][2]> corners[2,1]:
 				fails += 1
 	if fails != 0:
-		print '*+ EXITING.  MNI coordinates (%s,%s,%s) not within bounds of image' % (ROI[i][0],ROI[i][1],ROI[i][2])
+		print '++ Error.  MNI coordinates (%s,%s,%s) not within bounds of image' % (ROI[i][0],ROI[i][1],ROI[i][2])
 		sys.exit()
 	else:
-		print '++ %s MNI coordinates within image bounds' % description
+		print '++ INFO: %s MNI coordinates within image bounds' % description
+
 """
 Make a figure of the FFT for the ICA component across the time series
 series: path to time series data
@@ -100,6 +101,7 @@ def FFT(TED, series, i, N):
 	fig.subplots_adjust(bottom = 0.15, top = .90)
 	plt.savefig('FFT_Component_' + N)
 	plt.close()
+
 """
 Seperates the components into their respective bins.
 TED: TED directory from tedana.py
@@ -135,6 +137,7 @@ def components(TED):
 			d = d + 1
 
 	return (accept,reject,middle,ignore)
+
 """
 Removes two dimensional slices from 3d matrix image that contain are a mask for the x or y or z direction
 useful for ensuring that the only images that get displayed have nonzero pixels.
@@ -183,6 +186,7 @@ def mask(image, axis):
 			upper += 1
 			j = im_mask[im_mask.shape[0]-1-upper]
 		return (image[:,im_mask > 0,:],lower,im_mask.shape[0]-1-upper)
+
 """
 set up floodfill algorithm.  acts as a clustering algorithm.  x,y,z designates where to begin algorithm in matrix
 matrix: 2D array
@@ -199,6 +203,7 @@ def flood(matrix, x, y, z, flood_num):
 		return original
 	else:
 		return matrix
+
 """
 Rest of the flood fill algorithm.
 itemindex: array containing location of non-zero elements of matrix next to (x,y,z)
@@ -218,6 +223,7 @@ def floodfill(matrix, x, y, z, N, itemindex, flood_num):
 		if len(itemindex[0])>0:#ensures that if no more 1's around (x,y,z) not calling function again
 			N = floodfill(matrix,itemindex[0][0],itemindex[1][0],itemindex[2][0], N, itemindex, flood_num)
 	return N
+
 """
 Collects data from the anatomical, overlay, and threshold data sets.  
 Also collects the header from the anatomical and overlay.
@@ -284,6 +290,7 @@ def collect_data(startdir,label,TED,anatomical, overlay, threshold_map):
 		threshold = ''
 		threshold_data = ''
 	return(anat_data, overlay_data, threshold_data, anat_corners, overlay_corners)
+
 """
 Calculate the rotaion matrix for image alignment.  Uses the coordinates already associated with dataset and anatomical
 """
@@ -299,9 +306,8 @@ def Corners(data,hdr):
 	corners[:,0] = np.array([[hdr['qoffset_x']] ,[hdr['qoffset_y']], [hdr['qoffset_z']]])[:,0]# calculate extremes of overlay
 	corners[:,1] = (np.dot(R,np.array([[data.shape[0]*hdr['pixdim'][1]], [data.shape[1]*hdr['pixdim'][2]],
 		[q_fac*data.shape[2]*hdr['pixdim'][3]]]))[:,0] + corners[:,0])
-	
-
 	return(corners)
+
 """
 Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
@@ -425,8 +431,9 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 		else:
 			gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast)
 		FFT(TED, series, i, N)
-		print ('++ figures created for Component %s' % N)
+		print '\t\tFigures created for Component %s' % N
 		plt.show()
+
 """
 Creates a montage of greyscale 10 images of axial, Sagittal and coronal views of meica components along with a time series of the component.
 accepted components also get overlayed onto the anatomical image and floodfill is performed on statiscially significant voxels.
@@ -488,9 +495,11 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 	ax1.set_xlabel('Time (TR)', fontsize = 12)
 	ax1.set_ylabel('Arbitrary BOLD units', fontsize = 12)
 	ax1.set_xlim([0,time_series.shape[0]-1])
+	fig.subplots_adjust(bottom = 0.15, top = .90)
 	plt.savefig('TimeSeries_' + N)
 	plt.close()
 	plt.close()
+
 """
 Create a figure of the corregistration of the overlay onto the anatomcial image
 setname: path of directory containing the TED directory
@@ -520,7 +529,7 @@ def coreg(startdir, setname, label, figures, anat, coreg_anat):
 		elif os.path.isfile(anat_name + '_ns.nii.gz'):
 			anat_name = anat_name + '_ns'
 		else:
-			print '+* Can\'t find anatomical ,%s, to perform corregistration with. Coregistration will not be performed' % anat
+			print '++ Error: Can\'t find anatomical ,%s, to perform corregistration with. Coregistration will not be performed' % anat
 			fails = 1
 
 	if not fails:
@@ -559,7 +568,6 @@ def coreg(startdir, setname, label, figures, anat, coreg_anat):
 		os.chdir('%s/%s/%s' % (startdir,label,figures))
 		plt.savefig('coregistration')
 		plt.close()
-		print '++ finished corregistration figure'
 
 """
 Makes TSNR figures of medn, tsoc, and medn/tsoc datasets
@@ -600,7 +608,7 @@ def tsnr(tsoc,medn,startdir,label):
 	cb1 = grid.cbar_axes[0].colorbar(plot)
 	grid.cbar_axes[0].tick_params(labelsize=9)
 	grid.cbar_axes[0].get_yaxis().labelpad = 15
-	cb1.set_label_text('Absolute z-score', fontsize=9, rotation=270)
+	cb1.set_label_text('TSNR', fontsize=9, rotation=270)
 	plt.savefig('medn_tsnr', bbox_inches='tight', dpi=150)
 	np.save('%s/%s/axialized_nifti/medn_tsnr' % (startdir,label),SaveTSNR)
 	np.savetxt('%s/%s/axialized_nifti/tsnr_thresholds.txt' % (startdir,label),np.array([minimum,maximum]))
@@ -618,7 +626,7 @@ def tsnr(tsoc,medn,startdir,label):
 	cb2 = grid.cbar_axes[0].colorbar(plot)
 	grid.cbar_axes[0].tick_params(labelsize=9)
 	grid.cbar_axes[0].get_yaxis().labelpad = 15
-	cb2.set_label_text('Absolute z-score', fontsize=9, rotation=270)
+	cb2.set_label_text('TSNR', fontsize=9, rotation=270)
 	plt.savefig('tsoc_tsnr', bbox_inches='tight', dpi=150)
 	np.save('%s/%s/axialized_nifti/tsoc_tsnr' % (startdir,label),SaveTSNR)
 	plt.close()
@@ -638,7 +646,7 @@ def tsnr(tsoc,medn,startdir,label):
 	cb3 = grid.cbar_axes[0].colorbar(plot)
 	grid.cbar_axes[0].tick_params(labelsize=9)
 	grid.cbar_axes[0].get_yaxis().labelpad = 15
-	cb3.set_label_text('z-score ratio', fontsize=9, rotation=270)
+	cb3.set_label_text('TSNR ratio', fontsize=9, rotation=270)
 	plt.savefig('tsnr_ratio', bbox_inches='tight', dpi=150)
 	np.save('%s/%s/axialized_nifti/ratio_tsnr' % (startdir,label),SaveTSNR)
 	np.savetxt('%s/%s/axialized_nifti/ratio_tsnr_thresholds.txt' % (startdir,label),np.array([minimum,maximum]))
@@ -672,8 +680,8 @@ def tsnr(tsoc,medn,startdir,label):
 	plt.ylabel('Frequency', fontsize = 15)
 	plt.savefig('tsnr_ratio_hist')
 	plt.close()
-	print '++ finished tsnr figures'
 	return("Median meica denoised TSNR:  %s\nMedian optimally combined TSNR:   %s\nMedian denoised over optimally combined TSNR ratio:   %s" % (np.percentile(medn_mask,50),np.percentile(tsoc_mask,50),np.percentile(frac_mask,50)))
+
 """
 calculates the statistical correlation between a voxel and the rest of the brain
 and makes a montage image of it.  MNI option must have been stippulated
@@ -797,10 +805,10 @@ def correlation(startdir, label, figures, nsmprage, ROI_default, ROI_attention, 
 			plt.ylabel('z score', fontsize = 12, rotation = 270)
 			if len(ROI[i]) > 3:
 				plt.savefig('%s_correlation' % ROI[i][3])
-				print '++ %s correlation complete'  % ROI[i][3]
+				print '++ INFO: %s correlation complete'  % ROI[i][3]
 			else:
 				plt.savefig('(%s,%s,%s)_correlation' % (ROI[i][0], ROI[i][1], ROI[i][2]))
-				print '++ (%s,%s,%s) correlation complete'  % (ROI[i][0], ROI[i][1], ROI[i][2])
+				print '++ INFO: (%s,%s,%s) correlation complete'  % (ROI[i][0], ROI[i][1], ROI[i][2])
 			plt.close()
 """
 plot kappa vs rho and represent percent varaince by the size of the markers.
@@ -846,19 +854,19 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 		mpld3.save_html(fig,'%s/%s/%s/kappa_vs_rho.html' % (startdir,label,figures))
 		plt.close()
 	except:
-		print '++ could not import mpld3'
+		print '++ Error: cCould not import mpld3, interactive Kappa vs Rho plot not created'
 	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
 	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
 	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
-	trial_2 = plt.scatter(1,1, c = 'r', marker = '^')
-	trial_3 = plt.scatter(1,1, c = 'g', marker = 'v')
+	trial_2 = plt.scatter(1,1, c = 'r', marker = 'v')
+	trial_3 = plt.scatter(1,1, c = 'g', marker = '^')
 	trial_4 = plt.scatter(1,1, c = 'c', marker = '*')
 	plt.close(2)
 	fig = plt.figure()
 	plt.title('ME-ICA Analysis, ' + r'$\kappa$' + ' vs ' + r'$\rho$', fontsize = 14)
 	ACC = plt.scatter(accept[:,1], accept[:,2], c = 'b', marker = 'o', s = 50 * accept[:,4]) 
-	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = '^', s = 50 * reject[:,4])
-	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = 'v', s = 50 * middle[:,4])
+	REJ = plt.scatter(reject[:,1], reject[:,2], c = 'r', marker = 'v', s = 50 * reject[:,4])
+	MID = plt.scatter(middle[:,1], middle[:,2], c = 'g', marker = '^', s = 50 * middle[:,4])
 	IGN = plt.scatter(ignore[:,1], ignore[:,2], c = 'c', marker = '*', s = 50 * ignore[:,4])
 	plt.legend((trial_1, trial_2, trial_3, trial_4),('Accepted','Rejected','Middle',
 		'Ignore'), scatterpoints = 1, loc = 'upper right', markerscale = 2)
@@ -882,7 +890,6 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 		middle_high_k = ''
 	else:
 		middle_high_k = middle[0,0]
-	print '++ finished kappa vs rho figure'
 	return("Number of accepted components:   %s\nNumber of rejected components:   %s\nNumber of middle kappa components:   %s\nNumber of ignored components:   %s\nAccepted variance:   %s" % 
 		(len(accept[:,0]),len(reject[:,0]),len(middle[:,0]),len(ignore[:,0]),sum(accept[:,4])) + 
 		"\nRejected variance:   %s\nMiddle Kappa variance:   %s\nIgnored variance:   %s\nVariance explained by ICA:   %s\nLargest variance accepted component:   %s\nHighest kappa rejected component:   %s\nHighest kappa middle kappa component:   %s"
@@ -902,7 +909,6 @@ def kr_vs_component(comp_table_title):
 	plt.legend((r'$\kappa$', r'$\rho$'))
 	plt.savefig('kappa_rho_vs_components')
 	plt.close()	
-	print '++ finished kappa and rho vs component number figure'
 
 def motion(startdir,label,figures,setname,motion_file):
 	os.chdir(setname)

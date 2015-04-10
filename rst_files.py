@@ -42,6 +42,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	try:
 		import mpld3
 		sl.append('An interactive `Kappa vs Rho plot <../%s/kappa_vs_rho.html>`_.\n' % figures)
+		sl.append('.. image:: %s/kappa_vs_rho.png' % figures)
 	except:
 		sl.append('.. image:: %s/kappa_vs_rho.png' % figures)
 		sl.append('	:width: 49%')
@@ -49,7 +50,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 	sl.append('	:width: 49%\n')
 	sl.append('The size of the scatter plot points is linearly related to the percent variance of that particular component.\n')
 	if os.path.isfile('%s/%s' % (setname,motion_file)):
-		sl.append('\n The below figures show subject motion.  The plot on the right is the derivative of the 6 plots on the left with the euclidean norm applied in order to combine the data:\n')
+		sl.append('\nThe below figures show subject motion.  The plot on the right is the derivative of the 6 plots on the left with the euclidean norm applied in order to combine the data:\n')
 		sl.append('.. image:: %s/motion_plot.png' % figures)
 		sl.append('	:width: 49%')
 		sl.append('.. image:: %s/motion_rate.png' % figures)
