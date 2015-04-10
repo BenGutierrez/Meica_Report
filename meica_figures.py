@@ -139,53 +139,61 @@ def components(TED):
 	return (accept,reject,middle,ignore)
 
 """
-Removes two dimensional slices from 3d matrix image that contain are a mask for the x or y or z direction
-useful for ensuring that the only images that get displayed have nonzero pixels.
-image: three dim array
-axis: axis that the two dimensional plane fixes, i.e. (0,1) fixes z, (1,2) fixes x, etc.
+Primary usage is for finding upper and lower bounds for non-zero 2d slices so as to display only useful information
+when displaying montages of three dimmensional images.  Also returns an image with 2D zero-filled slices removed, but this is not always the
+more useful option.
+image: 3D array
+axis: String Dimmension to look for 2D zero-filled slices in, i.e, 'x','y','z'.
 """
-def mask(image, axis):
-	im_mask = np.zeros(image.shape)
+def ImageDimBounds(image, axis):
+	img_mask = np.zeros(image.shape)
 	image[np.isnan(image)] = 0
-	im_mask[image != 0] = 1
-	lower = 0
-	upper = 0
-	if axis == (0,1):
-		im_mask = np.sum(im_mask, axis = 0)
-		im_mask = np.sum(im_mask, axis = 0)
-		i = im_mask[0]
-		j = im_mask[im_mask.shape[0]-1]
-		while i == 0:
-			lower += 1
-			i = im_mask[lower]
-		while j == 0:
-			upper += 1
-			j = im_mask[im_mask.shape[0]-1-upper]
-		return (image[:,:,im_mask > 0], lower,im_mask.shape[0]-1-upper)
-	if axis == (1,2):
-		im_mask = np.sum(im_mask, axis = 1)
-		im_mask = np.sum(im_mask, axis = 1)
-		i = im_mask[0]
-		j = im_mask[im_mask.shape[0]-1]
-		while i == 0:
-			lower += 1
-			i = im_mask[lower]
-		while j == 0:
-			upper += 1
-			j = im_mask[im_mask.shape[0]-1-upper]
-		return (image[im_mask > 0,:,:],lower,im_mask.shape[0]-1-upper)
-	if axis == (0,2):
-		im_mask = np.sum(im_mask, axis = 0)
-		im_mask = np.sum(im_mask, axis = 1)
-		i = im_mask[0]
-		j = im_mask[im_mask.shape[0]-1]
-		while i == 0:
-			lower += 1
-			i = im_mask[lower]
-		while j == 0:
-			upper += 1
-			j = im_mask[im_mask.shape[0]-1-upper]
-		return (image[:,im_mask > 0,:],lower,im_mask.shape[0]-1-upper)
+	img_mask[image != 0] = 1
+
+	lower_bound = 0
+	upper_bound = 0
+
+	if axis == 'x':
+		first_dim = 1
+		second_dim = 1
+	if axis == 'z':
+		first_dim = 0
+		second_dim = 0
+	if axis == 'y':
+		first_dim = 0
+		second_dim = 1
+
+	img_bounds = np.sum(img_mask, axis = first_dim)
+	img_bounds = np.sum(img_bounds, axis = second_dim)
+
+	i = img_bounds[0]
+	j = img_bounds[img_bounds.shape[0]-1]
+
+	while i == 0:
+		lower_bound += 1
+		if lower_bound == img_bounds.shape[0]:
+			lower_bound = 0
+			break
+		else:
+			i = img_bounds[lower_bound]
+
+	while j == 0:
+		upper_bound += 1
+		if upper_bound == img_bounds.shape[0]:
+			upper_bound = 0
+			img_bounds = np.ones(img_bounds.shape)
+			break
+		else:
+			j = img_bounds[img_bounds.shape[0]-1-upper_bound]
+
+	if axis == 'x':
+		cropped_img = image[img_bounds > 0,:,:]
+	if axis == 'y':
+		cropped_img = image[:,img_bounds > 0,:]
+	if axis == 'z':
+		cropped_img = image[:,:,img_bounds > 0]
+
+	return (cropped_img,lower_bound,img_bounds.shape[0]-1-upper_bound)
 
 """
 set up floodfill algorithm.  acts as a clustering algorithm.  x,y,z designates where to begin algorithm in matrix
@@ -348,11 +356,11 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			contrast_ = overlay[overlay[:,:,:,i] != 0,i]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 			maximum = np.percentile(contrast_,100 - contrast)
 			minimum = np.percentile(contrast_,contrast)
-			tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))#find range of indicies for each axis that contain non-zero values for displaying to the user.
+			tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'z')#find range of indicies for each axis that contain non-zero values for displaying to the user.
 			ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
-			tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
+			tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'x')
 			sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
-			tmp,lower,upper = mask(overlay[:,:,:,i],(0,2))
+			tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'y')
 			cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 			
 			if Axial:#plot axial
@@ -451,11 +459,11 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 		contrast_ = overlay[overlay[:,:,:,i] != 0,i]#fix contrast overlay_z (makes no difference which overlay_'' choosen)
 		maximum = np.percentile(contrast_,100 - contrast)
 		minimum = np.percentile(contrast_,contrast)
-		tmp,lower,upper = mask(overlay[:,:,:,i],(0,1))#find range of indicies for each axis that contain non-zero values for displaying to the user.
+		tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'z')#find range of indicies for each axis that contain non-zero values for displaying to the user.
 		ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
-		tmp,lower,upper = mask(overlay[:,:,:,i],(1,2))
+		tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'x')
 		sag_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[0]
-		tmp,lower,upper = mask(overlay[:,:,:,i],(0,2))
+		tmp,lower,upper = ImageDimBounds(overlay[:,:,:,i],'y')
 		cor_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[1]
 		contrast_ = overlay[overlay[:,:,:,i] != 0,i]
 		maximum = np.percentile(contrast_, 100 - contrast)
@@ -553,7 +561,7 @@ def coreg(startdir, setname, label, figures, anat, coreg_anat):
 		overlay = ni.load('ocv_uni_vrm_e3.nii').get_data()
 
 		anatomical = ni.load('axialized_%s%s' % (anat_name,suffix)).get_data()
-		tmp,lower,upper = mask(overlay,(0,1))
+		tmp,lower,upper = ImageDimBounds(overlay,'z')
 		overlay[overlay == 0] = np.nan
 		ax_montage_spacing = np.linspace(lower,upper,10)/overlay.shape[2]
 		fig = plt.figure(figsize = (3.2*5,4))
@@ -584,9 +592,9 @@ def tsnr(tsoc,medn,startdir,label):
 	tsoc_tsnr = tsoc_data.mean(-1)/tsoc_data.std(-1)
 	frac = medn_tsnr/tsoc_tsnr
 
-	medn_tsnr,lower,upper = mask(image = medn_tsnr, axis = (0,1))#remove z slices without nonzero elements
-	tsoc_tsnr,lower,upper = mask(image = tsoc_tsnr, axis = (0,1))
-	frac_tsnr,lower,upper = mask(image = frac, axis = (0,1))#remove z slices without nonzero elements
+	medn_tsnr,lower,upper = ImageDimBounds(image = medn_tsnr, axis = 'z')#remove z slices without nonzero elements
+	tsoc_tsnr,lower,upper = ImageDimBounds(image = tsoc_tsnr, axis = 'z')
+	frac_tsnr,lower,upper = ImageDimBounds(image = frac, axis = 'z')#remove z slices without nonzero elements
 	medn_tsnr[medn_tsnr == 0] = np.nan
 	tsoc_tsnr[tsoc_tsnr == 0] = np.nan
 	frac_tsnr[frac_tsnr == 0] = np.nan

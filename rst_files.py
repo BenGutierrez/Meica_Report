@@ -43,6 +43,7 @@ def analysis_rst(accept, reject, middle, ignore, nsmprage, threshold, ctab, min_
 		import mpld3
 		sl.append('An interactive `Kappa vs Rho plot <../%s/kappa_vs_rho.html>`_.\n' % figures)
 		sl.append('.. image:: %s/kappa_vs_rho.png' % figures)
+		sl.append('	:width: 49%')
 	except:
 		sl.append('.. image:: %s/kappa_vs_rho.png' % figures)
 		sl.append('	:width: 49%')
