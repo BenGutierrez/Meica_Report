@@ -1,4 +1,4 @@
-meica_Report
+Meica Report
 ============
 
 Report generator for meica.py from https://bitbucket.org/prantikk/me-ica
