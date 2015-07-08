@@ -437,7 +437,6 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			plt.xlim([0,time_series.shape[0]-1])
 			fig.subplots_adjust(bottom = 0.15, top = .90)
 			plt.savefig('TimeSeries_' + N)
-			plt.savefig('TimeSeries_' + N + '.eps',format='eps')
 			plt.close()
 			l += 1# indecies of feats_OC2.nii differs from mefl.nii.gz this accounts for this
 		else:
@@ -482,7 +481,6 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid1[j].axes.get_xaxis().set_ticks([])
 			grid1[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Axial_Component_' + N, bbox_inches='tight', dpi=150)
-		plt.savefig('Axial_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 		plt.close()
 	if Sagittal:#plot sagittal
 		fig = plt.figure(figsize = (12,4))
@@ -492,7 +490,6 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid2[j].axes.get_xaxis().set_ticks([])
 			grid2[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Sagittal_Component_' + N, bbox_inches='tight', dpi=150)
-		plt.savefig('Sagittal_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 		plt.close()
 	if Coronal:#plot coronal
 		fig = plt.figure(figsize = (12,4))
@@ -502,7 +499,6 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid3[j].axes.get_xaxis().set_ticks([])
 			grid3[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Coronal_Component_' + N, bbox_inches='tight', dpi=150)
-		plt.savefig('Coronal_Component_' + N+ '.eps', bbox_inches='tight', dpi=150, format='eps')
 	fig = plt.figure(figsize= (8,4))
 	ax1 = plt.subplot(111)
 	time_series = np.loadtxt(series)#plots time series of the component
@@ -923,7 +919,6 @@ def kr_vs_component(comp_table_title):
 	#rho = plt.plot(components[:,0], components[:,2])
 	plt.legend((r'$\kappa$', r'$\rho$'))
 	plt.savefig('kappa_rho_vs_components')
-	plt.savefig('kappa_rho_vs_components.eps', format = 'eps')
 	plt.close()	
 
 def motion(startdir,label,figures,setname,motion_file):
