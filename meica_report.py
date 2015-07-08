@@ -212,7 +212,7 @@ if __name__=='__main__':
 	lab.add_argument('-label', dest = 'label', help = 'Label to tag directory for all output files, default is "Report"  ', default = 'Report')
 	lab.add_argument('-anat', dest = 'anat', help = 'Anatomical specified in meica.py (optional)', default = '')
 	lab.add_argument('-dir', dest = 'startdir', help = 'Directory to place report directory.  Default is current directory', default = '')
-	lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-label/TED"', default = 'TED')
+	lab.add_argument('-TED', dest = 'TED', help = 'Directory containing all files from tedana.py processing steps.  Input files are taken automatically from this directory. Default is "-setname/TED"', default = 'TED')
 	lab.add_argument('-motion', dest = 'motion_file',help='file containing motion (do not include path). file must be in -setname.  default is motion.1D in -setname.',default='motion.1D')
 	lab.add_argument('-overwrite', dest = 'overwrite', help = 'If -overwrite specified and -label directory already exists, will overwrite', action = 'store_false')
 	options = parser.add_argument_group('Report options')

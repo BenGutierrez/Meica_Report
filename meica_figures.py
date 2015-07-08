@@ -382,6 +382,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					grid1.cbar_axes[0].get_yaxis().labelpad = 15
 					cb1.set_label_text('Absolute z-score', fontsize=9, rotation=270)
 				plt.savefig('Axial_Component_' + N, bbox_inches='tight', dpi=150)
+				plt.savefig('Axial_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 				plt.close()
 			if Sagittal:#plot sagittal
 				fig = plt.figure(figsize = (12,4))
@@ -402,6 +403,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					grid2.cbar_axes[0].get_yaxis().labelpad = 15
 					cb2.set_label_text('Absolute z-score', fontsize=9, rotation=270)
 				plt.savefig('Sagittal_Component_' + N, bbox_inches='tight', dpi=150)
+				plt.savefig('Sagittal_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 				plt.close()
 			if Coronal:#plot coronal
 				fig = plt.figure(figsize = (12,4))
@@ -422,6 +424,7 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 					grid3.cbar_axes[0].get_yaxis().labelpad = 15
 					cb3.set_label_text('Absolute z-score', fontsize=9, rotation=270)
 				plt.savefig('Coronal_Component_' + N, bbox_inches='tight', dpi=150)
+				plt.savefig('Coronal_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 				plt.close()
 				
 			fig = plt.figure(figsize= (8,4))
@@ -433,7 +436,8 @@ def montage(maps, accept, threshold, alpha, TED, Axial, Sagittal, Coronal, flood
 			plt.ylabel('Arbitrary BOLD units', fontsize = 15)
 			plt.xlim([0,time_series.shape[0]-1])
 			fig.subplots_adjust(bottom = 0.15, top = .90)
-			plt.savefig('TimeSeries_' + N,)
+			plt.savefig('TimeSeries_' + N)
+			plt.savefig('TimeSeries_' + N + '.eps',format='eps')
 			plt.close()
 			l += 1# indecies of feats_OC2.nii differs from mefl.nii.gz this accounts for this
 		else:
@@ -478,6 +482,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid1[j].axes.get_xaxis().set_ticks([])
 			grid1[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Axial_Component_' + N, bbox_inches='tight', dpi=150)
+		plt.savefig('Axial_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 		plt.close()
 	if Sagittal:#plot sagittal
 		fig = plt.figure(figsize = (12,4))
@@ -487,6 +492,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid2[j].axes.get_xaxis().set_ticks([])
 			grid2[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Sagittal_Component_' + N, bbox_inches='tight', dpi=150)
+		plt.savefig('Sagittal_Component_' + N + '.eps', bbox_inches='tight', dpi=150,format='eps')
 		plt.close()
 	if Coronal:#plot coronal
 		fig = plt.figure(figsize = (12,4))
@@ -496,6 +502,7 @@ def gs_montage(overlay, Axial, Sagittal, Coronal, series, i, N, contrast):
 			grid3[j].axes.get_xaxis().set_ticks([])
 			grid3[j].axes.get_yaxis().set_ticks([])
 		plt.savefig('Coronal_Component_' + N, bbox_inches='tight', dpi=150)
+		plt.savefig('Coronal_Component_' + N+ '.eps', bbox_inches='tight', dpi=150, format='eps')
 	fig = plt.figure(figsize= (8,4))
 	ax1 = plt.subplot(111)
 	time_series = np.loadtxt(series)#plots time series of the component
@@ -862,7 +869,7 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 		mpld3.save_html(fig,'%s/%s/%s/kappa_vs_rho.html' % (startdir,label,figures))
 		plt.close()
 	except:
-		print '++ Error: cCould not import mpld3, interactive Kappa vs Rho plot not created'
+		print '++ Error: Could not import mpld3, interactive Kappa vs Rho plot not created'
 	plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
 	#plt.legend has issue where marker size in legend is propoertional to marker size in plot
 	trial_1 = plt.scatter(1,1, c = 'b', marker = 'o')
@@ -913,9 +920,10 @@ def kr_vs_component(comp_table_title):
 	plt.ylabel(r'$\kappa$' ', ' + r'$\rho$', fontsize = 15)
 	plt.xlabel('Component Rank', fontsize = 15)
 	kappa = plt.plot(components[:,0], components[:,1])
-	rho = plt.plot(components[:,0], components[:,2])
+	#rho = plt.plot(components[:,0], components[:,2])
 	plt.legend((r'$\kappa$', r'$\rho$'))
 	plt.savefig('kappa_rho_vs_components')
+	plt.savefig('kappa_rho_vs_components.eps', format = 'eps')
 	plt.close()	
 
 def motion(startdir,label,figures,setname,motion_file):
