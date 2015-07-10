@@ -856,7 +856,7 @@ def kappa_vs_rho_plot(accept,reject,middle,ignore,ctab,startdir,label,figures):
 
 		leg1 = Rectangle((0, 0), 0, 0, alpha=0.0)
 		plt.legend([leg1,leg1,leg1,leg1], ['Accepted - Blue','Rejected - Red','Middle kappa - Green','Ignored - Cyan'], handlelength=0)
-		mpld3.plugins.connect(fig, tooltip_acc,)
+		mpld3.plugins.connect(fig, tooltip_acc)
 		mpld3.plugins.connect(fig, tooltip_rej)
 		mpld3.plugins.connect(fig, tooltip_mid)
 		mpld3.plugins.connect(fig, tooltip_ign)
