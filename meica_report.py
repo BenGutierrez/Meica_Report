@@ -20,7 +20,7 @@ del path
 def dep_check():
     print("++ INFO [Main]: Checking for dependencies....")
     fails   = 0
-    modules = set(["numpy", "matplotlib","argparse","scipy","bokeh","nibabel","sphinx"])
+    modules = set(["numpy", "matplotlib","argparse","scipy","bokeh","nibabel","sphinx","pandas"])
 
     for m in modules:
         try:
@@ -49,6 +49,7 @@ if __name__=='__main__':
     import sphinx_files
     import nibabel as ni
     import numpy   as np
+    import pandas  as pd
     # Parse input parameters
     # ----------------------
     parser = ArgumentParser()
@@ -124,11 +125,53 @@ if __name__=='__main__':
     # load data
     # ---------
     print("++ INFO [Main]: Loading data...")
-    ctab                   = np.loadtxt(options.TED_dir + '/' + 'comp_table.txt')
+    
+    ctab_unordered         = np.loadtxt(options.TED_dir + '/' + 'comp_table.txt')
     Denoised_components_ts = np.loadtxt(options.TED_dir + '/' + 'meica_mix.1D')
     Denoised_ts            = ni.load(options.TED_dir + '/' + 'dn_ts_OC.nii').get_data()
     OptCombine_ts          = ni.load(options.TED_dir + '/' + 'ts_OC.nii').get_data()
     Denoised_components    = ni.load(options.TED_dir + '/' + 'betas_OC.nii').get_data()
+    
+    
+    # parse and order component table columns
+    # ---------------------------------------
+    ctab = np.zeros((ctab_unordered.shape[0],5))
+    if os.path.isfile("%s/comp_table.csv" % options.TED_dir):
+        print("++ INFO [Main]: Using pandas to parse comp_table.csv")
+
+        df = pd.read_csv("%s/comp_table.csv" % options.TED_dir)
+        ctab[:,1] = df['Kappa']
+        ctab[:,2] = df['Rho']
+        ctab[:,3] = df['%%Var']
+        if '%%Var(norm)' in df.columns:
+            ctab[:,4] = df['%%Var(norm)']
+        else:
+            ctab[:,4] = df['%%Var']
+
+    else:
+        print("++ INFO [MAIN]: Parsing comp_table.txt")
+        with open("%s/comp_table.txt" % (options.TED_dir), 'r') as original: ctab_txt = original.read()
+        ctab_txt = ctab_txt.split('\n')
+        N = 0
+        while '#' not in ctab_txt[-2-N][0]:
+            N += 1
+        ctab_columns = ctab_txt[-2 -N].split()[1:]
+
+        for i in range(len(ctab_columns)):
+            if ctab_columns[i] == 'Kappa':
+                ctab[:,1] = ctab_unordered[:,i]
+            if ctab_columns[i] == 'Rho':
+                ctab[:,2] = ctab_unordered[:,i]
+            if ctab_columns[i] == '%%Var':
+                ctab[:,3] = ctab_unordered[:,i]
+            if ctab_columns[i] == '%%Var(norm)':
+                ctab[:,4] = ctab_unordered[:,i]
+
+        if np.max(ctab[:,4] == 0):
+            ctab[:,4] = ctab[:,3]
+
+    ctab = ctab[ctab[:,1].argsort()[::-1]]
+    ctab[:,0] = np.arange(ctab.shape[0])
     
     # set variables
     # -------------

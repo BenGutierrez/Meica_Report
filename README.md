@@ -7,5 +7,5 @@ Use meica_report.py to generate the report.  The report will appear in the speci
 
 use 'meica_report.py -h' for help
 
-example input '~/meica_report/meica_report.py' -TED TED -setname meica.WE_TE1234label -sag -ax'
+example input 'python ~/Meica_Report/meica_report.py -o ./meica.Report --motion SBJ01_S02_Task01_e2_Motion.1D -t ./TED/ --overwrite --ncpus 5' 
 
