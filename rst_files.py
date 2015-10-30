@@ -247,7 +247,7 @@ def intro_rst(outputDir):
     sl.append('''There are two ways to visualize your data in ths Report, the first is the dynamic report.
   The dynamic report uses bokeh to create multiple plots which can be interacted with in order to go through the your data.
   The static report contains the same information, but cannot be interacted with.\n''')
-    sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n' + '* sphinx\n' + '* bokeh\n' + '* pandas\n')
+    sl.append('Requirements for generating this report form:\n\n' + '* matplotlib\n\n' + '* numpy\n\n' + '* nibabel\n\n' + '* sphinx\n' + '* bokeh\n')
     ofh = open("%s/Intro.rst" % outputDir,"w")
     ofh.write("\n".join(sl) + "\n")
     ofh.close()
