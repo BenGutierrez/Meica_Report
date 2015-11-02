@@ -52,7 +52,7 @@ def FFT(Denoised_components_ts, TR, N, outputDir):
     fig  = plt.figure(figsize= (8,4))
     gs1  = gridspec.GridSpec(1,1)
 
-    plt.plot(freq_axis,FFT[(t.size+1)/2:])
+    plt.plot(freq_axis,FFT[-(freq_axis.shape)[0]:])
     plt.title('FFT of the Time Series', fontsize = 15)
     plt.xlabel('Frequency(Hz)' , fontsize = 15)
     plt.ylabel('Amplitude' , fontsize = 15)
