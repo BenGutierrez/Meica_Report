@@ -50,14 +50,12 @@ def FFT(Denoised_components_ts, TR, N, outputDir):
     freq_axis = freq[np.where(freq == 0)[0][0]:]
 
     fig  = plt.figure(figsize= (8,4))
-    gs1  = gridspec.GridSpec(1,1)
 
     plt.plot(freq_axis,FFT[-(freq_axis.shape)[0]:])
     plt.title('FFT of the Time Series', fontsize = 15)
     plt.xlabel('Frequency(Hz)' , fontsize = 15)
     plt.ylabel('Amplitude' , fontsize = 15)
-    fig.subplots_adjust(bottom = 0.15, top = .90)
-    plt.savefig('%s/Report_Figures/FFT_Component_' % outputDir + str(N).zfill(len(str(Denoised_components_ts.shape[1]))))
+    plt.savefig('%s/Report_Figures/FFT_Component_' % outputDir + str(N).zfill(len(str(Denoised_components_ts.shape[1]))), bbox_inches='tight')
     plt.close()
 
 """
@@ -214,14 +212,12 @@ def gs_montage(item):
     plt.close()
 
     fig = plt.figure(figsize= (8,4))
-    gs1 = gridspec.GridSpec(1,1)
     plt.plot(np.arange(Denoised_components_ts.shape[0]),Denoised_components_ts[:,i])
     plt.title('Time Series of the Component', fontsize = 15)
     plt.xlabel('Time (TR)', fontsize = 15)
     plt.ylabel('Arbitrary BOLD units', fontsize = 15)
     plt.xlim([0,Denoised_components_ts.shape[0]-1])
-    fig.subplots_adjust(bottom = 0.15, top = .90)
-    plt.savefig('%s/Report_Figures/TimeSeries_' % outputDir + N)
+    plt.savefig('%s/Report_Figures/TimeSeries_' % outputDir + N, bbox_inches='tight')
     plt.close()
     
     print("++ INFO [Figures]: Component [%s] figure completed." % N)

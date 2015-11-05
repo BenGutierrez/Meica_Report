@@ -38,7 +38,7 @@ def dep_check():
 
 if __name__=='__main__':
     print("------------------------------------")
-    print("-- SFIM ME-ICA Report version %s--" % __version__)
+    print("-- SFIM ME-ICA Report version %s --" % __version__)
     print("------------------------------------")
     dep_check()
     
@@ -146,14 +146,17 @@ if __name__=='__main__':
     N = 0
     while '#' not in ctab_txt[-2-N][0]:
         N += 1
-    ctab_columns = ctab_txt[-2 -N].split()[1:]
+    ctab_columns = ctab_txt[-2 -N].split()
+
+    if ctab_columns[0] == '#':
+        ctab_columns = ctab_columns[1:]
 
     for i in range(len(ctab_columns)):
         if ctab_columns[i] == 'Kappa':
             ctab[:,1] = ctab_unordered[:,i]
         if ctab_columns[i] == 'Rho':
             ctab[:,2] = ctab_unordered[:,i]
-        if ctab_columns[i] == '%%Var':
+        if ctab_columns[i] == '%%Var' or ctab_columns[i] == 'Var':
             ctab[:,3] = ctab_unordered[:,i]
         if ctab_columns[i] == '%%Var(norm)':
             ctab[:,4] = ctab_unordered[:,i]
@@ -243,7 +246,7 @@ if __name__=='__main__':
     #    subprocess.call('make latexpdf', shell = True)
 
     subprocess.call('mv %s/_build/* %s' % (outputDir, outputDir), shell = True)
-    subprocess.call('rm -rf _*', shell = True)
+    #subprocess.call('rm -rf _*', shell = True)
     subprocess.call('mv %s/*.rst %s/sphinx_files/' % (outputDir, outputDir), shell = True)
     subprocess.call('mv %s/Makefile %s/sphinx_files' % (outputDir, outputDir), shell = True)
     subprocess.call('mv %s/conf.py %s/sphinx_files' % (outputDir, outputDir), shell = True)

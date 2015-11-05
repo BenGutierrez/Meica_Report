@@ -102,8 +102,8 @@ def analysis_rst(accept, reject, middle, ignore, ctab, outputDir, motion_file, T
         sl.append('.. image:: %s/Axial_GS_Component_'    % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Sagittal_GS_Component_' % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Coronal_GS_Component_'  % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
-        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
-        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
+        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 45%\n')
+        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 45%\n')
         N += 1
 
     sl.append('\nRejected Components\n' + '+++++++++++++++++++')
@@ -121,8 +121,8 @@ def analysis_rst(accept, reject, middle, ignore, ctab, outputDir, motion_file, T
         sl.append('.. image:: %s/Axial_GS_Component_'    % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Sagittal_GS_Component_' % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Coronal_GS_Component_'  % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
-        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
-        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
+        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
+        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
         N += 1
 
     sl.append('\nMiddle Components\n' + '+++++++++++++++++++')
@@ -140,8 +140,8 @@ def analysis_rst(accept, reject, middle, ignore, ctab, outputDir, motion_file, T
         sl.append('.. image:: %s/Axial_GS_Component_'    % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Sagittal_GS_Component_' % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Coronal_GS_Component_'  % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
-        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
-        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
+        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
+        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
         N += 1
 
     sl.append('\nIgnore Components\n' + '+++++++++++++++++++')
@@ -159,8 +159,8 @@ def analysis_rst(accept, reject, middle, ignore, ctab, outputDir, motion_file, T
         sl.append('.. image:: %s/Axial_GS_Component_'    % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Sagittal_GS_Component_' % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
         sl.append('.. image:: %s/Coronal_GS_Component_'  % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 95%\n')
-        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
-        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 49%\n')
+        sl.append('\n.. image:: %s/TimeSeries_'          % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
+        sl.append('.. image:: %s/FFT_Component_'         % figures + str(i).zfill(size) + '.png'); sl.append('\t:width: 40%\n')
         N += 1
 
 
