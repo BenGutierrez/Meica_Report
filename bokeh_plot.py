@@ -17,7 +17,7 @@ from bokeh.models.glyphs import ImageURL
 # Load Inputs into memory
 # =======================
 accepted_components = np.loadtxt(TED_dir + '/accepted.txt',delimiter=',').astype('int')
-comp_table          = np.loadtxt(TED_dir + '/comp_table.txt')
+ctab_unordered      = np.loadtxt(TED_dir + '/comp_table.txt')
 comp_timeseries     = np.loadtxt(TED_dir + '/meica_mix.1D')
 Nt, Nc              = comp_timeseries.shape
 path                = TED_dir + '/' +'betas_OC.nii'
@@ -61,19 +61,44 @@ freq_axis = freq[np.where(freq == 0)[0][0]:]
 # ======================
 output_file("%s/Bokeh_plot.html" % (report_figures))
 
+# Correcting comp_table columns
+# =============================
+ctab = np.zeros((ctab_unordered.shape[0],5))
+with open("%s/comp_table.txt" % (TED_dir), 'r') as original: ctab_txt = original.read()
+ctab_txt = ctab_txt.split('\n')
+N = 0
+while '#' not in ctab_txt[-2-N][0]:
+    N += 1
+ctab_columns = ctab_txt[-2 -N].split()[1:]
+
+for i in range(len(ctab_columns)):
+    if ctab_columns[i] == 'Kappa':
+        ctab[:,1] = ctab_unordered[:,i]
+    if ctab_columns[i] == 'Rho':
+        ctab[:,2] = ctab_unordered[:,i]
+    if ctab_columns[i] == '%%Var':
+        ctab[:,3] = ctab_unordered[:,i]
+    if ctab_columns[i] == '%%Var(norm)':
+        ctab[:,4] = ctab_unordered[:,i]
+
+if np.max(ctab[:,4] == 0):
+    ctab[:,4] = ctab[:,3]
+
+ctab = ctab[ctab[:,1].argsort()[::-1]]
+ctab[:,0] = np.arange(ctab.shape[0])
 # Reading the different features of interest
 # ==========================================
-Nc,Nf = comp_table.shape
-kappa = comp_table[:,1]
-rho   = comp_table[:,2]
-var   = comp_table[:,3]
-cID   = comp_table[:,0]
+Nc,Nf = ctab.shape
+kappa = ctab[:,1]
+rho   = ctab[:,2]
+var   = ctab[:,3]
+cID   = ctab[:,0]
 
-Nc,Nf = comp_table.shape
-kappa = comp_table[:,1]
-rho   = comp_table[:,2]
-var   = comp_table[:,3]
-cID   = comp_table[:,0]
+Nc,Nf = ctab.shape
+kappa = ctab[:,1]
+rho   = ctab[:,2]
+var   = ctab[:,3]
+cID   = ctab[:,0]
 
 loc_by_kappa = Nc - rankdata(kappa)
 loc_by_rho   = Nc - rankdata(rho)
