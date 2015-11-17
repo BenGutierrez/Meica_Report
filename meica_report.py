@@ -140,7 +140,7 @@ if __name__=='__main__':
     # parse and order component table columns
     # ---------------------------------------
     ctab = np.zeros((ctab_unordered.shape[0],5))
-    print("++ INFO [MAIN]: Parsing comp_table.txt")
+    print("++ INFO [Main]: Parsing comp_table.txt")
     with open("%s/comp_table.txt" % (options.TED_dir), 'r') as original: ctab_txt = original.read()
     ctab_txt = ctab_txt.split('\n')
     N = 0
@@ -173,7 +173,7 @@ if __name__=='__main__':
     if source_comp_table == True:
         with open(options.TED_dir + '/' + 'comp_table.txt') as f:
             lines = f.readlines()
-        for i in lines:
+        for i in range(len(lines)):
             if "ACC" in lines[i]:
                 accepted = ((lines[i]).split(' ')[1]).split(',')
             if "REJ" in lines[i]:
@@ -184,10 +184,10 @@ if __name__=='__main__':
                 ignored = ((lines[i]).split(' ')[1]).split(',')
                 
     else:
-        accepted = np.loadtxt(options.TED_dir + '/' + 'accepted.txt', delimiter = ',', dtype = 'int')
-        rejected = np.loadtxt(options.TED_dir + '/' + 'rejected.txt', delimiter = ',', dtype = 'int')
+        accepted = np.loadtxt(options.TED_dir + '/' + 'accepted.txt', delimiter = ',', dtype = 'int', ndmin = 1)
+        rejected = np.loadtxt(options.TED_dir + '/' + 'rejected.txt', delimiter = ',', dtype = 'int', ndmin = 1)
         if os.path.exists(options.TED_dir + '/' + 'midk_rejected.txt'):
-            middle_kappa = np.loadtxt(options.TED_dir + '/' + 'midk_rejected.txt', delimiter = ',',dtype = 'int')
+            middle_kappa = np.loadtxt(options.TED_dir + '/' + 'midk_rejected.txt', delimiter = ',',dtype = 'int', ndmin = 1)
         else:
             middle_kappa = []
         Nc = Denoised_components.shape[3]

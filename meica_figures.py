@@ -144,8 +144,7 @@ def montage_control(TED, outputDir, Denoised_components, Denoised_components_ts,
         grid1[j].axes.get_yaxis().set_ticks([])
     plt.savefig('%s/Report_Figures/Coronal_GS_Component_XX' % (outputDir), bbox_inches='tight', dpi=150)
     plt.close()
-    cpu = cpu_count()
-    pool = Pool(processes=int(4))
+    pool = Pool(processes=Ncpu)
 
     pool.map(gs_montage, [{'Denoised_components':Denoised_components,'N':str(i).zfill(len(str(Denoised_components.shape[3]))), 'outputDir':outputDir,
         'Denoised_components_ts': Denoised_components_ts} for i in range(Denoised_components.shape[3])])
