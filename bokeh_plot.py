@@ -209,7 +209,7 @@ sp_ratio = figure(tools=[TOOLS,HoverRatio],width=325, height=250, y_axis_label='
 sp_ratio.circle('loc_by_ratio','ratio',size=5,color='comp_color',source=Source)
 sp_ratio.yaxis.axis_label_text_font_size = "12pt"
 
-sp_kvr = figure(tools=[TOOLS,HoverKvsR],width=325, height=250, y_axis_label='rho', x_axis_label='kappa', toolbar_location=None,x_range=sp_kappa.x_range)
+sp_kvr = figure(tools=[TOOLS,HoverKvsR],width=325, height=250, y_axis_label='rho', x_axis_label='kappa', toolbar_location=None)
 sp_kvr.circle('kappa','rho',size=((var)/np.max(var))*20 + 2,color='comp_color',source=Source)
 sp_kvr.xaxis.axis_label_text_font_size = "12pt"
 sp_kvr.yaxis.axis_label_text_font_size = "12pt"

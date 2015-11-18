@@ -54,7 +54,7 @@ if __name__=='__main__':
     # ----------------------
     parser = ArgumentParser()
     parser.add_argument("-t","--TED_dir",          dest='TED_dir',        help="Path to meica output TED directory",                        type=str, default=None)
-    parser.add_argument("-o","--out_dir",          dest='out_dir',        help="Output directory to output report, default='./meica.Report",type=str, default='./meica.Report')
+    parser.add_argument("-o","--out_dir",          dest='out_dir',        help="Output directory to output report, default='./meica.Report'",type=str, default='./meica.Report')
     parser.add_argument(     "--motion",           dest='motion',         help="Path to motion.1D file",                                    type=str, default=None)
     parser.add_argument(     "--ncpus",            dest='Ncpus',          help='Number of cpus available. Default will be #available/2',    type=int, default=None)
     parser.add_argument(     "--overwrite",        dest='overwrite',      help="overwrite files previous created", action='store_true')
@@ -231,7 +231,7 @@ if __name__=='__main__':
     rst_files.analysis_rst(accepted, rejected, middle_kappa, ignored, ctab, outputDir, motion_file, options.TED_dir)
     rst_files.dynamic_analysis_rst(accepted, rejected, middle_kappa, ignored, ctab, outputDir, motion_file, options.TED_dir)
 
-    ofh = open("meica_report.txt","w")
+    ofh = open("%s/meica_report.txt" % options.out_dir,"w")
     ofh.write("\n".join(meica_txt) + "\n")
     ofh.close()
 
