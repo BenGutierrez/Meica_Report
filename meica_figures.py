@@ -9,13 +9,14 @@ mpl.use('Agg')
 
 from matplotlib.colors       import LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import ImageGrid
-from multiprocessing         import Pool, cpu_count
+from multiprocessing         import Pool
 from numpy.core.umath_tests  import inner1d
 from matplotlib.ticker       import MaxNLocator
 from matplotlib              import gridspec
 from matplotlib              import pylab
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 import nibabel as ni
 import numpy as np
 import subprocess
@@ -45,8 +46,8 @@ def FFT(Denoised_components_ts, TR, N, outputDir):
     FFT    = abs(np.fft.fft(t))
     FFT    = np.fft.fftshift(FFT)
 
-    freq = np.fft.fftfreq(t.size,float(TR))
-    freq = np.fft.fftshift(freq)
+    freq      = np.fft.fftfreq(t.size,float(TR))
+    freq      = np.fft.fftshift(freq)
     freq_axis = freq[np.where(freq == 0)[0][0]:]
 
     fig  = plt.figure(figsize= (8,4))
@@ -144,8 +145,8 @@ def montage_control(TED, outputDir, Denoised_components, Denoised_components_ts,
         grid1[j].axes.get_yaxis().set_ticks([])
     plt.savefig('%s/Report_Figures/Coronal_GS_Component_XX' % (outputDir), bbox_inches='tight', dpi=150)
     plt.close()
-    pool = Pool(processes=Ncpu)
 
+    pool = Pool(processes=Ncpu)
     pool.map(gs_montage, [{'Denoised_components':Denoised_components,'N':str(i).zfill(len(str(Denoised_components.shape[3]))), 'outputDir':outputDir,
         'Denoised_components_ts': Denoised_components_ts} for i in range(Denoised_components.shape[3])])
 
