@@ -110,10 +110,12 @@ for i in range(len(lines)):
         rejected_components_mask[np.array(((lines[i]).split(' ')[1]).split(',')    ,dtype=int)] = True
     if "MID" in lines[i]:
         middle_kappa_components = ((lines[i]).split(' ')[1]).split(',')
-        middle_kappa_components_mask[np.array(((lines[i]).split(' ')[1]).split(','),dtype=int)] = True
+        if middle_kappa_components != [""]:
+            middle_kappa_components_mask[np.array(((lines[i]).split(' ')[1]).split(','),dtype=int)] = True
     if "IGN" in lines[i]:
         ignored_components = ((lines[i]).split(' ')[1]).split(',')
-        ignored_components_mask[np.array(((lines[i]).split(' ')[1]).split(',')     ,dtype=int)] = True
+        if ignored_components != [""]:
+            ignored_components_mask[np.array(((lines[i]).split(' ')[1]).split(',')     ,dtype=int)] = True
 # Reading the different features of interest
 # ==========================================
 Nc,Nf = ctab.shape

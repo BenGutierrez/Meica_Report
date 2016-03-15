@@ -33,7 +33,7 @@ def dynamic_analysis_rst(accept, reject, middle, ignore, ctab, outputDir, motion
     sl.append('+----------------+------------------+-------------------------+\n')
 
     sl.append('In the scatter plots below, you can click on any point to see the component time series.  ' + 
-            'The size of the scatter points in the plot furthest to the right coorespond to the variance of the component.  ' +
+            'The size of the scatter points in the plot furthest to the right correspond to the variance of the component.  ' +
             'The green components are accepted, the red are everything else.\n')
     sl.append('.. bokeh-plot:: %s/bokeh_plot.py' % figures)
     sl.append('\t:source-position: none \n')
