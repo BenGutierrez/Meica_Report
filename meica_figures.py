@@ -56,13 +56,14 @@ def FFT(Denoised_components_ts, TR, N, outputDir):
     plt.title('FFT of the Time Series', fontsize = 15)
     plt.xlabel('Frequency(Hz)' , fontsize = 15)
     plt.ylabel('Amplitude' , fontsize = 15)
-    plt.savefig('%s/Report_Figures/FFT_Component_' % outputDir + str(N).zfill(len(str(Denoised_components_ts.shape[1]))), bbox_inches='tight')
+    plt.savefig('%s/Report_Figures/FFT_Component_' % outputDir + str(N).zfill(len(str(Denoised_components_ts.shape[1])))
+        , bbox_inches='tight')
     plt.close()
 
 """
-Primary usage is for finding upper and lower bounds for non-zero 2d slices so as to display only useful information
-when displaying montages of three dimmensional images.  Also returns an image with 2D zero-filled slices removed, but this is not always the
-more useful option.
+Primary usage is for finding upper and lower bounds for non-zero 2d slices so as to 
+display only useful information when displaying montages of three dimmensional images.  
+Also returns an image with 2D zero-filled slices removed, but this is not always the more useful option.
 image: 3D array
 axis: String Dimmension to look for 2D zero-filled slices in, i.e, 'x','y','z'.
 """
@@ -147,8 +148,8 @@ def montage_control(TED, outputDir, Denoised_components, Denoised_components_ts,
     plt.close()
 
     pool = Pool(processes=Ncpu)
-    pool.map(gs_montage, [{'Denoised_components':Denoised_components,'N':str(i).zfill(len(str(Denoised_components.shape[3]))), 'outputDir':outputDir,
-        'Denoised_components_ts': Denoised_components_ts} for i in range(Denoised_components.shape[3])])
+    pool.map(gs_montage, [{'Denoised_components':Denoised_components,'N':str(i).zfill(len(str(Denoised_components.shape[3]))),
+     'outputDir':outputDir,'Denoised_components_ts': Denoised_components_ts} for i in range(Denoised_components.shape[3])])
 
     p = subprocess.Popen(['3dinfo','-tr', '%s/betas_OC.nii' % TED], stdout = subprocess.PIPE, stderr = subprocess.PIPE)# retrieve TR
     TR = p.communicate()[0][:-2]
@@ -187,7 +188,8 @@ def gs_montage(item):
     fig = plt.figure(figsize = (12,4))
     grid1 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
     for j in range(10):
-        grid1[j].imshow(Denoised_components[:,:,int((Denoised_components.shape[2]-1)*ax_montage_spacing[j]),i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+        grid1[j].imshow(Denoised_components[:,:,int((Denoised_components.shape[2]-1)*ax_montage_spacing[j]),i].T, cmap = 'Greys_r',
+         vmin = minimum, vmax = maximum)
         grid1[j].axes.get_xaxis().set_ticks([])
         grid1[j].axes.get_yaxis().set_ticks([])
     plt.savefig('%s/Report_Figures/Axial_GS_Component_' % outputDir + N, bbox_inches='tight', dpi=150)
@@ -196,7 +198,8 @@ def gs_montage(item):
     fig = plt.figure(figsize = (12,4))
     grid2 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
     for j in range(10):
-        grid2[j].imshow(Denoised_components[int((Denoised_components.shape[0]-1)*sag_montage_spacing[j]),:,::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+        grid2[j].imshow(Denoised_components[int((Denoised_components.shape[0]-1)*sag_montage_spacing[j]),:,::-1,i].T, cmap = 'Greys_r',
+         vmin = minimum, vmax = maximum)
         grid2[j].axes.get_xaxis().set_ticks([])
         grid2[j].axes.get_yaxis().set_ticks([])
     plt.savefig('%s/Report_Figures/Sagittal_GS_Component_' % outputDir + N, bbox_inches='tight', dpi=150)
@@ -205,7 +208,8 @@ def gs_montage(item):
     fig = plt.figure(figsize = (12,4))
     grid3 = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,axes_pad=0.0,share_all=True,cbar_mode=None)
     for j in range(10):
-        grid3[j].imshow(Denoised_components[:,int((Denoised_components.shape[1]-1)*cor_montage_spacing[j]),::-1,i].T, cmap = 'Greys_r', vmin = minimum, vmax = maximum)
+        grid3[j].imshow(Denoised_components[:,int((Denoised_components.shape[1]-1)*cor_montage_spacing[j]),::-1,i].T, cmap = 'Greys_r',
+         vmin = minimum, vmax = maximum)
         grid3[j].axes.get_xaxis().set_ticks([])
         grid3[j].axes.get_yaxis().set_ticks([])
     plt.savefig('%s/Report_Figures/Coronal_GS_Component_' % outputDir + N, bbox_inches='tight', dpi=150)
@@ -244,7 +248,8 @@ def tsnr(tsoc_data, medn_data, outputDir):
     background = np.zeros((medn_tsnr[:,:,0].T).shape)
 
     fig = plt.figure(figsize = (12,2))#plot montage of medn TSNR
-    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
+    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,
+        share_all=True,cbar_mode="single")
 
     tsnr_mask = medn_tsnr[np.isnan(medn_tsnr) == False]
     maximum = np.percentile(tsnr_mask,95)
@@ -266,7 +271,8 @@ def tsnr(tsoc_data, medn_data, outputDir):
     plt.close()
 
     fig = plt.figure(figsize = (12,2))#plot montage of medn TSNR
-    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
+    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,
+        share_all=True,cbar_mode="single")
     SaveTSNR=np.zeros((tsoc_tsnr.shape[1],tsoc_tsnr.shape[0],10))
     for i in range(10):
         grid[i].imshow(background, cmap = 'Greys_r')
@@ -283,7 +289,8 @@ def tsnr(tsoc_data, medn_data, outputDir):
     plt.close()
 
     fig = plt.figure(figsize = (12,2))#plot montage of medn TSNR
-    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,share_all=True,cbar_mode="single")
+    grid = ImageGrid(fig, 111 , nrows_ncols=(1,10),cbar_location='right',add_all=True,cbar_pad=0.05,axes_pad=0.0,
+        share_all=True,cbar_mode="single")
     tsnr_mask = frac_tsnr[np.isnan(frac_tsnr) == False]
     maximum = np.percentile(tsnr_mask,95)
     minimum = np.percentile(tsnr_mask,5)
@@ -332,7 +339,8 @@ def tsnr(tsoc_data, medn_data, outputDir):
     plt.savefig('%s/Report_Figures/tsnr_ratio_hist' % outputDir)
     plt.close()
     print("++ INFO [Figures]: TSNR figures created.")
-    return("Median meica denoised TSNR:  %s\nMedian optimally combined TSNR:   %s\nMedian denoised over optimally combined TSNR ratio:   %s" % (np.percentile(medn_mask,50),np.percentile(tsoc_mask,50),np.percentile(frac_mask,50)))
+    return("Median meica denoised TSNR:  %s\nMedian optimally combined TSNR:   %s\nMedian denoised over optimally combined TSNR ratio:   %s"
+     % (np.percentile(medn_mask,50),np.percentile(tsoc_mask,50),np.percentile(frac_mask,50)))
 
 def kappa_vs_rho_plot(accepted,rejected,middle_kappa,ignored,ctab,outputDir,TED_dir):
     plt.figure(2)# this simple figure is created and removed in order to take the legend from it.  
