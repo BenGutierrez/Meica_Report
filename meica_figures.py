@@ -432,6 +432,6 @@ def motion(outputDir, motion_file):
     plt.close()
     print("++ INFO [Figures]: Motion figures created.")
     itemindex = np.where(np.absolute(motion)==np.max(np.absolute(motion)))
-    return("Max head displacement in any one dirrection:   %s\nTime of max head displacement (TR):   %s\nMax rate of head motion:   %s\nTime of max head motion rate (TR):   %s" % (np.max(np.absolute(motion)),itemindex[0][0],
-        np.max(np.absolute(deriv)),np.argmax(np.absolute(deriv))))
+    return("Max head displacement:   %s\nTime of max head displacement (TR):   %s\nMax rate of head motion:   %s\nTime of max head motion rate (TR):   %s" 
+        % (np.max(np.absolute(motion)),itemindex[0][0],np.max(np.absolute(deriv)),np.argmax(np.absolute(deriv))))
 

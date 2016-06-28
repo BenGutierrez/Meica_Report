@@ -172,7 +172,7 @@ def table(pattern):
         writer.writerows([['Label','Experimental label','# Accepted Components', '# Rejected Compoents','# Middle Components','# Ignore Components',
             'Accepted Variance','Rejected Variance','Middle Kappa Variance', 'Ignore Variance','Variance Explained by ICA','Largest Variance Accepted Component',
             'Highest Kappa Rejected Component','Highest Kappa Middle Kappa Component','Median Meica Denoised TSNR','Median Optimally Combined TSNR',
-            'Median Denoised Over Optimally Combined TSNR Ratio','Max Head Displacement In Any One Dirrection','Time of Max Head Displacement (TR)',
+            'Median Denoised Over Optimally Combined TSNR Ratio','Max Head Displacement','Time of Max Head Displacement (TR)',
             'Max Rate of Head Motion','Time of Max Head Motion Rate (TR)']])
         for i in range(len(variables)):
             writer.writerows(variables[i])
